@@ -174,6 +174,9 @@ class ReminderReceiver : BroadcastReceiver() {
                 when (intent.action) {
                     "app.plait.MEETING_REMINDER" -> Reminders.notifyMeeting(context, intent)
                     "app.plait.NOTE_NUDGE" -> { Reminders.notifyNudge(context); Reminders.scheduleAll(context) }
+                    TaskReminders.ACTION_FIRE -> TaskReminders.fire(context, intent)
+                    TaskReminders.ACTION_DONE -> TaskReminders.done(context, intent)
+                    TaskReminders.ACTION_LATER -> TaskReminders.later(context, intent)
                 }
             } finally { pending.finish() }
         }.start()
@@ -183,6 +186,6 @@ class ReminderReceiver : BroadcastReceiver() {
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
-        Thread { try { runCatching { Reminders.scheduleAll(context) } } finally { pending.finish() } }.start()
+        Thread { try { runCatching { Reminders.scheduleAll(context) }; runCatching { TaskReminders.scheduleAll(context) } } finally { pending.finish() } }.start()
     }
 }

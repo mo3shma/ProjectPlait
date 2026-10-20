@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.io.File
@@ -25,12 +26,15 @@ sealed interface ModelState {
 /**
  * Downloads and keeps the optional models. A download resumes where it stopped (a `.part` file per file), writes a
  * marker only when every file is complete, and can be deleted to give the space back. Nothing is downloaded unless
- * the user taps Download.
+ * the user taps Download. While anything downloads, [ModelDownloadService] keeps the app running in the background;
+ * unfinished downloads are remembered and picked up again if Android stops the app, and a dropped connection is
+ * retried a few times before the download is reported as stopped.
  */
 object ModelCenter {
     val states = mutableStateMapOf<String, ModelState>()
     private val jobs = HashMap<String, Job>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private const val RETRIES = 5
 
     fun dir(context: Context, id: String) = File(context.filesDir, "models/$id")
     private fun marker(context: Context, id: String) = File(dir(context, id), ".complete")
@@ -66,6 +70,27 @@ object ModelCenter {
 
     fun state(id: String): ModelState = states[id] ?: ModelState.NotInstalled
 
+    /** The models downloading right now, with their progress. */
+    fun downloading(): List<Pair<ModelSpec, ModelState.Downloading>> =
+        ModelCatalog.all.mapNotNull { m -> (states[m.id] as? ModelState.Downloading)?.let { m to it } }
+
+    private fun prefs(context: Context) = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+    private fun pending(context: Context): Set<String> = prefs(context).getStringSet("model_downloads", emptySet()).orEmpty()
+    private fun setPending(context: Context, id: String, on: Boolean) {
+        val now = pending(context).let { if (on) it + id else it - id }
+        prefs(context).edit().putStringSet("model_downloads", now).apply()
+    }
+
+    /** Starts again any download that was still running when the app was stopped. */
+    fun resumePending(context: Context) {
+        val app = context.applicationContext
+        for (id in pending(app)) {
+            val spec = ModelCatalog.byId(id)
+            if (spec == null || isInstalled(app, id)) { setPending(app, id, false); continue }
+            download(app, spec)
+        }
+    }
+
     fun isMetered(context: Context): Boolean =
         (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
 
@@ -83,22 +108,37 @@ object ModelCenter {
             return
         }
         states[spec.id] = ModelState.Downloading(0, spec.bytes)
+        setPending(app, spec.id, true)
+        ModelDownloadService.start(app)
         jobs[spec.id] = scope.launch {
             try {
-                var done = spec.files.sumOf { f -> File(root, f.name).takeIf { it.exists() }?.length() ?: 0L }
-                for (f in spec.files) {
-                    val target = File(root, f.name)
-                    if (target.exists() && target.length() == f.bytes) continue
-                    done = fetch(f, root, done, spec) { states[spec.id] = ModelState.Downloading(it, spec.bytes) }
+                var attempt = 0
+                while (true) {
+                    try {
+                        var done = spec.files.sumOf { f -> File(root, f.name).takeIf { it.exists() }?.length() ?: 0L }
+                        for (f in spec.files) {
+                            val target = File(root, f.name)
+                            if (target.exists() && target.length() == f.bytes) continue
+                            done = fetch(f, root, done, spec) { states[spec.id] = ModelState.Downloading(it, spec.bytes) }
+                        }
+                        break
+                    } catch (e: IOException) {
+                        // A dropped connection: wait and carry on from the .part file, a few times, before giving up.
+                        if (++attempt > RETRIES) throw e
+                        Diag.log("DOWNLOAD", "${spec.id}: ${e.message}, retry $attempt")
+                        delay(attempt * 5_000L)
+                    }
                 }
                 marker(app, spec.id).writeText("ok")
                 states[spec.id] = ModelState.Installed
+                setPending(app, spec.id, false)
                 AiPrefs.makeDefault(app, spec)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 states[spec.id] = ModelState.NotInstalled
                 throw e
             } catch (e: Exception) {
                 Diag.log("DOWNLOAD", "${spec.id}: ${e.message}")
+                setPending(app, spec.id, false)
                 states[spec.id] = ModelState.Failed(
                     if (e is IOException) "The download stopped (${e.message ?: "network"}). Tap Download to carry on." else (e.message ?: "The download failed."),
                 )
@@ -145,13 +185,19 @@ object ModelCenter {
         }
     }
 
-    fun cancel(id: String) {
+    fun cancel(context: Context, id: String) {
         jobs[id]?.cancel()
         states[id] = ModelState.NotInstalled
+        setPending(context.applicationContext, id, false)
+    }
+
+    fun cancelAll(context: Context) {
+        downloading().forEach { cancel(context, it.first.id) }
     }
 
     fun delete(context: Context, id: String) {
         jobs[id]?.cancel()
+        setPending(context.applicationContext, id, false)
         dir(context, id).deleteRecursively()
         states[id] = ModelState.NotInstalled
         if (AiPrefs.textModelId == id) LocalLlm.release()

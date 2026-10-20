@@ -289,6 +289,7 @@ private fun NotesTab(
     var editing by remember { mutableStateOf<Any?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         AddNoteCard(eventId, memos, LocalMeetingLook.current?.backdrop, onRecord)
+        app.plait.data.Calendars.find(eventId)?.let { SuggestedTasksCard(it) }
         mine.forEach { m ->
             key("m" + m.id) {
                 SwipeToDelete(onDelete = { undo.delete("m" + m.id, "note") { memos.delete(m) } }, cornerRadius = 30) { MemoCard(m, memos, onLongPress = { actionsFor = m }) }

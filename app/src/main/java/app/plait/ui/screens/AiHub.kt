@@ -289,7 +289,7 @@ private fun ModelOption(spec: ModelSpec, selected: Boolean, onSelect: (() -> Uni
                 }
                 StatusLine("${ModelCatalog.formatSize(state.done)} of ${ModelCatalog.formatSize(state.total)} · ${(frac * 100).toInt()}%")
                 Text("Keep Plait open. It carries on from here if interrupted.", style = PlaitType.caption, color = plait.muted)
-                PlaitButton("Cancel", { ModelCenter.cancel(spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton("Cancel", { ModelCenter.cancel(context, spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
             else -> {
                 (state as? ModelState.Failed)?.let { Text(it.reason, style = PlaitType.caption, color = plait.signal) }

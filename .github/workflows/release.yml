@@ -48,28 +48,32 @@ jobs:
           fi
 
       - name: Unpack the signing key
+        id: key
         if: steps.version.outputs.new == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.PLAIT_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::The PLAIT_KEYSTORE_BASE64 secret is missing. Add it under Settings > Secrets and variables > Actions."
-            exit 1
+            # Not set up yet: skip quietly rather than fail every push.
+            echo "::notice::No PLAIT_KEYSTORE_BASE64 secret, so nothing is released. Add the signing secrets to turn releases on."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/plait.keystore"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-java@v4
-        if: steps.version.outputs.new == 'true'
+        if: steps.key.outputs.ready == 'true'
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
 
       - uses: android-actions/setup-android@v3
-        if: steps.version.outputs.new == 'true'
+        if: steps.key.outputs.ready == 'true'
 
       - name: Test and build
-        if: steps.version.outputs.new == 'true'
+        if: steps.key.outputs.ready == 'true'
         env:
           PLAIT_KEYSTORE: ${{ runner.temp }}/plait.keystore
           PLAIT_STORE_PASSWORD: ${{ secrets.PLAIT_STORE_PASSWORD }}
@@ -78,7 +82,7 @@ jobs:
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
 
       - name: Check the signature
-        if: steps.version.outputs.new == 'true'
+        if: steps.key.outputs.ready == 'true'
         run: |
           cp app/build/outputs/apk/release/app-release.apk plait.apk
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
@@ -90,7 +94,7 @@ jobs:
           fi
 
       - name: Publish the release
-        if: steps.version.outputs.new == 'true'
+        if: steps.key.outputs.ready == 'true'
         run: |
           v="${{ steps.version.outputs.version }}"
           # The release notes are this version's section of CHANGELOG.md.

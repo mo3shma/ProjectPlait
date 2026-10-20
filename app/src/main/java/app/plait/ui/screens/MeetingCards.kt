@@ -386,6 +386,7 @@ internal fun BriefTab(ev: CalEvent, brief: MeetingBrief, onRecord: () -> Unit, n
                 .filter { it.isNotBlank() }.joinToString("\n").take(1500)
         }
         MeetingInfoCard(ev, desc, brief, notesText, onRecord)
+        SuggestedTasksCard(ev)
         val count = notes.size + memos.size
         var open by remember { mutableStateOf(false) }
         val items = remember(notes, memos) {

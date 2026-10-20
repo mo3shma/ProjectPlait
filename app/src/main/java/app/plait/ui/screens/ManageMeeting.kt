@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.popupSurface
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -153,7 +154,7 @@ private fun EditEventDialog(ev: CalEvent, onSave: (String, String, String) -> Un
     var place by remember { mutableStateOf(ev.location ?: ev.place) }
     var notes by remember { mutableStateOf(ev.description.orEmpty()) }
     Dialog(onDismissRequest = onDismiss) { PopIn {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Edit meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Field("Title", title, 1) { title = it }
             Field("Place", place, 1) { place = it }

@@ -12,6 +12,7 @@ import app.plait.data.Calendars
 import app.plait.data.NoteDigest
 import app.plait.data.NoteStore
 import app.plait.data.SavedNote
+import app.plait.data.tasks.TaskSuggester
 import app.plait.data.device.DeviceWrite
 import app.plait.data.sync.SyncEngine
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +47,8 @@ object NoteProcessor {
             }
             syncToCalendar(app, current)
             SyncEngine.requestAsync(app, force = true)
+            // 3. Tasks to suggest from what was said.
+            TaskSuggester.suggestAsync(app, current.id, current.eventId, current.lines.joinToString(" ") { it.text })
         }
     }
 

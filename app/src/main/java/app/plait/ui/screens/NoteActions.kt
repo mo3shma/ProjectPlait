@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -181,21 +182,16 @@ class NoteAction(val label: String, val icon: ImageVector, val danger: Boolean =
 /** What press-and-hold on a note offers: open it, edit it, delete it. */
 @Composable
 fun ActionsDialog(title: String, actions: List<NoteAction>, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) { PopIn {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = plait.text, maxLines = 2, modifier = Modifier.padding(horizontal = 22.dp, vertical = 10.dp))
-            actions.forEach { a ->
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).clip(RoundedCornerShape(20.dp))
-                        .pressable({ onDismiss(); a.onClick() }, lift = 2.dp).padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Icon(a.icon, null, tint = if (a.danger) plait.signal else plait.text, modifier = Modifier.size(22.dp))
-                    Text(a.label, style = PlaitType.bodyStrong, color = if (a.danger) plait.signal else plait.text)
-                }
-            }
-        }
-    } }
+    Dialog(onDismissRequest = onDismiss) { PopIn { ActionsMenu(title, actions, onDismiss) } }
+}
+
+/** The body of [ActionsDialog]: a title and one button per action, in the chosen style. */
+@Composable
+internal fun ActionsMenu(title: String, actions: List<NoteAction>, onDismiss: () -> Unit) {
+    Column(Modifier.fillMaxWidth().popupSurface().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp))
+        actions.forEach { a -> app.plait.ui.MenuAction(a.label, a.icon, { onDismiss(); a.onClick() }, danger = a.danger) }
+    }
 }
 
 /** A text box in a sheet, for editing a note. */
@@ -203,7 +199,7 @@ fun ActionsDialog(title: String, actions: List<NoteAction>, onDismiss: () -> Uni
 fun EditTextDialog(title: String, initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(initial) }
     Dialog(onDismissRequest = onDismiss) { PopIn {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             BasicTextField(
                 value = text, onValueChange = { text = it },
@@ -235,7 +231,7 @@ fun PopIn(content: @Composable () -> Unit) {
 fun DetailDialog(title: String, onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     Dialog(onDismissRequest = onDismiss) { PopIn {
         Column(
-            Modifier.fillMaxWidth().heightIn(max = 600.dp).clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(vertical = 20.dp),
+            Modifier.fillMaxWidth().heightIn(max = 600.dp).popupSurface().padding(vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(title, style = PlaitType.section.copy(fontSize = 22.sp), color = plait.text, modifier = Modifier.padding(horizontal = 24.dp))
@@ -286,7 +282,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
     var draft by remember { mutableStateOf("") }
     val addDraft = { if (draft.isNotBlank()) { items.add(app.plait.data.memo.Checklist.Item(draft.trim(), false)); draft = "" } }
     Dialog(onDismissRequest = onDismiss) { PopIn {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (items.isEmpty()) Text("No tasks yet. Add the first one below.", style = PlaitType.caption, color = plait.muted)

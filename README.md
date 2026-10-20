@@ -36,7 +36,7 @@
 
 **A home that follows the day.** Morning, Midday and Evening cards. The morning card shows what's ahead. Midday shows what's done and what's still to come. The evening card shows your time in meetings, which meetings still need notes, and a look at tomorrow, with an offer to hold a free stretch for focus.
 
-**Meeting pages.** Guests and their answers. **About this meeting** turns the invite into a few plain lines. A summary of your notes for that meeting. One-tap **Join** for Teams, Meet, Zoom and Webex, even when the link is hidden behind Outlook Safe Links.
+**Meeting pages.** Guests and their answers. **About this meeting** sums the invite up in a short paragraph. When the invite has no details, it says what the meeting is likely about from its title, in one careful line. A summary of your notes for that meeting. One-tap **Join** for Teams, Meet, Zoom and Webex, even when the link is hidden behind Outlook Safe Links.
 
 **Manage meetings.** For meetings you organise: edit details, reschedule, cancel one occurrence, or delete the whole series. For meetings someone else organised: answer **Going**, **Maybe** or **Decline**. It works for phone calendars and for Google, and guests are notified.
 
@@ -47,6 +47,8 @@
 **Search that understands.** Search covers meetings, transcripts, written notes, photo text and emails, in English and Arabic. With an AI chosen, Plait widens your question into related words and names, then answers from your notes and shows its sources.
 
 **Prep and follow-ups.** Before each meeting you get a 30-second plan: the goal, what to remember and what to raise. Follow-ups are pulled from your notes. Mark them done, or book them into a free slot.
+
+**Suggested tasks.** After a voice note or a photo of a whiteboard, Plait suggests the tasks it heard or read, with a due time when the note gives one. Add one and it joins the meeting's checklist with a reminder; the notification has Done and Tomorrow buttons.
 
 **A day brief on your home screen.** The widget comes in four sizes: 2×1, 2×2, 4×2 and 4×4. Each shows the same day with a layout for its size, and the larger ones add a live countdown and Join.
 
@@ -81,7 +83,7 @@
 
 ## On-device AI
 
-Choose the engine in **Settings → AI on this phone**. Models show their size before you download them, are never downloaded twice, and can be deleted to get the space back. Nothing is sent to a cloud AI.
+Choose the engine in **Settings → AI on this phone**. Models show their size before you download them, keep downloading when you leave the app, are never downloaded twice, and can be deleted to get the space back. Nothing is sent to a cloud AI.
 
 | Engine | What it does |
 | --- | --- |
@@ -97,7 +99,7 @@ Everything the AI writes that Plait shows as fact goes through the same harness:
 1. **Clean input.** HTML, style sheets, scripts, links, dial-ins and codes are removed in code first.
 2. **Rules apart from material.** The instructions go in the system message. The invite is fenced off as material, never as instructions.
 3. **Low temperature (0.2),** so the model keeps to the likeliest words.
-4. **A fixed JSON shape** (purpose, agenda, prepare). A broken answer gets one retry.
+4. **A fixed JSON shape** (a short paragraph, a one-line guess, or a list of tasks). A broken answer gets one retry.
 5. **Checked in code.** Word limits, no code or links, and no name or number that isn't in the source.
 6. **Rules as the fallback.** If nothing passes, plain rules take over.
 

@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -280,8 +281,8 @@ private fun LinkPicker(e: Entry, onPick: (String) -> Unit, onDismiss: () -> Unit
         Calendars.events.filter { it.startMs in (now - 30L * 86_400_000)..(now + 14L * 86_400_000) }
             .sortedBy { kotlin.math.abs(it.startMs - e.createdAt) }.take(40)
     }
-    Dialog(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).clip(RoundedCornerShape(30.dp)).background(plait.surfaceHigh).padding(vertical = 16.dp)) {
+    Dialog(onDismissRequest = onDismiss) { PopIn {
+        Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).popupSurface().padding(vertical = 16.dp)) {
             Text("Link to a meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
             if (events.isEmpty()) {
                 Text("No meetings found around now. Connect a calendar to link notes.", style = PlaitType.body, color = plait.muted, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
@@ -300,5 +301,5 @@ private fun LinkPicker(e: Entry, onPick: (String) -> Unit, onDismiss: () -> Unit
             }
             Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { PlaitButton("Cancel", onDismiss, size = ButtonSize.Small, style = ButtonStyle.Quiet) }
         }
-    }
+    } }
 }

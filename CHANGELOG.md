@@ -2,6 +2,14 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.19.0: brief About, suggested tasks, downloads that keep going
+
+- **About this meeting is one short paragraph.** From the invite: at most two sentences, about 35 words, only what the invite says. With no details in the invite: one careful line from the title ("Likely a check-in on the dashboard"). The guess must share a subject word with the title, so it cannot wander off; with no AI, it reads "Likely about <title>".
+- **Suggested tasks.** After a voice note or a photo note, Plait suggests up to four tasks from what was said or written, with a due time when the note gives one ("today", "by Thursday", "next week"). They show in a new card on the meeting. Add puts a task on the meeting's checklist and sets a reminder (today 5 PM, tomorrow 9 AM, Friday 9 AM, or next Monday 9 AM); the notification has Done, which ticks it off, and Tomorrow. Dismissed tasks are never suggested again. With no AI, phrases like "we need to" and "follow up" are used.
+- **Model downloads keep going when you leave the app.** Android froze the app in the background, which stopped the download. A download now runs in a foreground service with a progress notification and a Cancel button, keeps the phone and Wi-Fi awake, retries a dropped connection five times, carries on after Android stops the app, and says when the model is ready.
+- **Every pop-up and menu follows the chosen style.** Liquid Glass: a lit glass panel with glass pill buttons and a red Delete. Material 3 Expressive: a tonal container with tonal buttons and an error-coloured Delete. This covers note actions, the record and manage menus, editing, checklists, linking a note, the day sheet and the new-meeting and attach sheets.
+- The AI checks no longer mistake the first word of a sentence for a made-up name.
+
 ## 0.18.5: colours and the real font
 
 - **Coloured buttons keep their colour with glass effects off** (the default). The plain surface was drawn on top of the colour, so Join, Record, Reply to organizer and the + button came out nearly white in light mode and nearly black in dark mode, and their labels could not be read. The surface now goes underneath.

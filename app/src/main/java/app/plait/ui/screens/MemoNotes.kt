@@ -102,6 +102,7 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
             } else {
                 val text = Ocr.read(context, target, lang)
                 memos.add(Memo(id, eventId, MemoKind.Photo, System.currentTimeMillis(), text.orEmpty(), target.name))
+                if (!text.isNullOrBlank()) app.plait.data.tasks.TaskSuggester.suggestAsync(context, id, eventId, text)
                 app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
                 if (text.isNullOrBlank()) Toast.makeText(context, "Saved. No text was found in the picture.", Toast.LENGTH_LONG).show()
             }

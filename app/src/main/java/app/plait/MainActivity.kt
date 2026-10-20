@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = if (resources.configuration.smallestScreenWidthDp < 600) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         app.plait.data.sync.Tombstones.init(this)
         // Count any model files already on the phone (including ones copied into the drop folder), so nothing is downloaded twice.
-        Thread { runCatching { app.plait.ai.ModelCenter.refresh(applicationContext); app.plait.ai.ModelFinder.scanThisPhone(applicationContext) } }.start()
+        Thread { runCatching { app.plait.ai.ModelCenter.refresh(applicationContext); app.plait.ai.ModelFinder.scanThisPhone(applicationContext); app.plait.ai.ModelCenter.resumePending(applicationContext) } }.start()
         Entrance.arrived()
         if (savedInstanceState == null) { ShareInbox.handle(this, intent); Launch.from(intent) }
         setContent {

@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
 import android.widget.Toast
 import androidx.compose.animation.core.MutableTransitionState
@@ -88,7 +89,7 @@ fun AttachSheet(shared: SharedMail, onAttached: (CalEvent) -> Unit, onDismiss: (
         Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.BottomCenter) {
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 760.dp)
-                    .clip(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp)).background(plait.surfaceHigh)
+                    .popupSurface(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
                     .clickable(interactionSource = null, indication = null) {}
                     .navigationBarsPadding().verticalScroll(rememberScrollState())
                     .padding(horizontal = 22.dp, vertical = 16.dp),

@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
 import app.plait.ui.fauxGlass
 import androidx.activity.compose.BackHandler
@@ -666,7 +667,7 @@ private fun DaySheet(state: CalendarState, events: List<CalEvent>, nowMs: Long, 
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.62f)
                 .graphicsLayer { translationY = (1f - progress.value) * size.height }
-                .shadow(24.dp, shape, clip = false).clip(shape).background(plait.surfaceHigh)
+                .popupSurface(shape)
                 .clickable(interactionSource = null, indication = null) {},
         ) {
             Box(

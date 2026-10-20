@@ -42,9 +42,51 @@ object AiHarness {
         val words = v.split(' ')
         val src = source.lowercase()
         val numbersOk = Regex("\\d[\\d:.,/]*").findAll(v).all { it.value.trimEnd('.', ',') in src }
-        val namesOk = words.drop(1).map { it.trim(',', '.', ';', ':', '(', ')', '"') }.filter { it.length >= 3 && it[0].isUpperCase() }.all { it.lowercase() in src }
+        // Capitalised words that do not start a sentence must be in the source: they are likely names.
+        val namesOk = words.indices.drop(1).filter { i -> words[i - 1].last() !in ".!?:" }
+            .map { words[it].trim(',', '.', ';', ':', '(', ')', '"') }.filter { it.length >= 3 && it[0].isUpperCase() }.all { it.lowercase() in src }
         if (!numbersOk || !namesOk) return null
         val cut = if (words.size > maxWords) words.take(maxWords).joinToString(" ").trimEnd(',', ';', ':') + "…" else v
         return cut.replaceFirstChar { it.uppercase() }
+    }
+
+    /**
+     * A short paragraph the model wrote, if it is fit to show: the same checks as [checked], then cut back to whole
+     * sentences, at most [maxSentences] and [maxWords]. A first sentence that is too long on its own is cut with "…".
+     */
+    fun paragraph(value: String?, source: String, maxWords: Int, maxSentences: Int = 2): String? {
+        val v = checked(value, source, Int.MAX_VALUE) ?: return null
+        val sentences = v.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        val kept = ArrayList<String>()
+        var words = 0
+        for (s in sentences.take(maxSentences)) {
+            val n = s.split(' ').size
+            if (kept.isNotEmpty() && words + n > maxWords) break
+            kept += s; words += n
+        }
+        val text = kept.joinToString(" ")
+        val all = text.split(' ')
+        val out = if (all.size > maxWords) all.take(maxWords).joinToString(" ").trimEnd(',', ';', ':', '.') + "…" else text
+        return if (out.last() in ".!?…") out else "$out."
+    }
+
+    private val generic = setOf(
+        "meeting", "call", "sync", "chat", "catch", "catchup", "check", "checkin", "weekly", "daily", "monthly", "quarterly",
+        "the", "and", "with", "for", "about", "team", "session", "time", "invite", "invitation", "update", "updates", "follow",
+    )
+
+    /** The words of a title that say what it is about, without "weekly", "sync", "meeting" and the like. */
+    fun topicWords(title: String): List<String> =
+        title.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 && it !in generic && !it.all(Char::isDigit) }
+
+    /**
+     * True when a guess stays on the title's subject: it shares at least one of the title's topic words (by its first
+     * five letters, so "revising" matches "revision"). A title with no topic words at all lets any careful guess through.
+     */
+    fun onTopic(guess: String, title: String): Boolean {
+        val topics = topicWords(title)
+        if (topics.isEmpty()) return true
+        val g = guess.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 }
+        return topics.any { t -> val a = t.take(5); g.any { w -> val b = w.take(5); a.startsWith(b) || b.startsWith(a) } }
     }
 }
