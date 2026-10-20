@@ -1,5 +1,7 @@
 # Plait
 
+**Site and trailer:** https://mo3shma.github.io/ProjectPlait/ · **Download:** [plait.apk](https://github.com/mo3shma/ProjectPlait/releases/latest/download/plait.apk) (Android 8+)
+
 An Android calendar that merges your calendars into one agenda, joins calls in one tap, and records voice notes that are transcribed on the phone.
 
 Kotlin, Jetpack Compose, Liquid Glass look (Apple's Liquid Glass guidance, approximated with the open-source Backdrop library).

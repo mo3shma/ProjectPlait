@@ -182,7 +182,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 <section class="download" id="download"><div class="wrap">
   <h2>Get Plait</h2>
   <p class="lead" style="margin:12px auto 28px">Free for Android 8 and newer. Download the latest APK from Releases and open it on your phone.</p>
-  <div class="cta"><a class="pill primary" id="dl" href="../../releases/latest">Download the APK</a><a class="pill ghost" id="src" href="../..">Source on GitHub</a></div>
+  <div class="cta"><a class="pill primary" id="dl" href="../../releases/latest/download/plait.apk">Download the APK</a><a class="pill ghost" id="src" href="../..">Source on GitHub</a></div>
 </div></section>
 
 <footer><div class="wrap"><span>Plait · made for people with too many calendars.</span><span>Fonts: AR One Sans (SIL OFL).</span></div></footer>
@@ -193,7 +193,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
   const host = location.hostname, path = location.pathname.split('/').filter(Boolean);
   if (host.endsWith('github.io') && path.length) {
     const repo = 'https://github.com/' + host.split('.')[0] + '/' + path[0];
-    document.getElementById('dl').href = repo + '/releases/latest';
+    document.getElementById('dl').href = repo + '/releases/latest/download/plait.apk';
     document.getElementById('src').href = repo;
   }
 })();
