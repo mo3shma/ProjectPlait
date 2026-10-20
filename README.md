@@ -58,6 +58,27 @@
 
 **Two looks.** *Liquid Glass* is blurred, tinted glass that's lit at the edge. *Material 3 Expressive* uses your Material You colours, shape-morphing buttons and spring motion. Both follow light and dark mode, with pure black for OLED screens and an option to reduce animations.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/01-home-morning.jpg" alt="The morning card on Home with the day's headline, the day strip and each meeting"><br><sub><b>Morning</b>: the day's headline, what's next, and every meeting in order.</sub></td>
+    <td width="50%"><img src="docs/screenshots/02-home-midday.jpg" alt="The midday card showing two meetings done and three to go"><br><sub><b>Midday</b>: what's done and what's still to come.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/03-home-evening-dark.jpg" alt="The evening card in dark mode with time in meetings, the day in numbers and time by kind"><br><sub><b>Evening</b>, in dark mode: the day in numbers.</sub></td>
+    <td width="50%"><img src="docs/screenshots/04-meeting.jpg" alt="A meeting page with guests and their answers, Reply, Email, Add people, Share link and Join Meet"><br><sub><b>A meeting</b>: guests and their answers, and one-tap Join.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/05-meeting-notes-dark.jpg" alt="The Notes tab of a meeting in dark mode with Voice, Write, Photo and List, a written note and a checklist"><br><sub><b>Notes on a meeting</b>: voice, written, photo and checklists.</sub></td>
+    <td width="50%"><img src="docs/screenshots/06-calendar.jpg" alt="The month calendar with today highlighted"><br><sub><b>Calendar</b>: the month at a glance, or a day at a time.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/07-notes.jpg" alt="The Notes library with search, add-note buttons, filters, a checklist and a voice note"><br><sub><b>Notes</b>: every note in one place, with search and filters.</sub></td>
+    <td width="50%"><img src="docs/screenshots/08-ai.jpg" alt="The AI on this phone settings page"><br><sub><b>AI on this phone</b>: pick what writes and what transcribes.</sub></td>
+  </tr>
+</table>
+
+<sub>The meetings and people in the screenshots are examples.</sub>
+
 ## On-device AI
 
 Choose the engine in **Settings → AI on this phone**. Models show their size before you download them, are never downloaded twice, and can be deleted to get the space back. Nothing is sent to a cloud AI.

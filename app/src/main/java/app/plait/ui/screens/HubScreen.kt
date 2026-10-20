@@ -271,7 +271,8 @@ fun HubScreen(onBack: () -> Unit) {
                         Text("SETTINGS", style = PlaitType.monoLabel, color = plait.muted)
                         Text("Settings", style = PlaitType.title, color = plait.text)
                         Text(
-                            if (Calendars.connected) "${Calendars.events.size} events from ${cals.count { it.id !in Calendars.hidden } + Calendars.feeds.size + (if (Calendars.googleOn) 1 else 0)} calendars" +
+                            if (Calendars.connected) countLabel(Calendars.events.size, "event") + " from " +
+                                countLabel(cals.count { it.id !in Calendars.hidden } + Calendars.feeds.size + (if (Calendars.googleOn) 1 else 0), "calendar") +
                                 (if (Calendars.syncing) " · syncing…" else "")
                             else "Nothing connected yet. Pick a way below.",
                             style = PlaitType.body, color = plait.muted,
@@ -675,6 +676,9 @@ fun HubScreen(onBack: () -> Unit) {
 
 @Composable
 private fun Modifier.statusBarsPaddingCompat(): Modifier = this.padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+
+/** "1 event", "5 events". */
+internal fun countLabel(n: Int, noun: String): String = "$n $noun" + if (n == 1) "" else "s"
 
 @Composable
 internal fun SectionTitle(title: String, detail: String) {

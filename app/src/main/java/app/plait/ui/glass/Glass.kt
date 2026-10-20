@@ -216,16 +216,24 @@ fun Modifier.liquidGlass(
             },
             onDrawSurface = {
                 if (dim > 0f) drawRect(Color.Black.copy(alpha = dim))
-                if (tint.isSpecified && tint.alpha > 0f) {
-                    if (env.material) {
-                        // Material 3: a main action is a solid filled container, a soft tint is a light wash.
-                        drawRect(tint.copy(alpha = if (tint.alpha >= 0.6f) 1f else 0.30f))
-                    } else {
-                        drawRect(tint, blendMode = BlendMode.Hue)
-                        drawRect(tint.copy(alpha = 0.75f * tint.alpha))
+                val tinted = tint.isSpecified && tint.alpha > 0f
+                if (tinted && env.solid && !env.material) {
+                    // Glass off: the plain surface goes underneath and the colour on top, so Join, Record and other
+                    // coloured controls keep their colour (and their label stays readable).
+                    if (surface != Color.Transparent) drawRect(surface)
+                    drawRect(tint.copy(alpha = if (tint.alpha >= 0.6f) 1f else tint.alpha))
+                } else {
+                    if (tinted) {
+                        if (env.material) {
+                            // Material 3: a main action is a solid filled container, a soft tint is a light wash.
+                            drawRect(tint.copy(alpha = if (tint.alpha >= 0.6f) 1f else 0.30f))
+                        } else {
+                            drawRect(tint, blendMode = BlendMode.Hue)
+                            drawRect(tint.copy(alpha = 0.75f * tint.alpha))
+                        }
                     }
+                    if (surface != Color.Transparent) drawRect(surface)
                 }
-                if (surface != Color.Transparent) drawRect(surface)
             },
         )
         .then(if (interactive) press.bloom.then(press.gesture) else Modifier)

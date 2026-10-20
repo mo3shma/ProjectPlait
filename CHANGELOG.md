@@ -2,6 +2,12 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.18.5: colours and the real font
+
+- **Coloured buttons keep their colour with glass effects off** (the default). The plain surface was drawn on top of the colour, so Join, Record, Reply to organizer and the + button came out nearly white in light mode and nearly black in dark mode, and their labels could not be read. The surface now goes underneath.
+- **AR One Sans is really used.** The font file in the app was a broken download (a web page saved under the font's name), so every screen fell back to the phone's own font. It is now the real AR One Sans (SIL Open Font Licence).
+- Settings says "1 calendar" instead of "1 calendars".
+
 ## 0.18.4: a proper AI harness
 
 - **How Plait now asks the AI for anything it shows as fact** (About this meeting first):
