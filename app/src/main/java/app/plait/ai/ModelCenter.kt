@@ -1,0 +1,159 @@
+package app.plait.ai
+
+import android.content.Context
+import app.plait.diag.Diag
+import android.net.ConnectivityManager
+import androidx.compose.runtime.mutableStateMapOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+
+sealed interface ModelState {
+    data object NotInstalled : ModelState
+    data class Downloading(val done: Long, val total: Long) : ModelState
+    data object Installed : ModelState
+    data class Failed(val reason: String) : ModelState
+}
+
+/**
+ * Downloads and keeps the optional models. A download resumes where it stopped (a `.part` file per file), writes a
+ * marker only when every file is complete, and can be deleted to give the space back. Nothing is downloaded unless
+ * the user taps Download.
+ */
+object ModelCenter {
+    val states = mutableStateMapOf<String, ModelState>()
+    private val jobs = HashMap<String, Job>()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun dir(context: Context, id: String) = File(context.filesDir, "models/$id")
+    private fun marker(context: Context, id: String) = File(dir(context, id), ".complete")
+
+    fun file(context: Context, id: String, name: String) = File(dir(context, id), name)
+
+    /** True once every file of the model is on the phone, with or without the completion marker. */
+    fun isInstalled(context: Context, id: String): Boolean =
+        marker(context, id).exists() || ModelCatalog.byId(id)?.let { completeOnDisk(context, it) } == true
+
+    /**
+     * Reads what is on disk into [states]. A model whose files are all present at the right size counts as installed even
+     * if the completion marker is missing (an interrupted finish, a file copied in by hand), so it is never downloaded twice.
+     */
+    fun refresh(context: Context) {
+        for (m in ModelCatalog.all) {
+            if (states[m.id] is ModelState.Downloading) continue
+            if (!isInstalled(context, m.id) && completeOnDisk(context, m)) runCatching { marker(context, m.id).writeText("ok") }
+            states[m.id] = if (isInstalled(context, m.id)) ModelState.Installed else ModelState.NotInstalled
+        }
+    }
+
+    fun completeOnDisk(context: Context, spec: ModelSpec): Boolean =
+        spec.files.all { f -> File(dir(context, spec.id), f.name).let { it.exists() && it.length() == f.bytes } }
+
+    /** Marks a model installed if [adopt] has just made its files whole. */
+    fun adopt(context: Context, spec: ModelSpec): Boolean {
+        if (!completeOnDisk(context, spec)) return false
+        runCatching { marker(context, spec.id).writeText("ok") }
+        states[spec.id] = ModelState.Installed
+        return true
+    }
+
+    fun state(id: String): ModelState = states[id] ?: ModelState.NotInstalled
+
+    fun isMetered(context: Context): Boolean =
+        (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
+
+    fun download(context: Context, spec: ModelSpec) {
+        if (jobs[spec.id]?.isActive == true) return
+        val app = context.applicationContext
+        // Never fetch what is already on the phone, whole or in part.
+        if (isInstalled(app, spec.id) || adopt(app, spec)) return
+        runCatching { ModelFinder.scanThisPhone(app) }
+        if (isInstalled(app, spec.id)) return
+        val root = dir(app, spec.id).also { it.mkdirs() }
+        val needed = spec.bytes - spec.files.sumOf { File(root, it.name + ".part").length() }
+        if (root.usableSpace < needed + 50_000_000L) {
+            states[spec.id] = ModelState.Failed("Not enough free space. ${ModelCatalog.formatSize(needed)} needed.")
+            return
+        }
+        states[spec.id] = ModelState.Downloading(0, spec.bytes)
+        jobs[spec.id] = scope.launch {
+            try {
+                var done = spec.files.sumOf { f -> File(root, f.name).takeIf { it.exists() }?.length() ?: 0L }
+                for (f in spec.files) {
+                    val target = File(root, f.name)
+                    if (target.exists() && target.length() == f.bytes) continue
+                    done = fetch(f, root, done, spec) { states[spec.id] = ModelState.Downloading(it, spec.bytes) }
+                }
+                marker(app, spec.id).writeText("ok")
+                states[spec.id] = ModelState.Installed
+                AiPrefs.makeDefault(app, spec)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                states[spec.id] = ModelState.NotInstalled
+                throw e
+            } catch (e: Exception) {
+                Diag.log("DOWNLOAD", "${spec.id}: ${e.message}")
+                states[spec.id] = ModelState.Failed(
+                    if (e is IOException) "The download stopped (${e.message ?: "network"}). Tap Download to carry on." else (e.message ?: "The download failed."),
+                )
+            }
+        }
+    }
+
+
+    /** Downloads one file, resuming from its .part. Returns the running total of bytes done. */
+    private suspend fun fetch(f: ModelFile, root: File, doneBefore: Long, spec: ModelSpec, progress: (Long) -> Unit): Long {
+        val part = File(root, f.name + ".part")
+        var have = if (part.exists()) part.length() else 0L
+        if (have > f.bytes) { part.delete(); have = 0 }
+        val conn = (URL(f.url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 20_000; readTimeout = 30_000; instanceFollowRedirects = true
+            if (have > 0) setRequestProperty("Range", "bytes=$have-")
+        }
+        try {
+            val code = conn.responseCode
+            if (code == 200 && have > 0) { part.delete(); have = 0 } // server ignored Range: start over
+            else if (code != 200 && code != 206) throw IOException("server answered $code")
+            var done = doneBefore + have
+            conn.inputStream.use { input ->
+                java.io.FileOutputStream(part, have > 0 && code == 206).use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    var lastReport = 0L
+                    while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                        done += n
+                        val now = System.nanoTime()
+                        if (now - lastReport > 250_000_000L) { lastReport = now; progress(done) }
+                    }
+                }
+            }
+            if (part.length() != f.bytes) throw IOException("the file was incomplete (${part.length()} of ${f.bytes} bytes)")
+            if (!part.renameTo(File(root, f.name))) throw IOException("couldn't save the file")
+            progress(done)
+            return done
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    fun cancel(id: String) {
+        jobs[id]?.cancel()
+        states[id] = ModelState.NotInstalled
+    }
+
+    fun delete(context: Context, id: String) {
+        jobs[id]?.cancel()
+        dir(context, id).deleteRecursively()
+        states[id] = ModelState.NotInstalled
+        if (AiPrefs.textModelId == id) LocalLlm.release()
+    }
+}

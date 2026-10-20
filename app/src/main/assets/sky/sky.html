@@ -1,0 +1,54 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+#sky{position:absolute;inset:0;overflow:hidden;opacity:.9}
+.abs{position:absolute}
+</style></head><body><div id="sky"></div>
+<script src="gsap.min.js"></script>
+<script>
+// #phase,hour,reduceMotion,dark
+const [phase, hourS, rmS, darkS] = location.hash.slice(1).split(",");
+const hour = parseFloat(hourS) || 12, still = rmS === "1", dark = darkS !== "0";
+const sky = document.getElementById("sky");
+const mk = (css, parent = sky) => { const d = document.createElement("div"); d.className = "abs"; d.style.cssText = css; parent.appendChild(d); return d; };
+const R = (a, b) => a + Math.random() * (b - a);
+const go = (t, v) => { if (still) gsap.set(t, v); else gsap.to(t, v); };
+const pick = (d, l) => (dark ? d : l);
+
+if (phase === "morning") {
+  const glow = mk(`left:-35%;top:55%;width:170%;height:120%;border-radius:50%;background:radial-gradient(closest-side,${pick("rgba(255,190,110,.55)", "rgba(255,236,170,.9)")},${pick("rgba(255,140,70,.3)", "rgba(255,190,100,.45)")} 55%,rgba(255,190,100,0))`);
+  const sun = mk(`left:24%;top:78%;width:16%;aspect-ratio:1;border-radius:50%;background:${pick("#FFD08A", "#FFC24D")};box-shadow:0 0 60px 20px ${pick("rgba(255,190,110,.5)", "rgba(255,200,90,.6)")}`);
+  if (!still) {
+    // The sun climbs once, then the whole morning keeps breathing.
+    gsap.fromTo([sun, glow], { y: 90 }, { y: 0, duration: 2.4, ease: "power3.out" });
+    gsap.to(glow, { scale: 1.12, duration: 5, ease: "sine.inOut", yoyo: true, repeat: -1 });
+    gsap.to(sun, { x: 24, duration: 14, ease: "sine.inOut", yoyo: true, repeat: -1 });
+  }
+  for (let i = 0; i < 5; i++) {
+    const ray = mk(`left:${10 + i * 20}%;top:0;width:8%;height:70%;background:linear-gradient(rgba(255,255,255,${pick(".10", ".30")}),rgba(255,255,255,0))`);
+    go(ray, { x: R(-18, 18), opacity: R(.3, 1), duration: R(5, 9), ease: "sine.inOut", yoyo: true, repeat: -1, delay: i * .4 });
+  }
+} else if (phase === "noon") {
+  const sun = mk(`right:-10%;top:-12%;width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,${pick("rgba(255,255,255,.35)", "rgba(255,250,200,.95)")},${pick("rgba(255,243,176,.12)", "rgba(255,243,176,.45)")} 55%,rgba(255,243,176,0))`);
+  go(sun, { scale: 1.1, duration: 6, ease: "sine.inOut", yoyo: true, repeat: -1 });
+  for (let i = 0; i < 5; i++) {
+    const w = R(26, 40);
+    const c = mk(`top:${6 + i * 17}%;left:0;width:${w}%;height:${w * .38}%;border-radius:50%;background:radial-gradient(closest-side,${pick("rgba(170,200,255,.28)", "rgba(255,255,255,.95)")},rgba(255,255,255,0));filter:blur(2px)`);
+    if (still) gsap.set(c, { xPercent: 40 + i * 60 });
+    else gsap.fromTo(c, { xPercent: -150 }, { xPercent: 380, duration: R(38, 70), ease: "none", repeat: -1, delay: -R(0, 40) });
+  }
+} else {
+  // Evening: in the dark theme 17:00 is dusk and 22:00 is night; the light theme stays a pale dusk that only deepens a little.
+  const n = Math.min(1, Math.max(0, (hour - 17) / 5));
+  const mix = (a, b) => gsap.utils.interpolate(a, b, n);
+  const horizon = mk(`left:-10%;top:70%;width:120%;height:70%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,194,122,${(dark ? 0.7 : 0.5) * (1 - n)}),rgba(255,194,122,0))`);
+  go(horizon, { scale: 1.1, y: -14, duration: 6, ease: "sine.inOut", yoyo: true, repeat: -1 });
+  const a = dark ? Math.min(1, Math.max(0, (n - .25) / .5)) : 0;
+  if (a > 0) for (let i = 0; i < 44; i++) {
+    const s = R(1.5, 4);
+    const st = mk(`left:${R(0, 100)}%;top:${R(0, 72)}%;width:${s}px;height:${s}px;border-radius:50%;background:#fff;opacity:${a * R(.3, 1)}`);
+    if (!still) gsap.to(st, { opacity: a * 0.15, duration: R(.9, 2.4), ease: "sine.inOut", yoyo: true, repeat: -1, delay: R(0, 2) });
+  }
+}
+</script></body></html>

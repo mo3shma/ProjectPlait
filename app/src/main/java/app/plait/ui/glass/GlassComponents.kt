@@ -1,0 +1,382 @@
+package app.plait.ui.glass
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import app.plait.ui.theme.LocalIsDark
+import app.plait.ui.theme.PlaitType
+import app.plait.ui.theme.plait
+import app.plait.ui.theme.mContainer
+import app.plait.ui.theme.mPrimaryContainer
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.InnerShadow
+import com.kyant.backdrop.shadow.Shadow
+import com.kyant.shapes.Capsule
+import com.kyant.shapes.RoundedRectangle
+import kotlin.math.roundToInt
+
+/** A round, interactive glass control for toolbars. Always give it a [description]. */
+@Composable
+fun GlassIconButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    backdrop: Backdrop,
+    modifier: Modifier = Modifier,
+    size: Dp = 48.dp,
+    iconSize: Dp = 22.dp,
+    variant: GlassVariant = GlassVariant.Regular,
+    tint: Color = Color.Unspecified,
+    iconTint: Color = plait.text,
+    spinning: Boolean = false,
+) {
+    if (LocalGlassEnv.current.material) {
+        val t = rememberInfiniteTransition(label = "spin")
+        val deg = if (spinning) t.animateFloat(0f, 360f, infiniteRepeatable(tween(1000, easing = LinearEasing)), label = "deg").value else 0f
+        app.plait.ui.material.MIconButton(icon, description, onClick, modifier, size, iconSize, tint, iconTint, deg)
+        return
+    }
+    Box(
+        modifier
+            .size(size)
+            .liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
+            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (spinning && !LocalGlassEnv.current.reduceMotion) {
+            val t = rememberInfiniteTransition(label = "spin")
+            val degrees = t.animateFloat(0f, 360f, infiniteRepeatable(tween(1000, easing = LinearEasing)), label = "deg")
+            Icon(icon, contentDescription = description, tint = iconTint, modifier = Modifier.size(iconSize).graphicsLayer { rotationZ = degrees.value })
+        } else {
+            Icon(icon, contentDescription = description, tint = iconTint, modifier = Modifier.size(iconSize))
+        }
+    }
+}
+
+/** A capsule glass button with a label, optionally tinted to mark the primary action. */
+@Composable
+fun GlassPillButton(
+    label: String,
+    onClick: () -> Unit,
+    backdrop: Backdrop,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    tint: Color = Color.Unspecified,
+    contentColor: Color = plait.text,
+    height: Dp = 48.dp,
+    variant: GlassVariant = GlassVariant.Regular,
+) {
+    if (LocalGlassEnv.current.material) {
+        app.plait.ui.material.MPill(label, onClick, modifier, icon, tint, contentColor, height)
+        return
+    }
+    Row(
+        modifier
+            .liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
+            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
+            .height(height)
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+    ) {
+        if (icon != null) Icon(icon, null, tint = contentColor, modifier = Modifier.size(22.dp))
+        Text(label, style = PlaitType.bodyStrong, color = contentColor, maxLines = 1, softWrap = false, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+    }
+}
+
+data class GlassTab(val label: String, val icon: ImageVector? = null)
+
+enum class TabContainer {
+    /** A tab bar: the whole bar is glass and floats above content. */
+    Glass,
+
+    /** A segmented control in the content layer: only the knob turns to glass, while touched. */
+    Solid,
+}
+
+/**
+ * Tab bar / segmented control. Apple's controls "transform into Liquid Glass during
+ * interaction": at rest the selected knob is a quiet pill; under a finger it lifts, grows and
+ * refracts what is beneath it, then springs to the tab nearest where you let go.
+ */
+@Composable
+fun GlassTabBar(
+    tabs: List<GlassTab>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    backdrop: Backdrop,
+    modifier: Modifier = Modifier,
+    container: TabContainer = TabContainer.Glass,
+    height: Dp = 64.dp,
+    selectedColor: Color = plait.accent,
+) {
+    val env = LocalGlassEnv.current
+    if (env.material) {
+        app.plait.ui.material.MTabs(tabs, selected, onSelect, modifier, height)
+        return
+    }
+    val dark = LocalIsDark.current
+    val scope = rememberCoroutineScope()
+    val barBackdrop = rememberLayerBackdrop()
+    val thumb = remember { Animatable(selected.toFloat(), 0.001f) }
+    val press = remember { Animatable(0f, 0.001f) }
+    val currentOnSelect by rememberUpdatedState(onSelect)
+
+    val settle = spring<Float>(dampingRatio = 0.72f, stiffness = 380f, visibilityThreshold = 0.001f)
+    val follow = spring<Float>(dampingRatio = 0.9f, stiffness = 520f, visibilityThreshold = 0.001f)
+    val lift = spring<Float>(dampingRatio = 0.6f, stiffness = 300f, visibilityThreshold = 0.001f)
+
+    LaunchedEffect(selected) { thumb.animateTo(selected.toFloat(), settle) }
+
+    BoxWithConstraints(modifier.fillMaxWidth().height(height)) {
+        val density = LocalDensity.current
+        val padPx = with(density) { 4.dp.toPx() }
+        val tabW = (constraints.maxWidth - 2 * padPx) / tabs.size
+        val lastIndex = (tabs.size - 1).toFloat()
+
+        val gestures = Modifier.pointerInput(tabs.size, tabW) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                fun target(x: Float) = ((x - padPx) / tabW - 0.5f).coerceIn(0f, lastIndex)
+                scope.launch { press.animateTo(1f, lift) }
+                scope.launch { thumb.animateTo(target(down.position.x).roundToInt().toFloat(), settle) }
+                var lastX = down.position.x
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull { it.id == down.id }
+                    if (change != null && change.pressed) {
+                        lastX = change.position.x
+                        scope.launch { thumb.animateTo(target(lastX), follow) }
+                    }
+                } while (event.changes.any { it.pressed })
+                val index = target(lastX).roundToInt()
+                scope.launch { press.animateTo(0f, lift) }
+                scope.launch { thumb.animateTo(index.toFloat(), settle) }
+                currentOnSelect(index)
+            }
+        }
+
+        // Container
+        val containerModifier = when (container) {
+            TabContainer.Glass -> if (env.material) Modifier.layerBackdrop(barBackdrop).clip(Capsule()).background(plait.mContainer)
+                else Modifier.liquidGlass(backdrop, exported = barBackdrop)
+            TabContainer.Solid -> Modifier
+                .layerBackdrop(barBackdrop)
+                .clip(Capsule())
+                .background(plait.surface)
+        }
+        Box(Modifier.fillMaxSize().then(containerModifier).then(gestures))
+
+        // Knob
+        val materialKnob = plait.mPrimaryContainer
+        val restFill = if (dark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.07f)
+        Box(
+            Modifier
+                .offset { IntOffset((padPx + thumb.value * tabW).roundToInt(), padPx.roundToInt()) }
+                .size(width = with(density) { tabW.toDp() }, height = height - 8.dp)
+                .drawBackdrop(
+                    backdrop = barBackdrop,
+                    shape = { Capsule() },
+                    effects = {
+                        if (!env.solid) {
+                            val p = press.value
+                            lens(10.dp.toPx() * p, 14.dp.toPx() * p)
+                        }
+                    },
+                    highlight = { Highlight.Default.copy(alpha = press.value.coerceIn(0f, 1f)) },
+                    shadow = { Shadow(alpha = press.value.coerceIn(0f, 1f)) },
+                    innerShadow = { InnerShadow(radius = 8.dp * press.value, alpha = press.value.coerceIn(0f, 1f)) },
+                    layerBlock = {
+                        val s = 1f + (14.dp.toPx() / size.width) * press.value
+                        scaleX = s
+                        scaleY = s
+                    },
+                    onDrawSurface = { if (env.material) drawRect(materialKnob) else drawRect(restFill, alpha = (1f - press.value).coerceIn(0f, 1f)) },
+                )
+        )
+
+        // Labels, drawn above the knob. Each is sized to fit inside it, and swells and lifts as the knob arrives,
+        // so the spring on the knob also makes the label bounce.
+        val liveIndex = thumb.value.roundToInt().coerceIn(0, tabs.size - 1)
+        val tabWidthDp = with(density) { tabW.toDp() }
+        Row(
+            Modifier.fillMaxSize().padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            tabs.forEachIndexed { i, tab ->
+                val color by animateColorAsState(if (i == liveIndex) (if (env.material) plait.text else selectedColor) else plait.muted, label = "tab-color")
+                val base = if (tab.icon != null) 11f else 14f
+                // about 0.56 em per character, and 20 dp of air so the text always sits well inside the highlight
+                val fit = ((tabWidthDp.value - 20f) / (tab.label.length * 0.56f)).coerceIn(9f, base)
+                Column(
+                    Modifier.weight(1f).fillMaxSize().semantics { contentDescription = tab.label }
+                        .graphicsLayer {
+                            val near = (1f - kotlin.math.abs(thumb.value - i)).coerceIn(0f, 1f)
+                            val sc = 1f + 0.12f * near
+                            scaleX = sc; scaleY = sc
+                            translationY = -2.dp.toPx() * near
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    if (tab.icon != null) {
+                        Icon(tab.icon, null, tint = color, modifier = Modifier.size(22.dp))
+                        Text(tab.label, style = PlaitType.caption.copy(fontSize = fit.sp, fontWeight = FontWeight.SemiBold), color = color, maxLines = 1, softWrap = false)
+                    } else {
+                        Text(tab.label, style = PlaitType.label.copy(fontSize = fit.sp, fontWeight = FontWeight.SemiBold), color = color, maxLines = 1, softWrap = false)
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class GlassMenuAction(val label: String, val icon: ImageVector, val onClick: () -> Unit)
+
+/**
+ * A glass button that morphs into a menu (Apple: "buttons fluidly morph into menus and
+ * popovers"). One glass shape grows from the button's circle into a rounded panel on a
+ * bouncy spring while its icon cross-fades into the actions; closing reverses it.
+ */
+@Composable
+fun GlassMorphMenu(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    collapsedIcon: ImageVector,
+    collapsedDescription: String,
+    actions: List<GlassMenuAction>,
+    backdrop: Backdrop,
+    modifier: Modifier = Modifier,
+    collapsedSize: Dp = 64.dp,
+    expandedWidth: Dp = 250.dp,
+    tint: Color = plait.signal,
+    iconTint: Color = Color(0xFF0E1316),
+) {
+    if (LocalGlassEnv.current.material) {
+        app.plait.ui.material.MFabMenu(expanded, onExpandedChange, actions, modifier)
+        return
+    }
+    val rowHeight = 56.dp
+    val expandedHeight = rowHeight * actions.size + 16.dp
+    val t by animateFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 380f, visibilityThreshold = 0.001f),
+        label = "morph",
+    )
+    val width = lerp(collapsedSize, expandedWidth, t)
+    val heightDp = lerp(collapsedSize, expandedHeight, t)
+    val corner = lerp(collapsedSize / 2, 32.dp, t.coerceIn(0f, 1f))
+    val tintNow = tint.copy(alpha = (1f - t * 1.6f).coerceIn(0f, 1f))
+
+    Box(
+        modifier
+            .size(width, heightDp)
+            .liquidGlass(
+                backdrop,
+                shape = { RoundedRectangle(corner) },
+                tint = tintNow,
+                interactive = !expanded,
+            )
+            .clickable(
+                enabled = !expanded,
+                interactionSource = null,
+                indication = null,
+                role = Role.Button,
+                onClick = { onExpandedChange(true) },
+            ),
+    ) {
+        if (t < 0.6f) {
+            Icon(
+                collapsedIcon,
+                contentDescription = collapsedDescription,
+                tint = iconTint,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(28.dp)
+                    .graphicsLayer { alpha = (1f - t * 2.2f).coerceIn(0f, 1f); rotationZ = t * 45f },
+            )
+        }
+        if (t > 0.15f) {
+            Column(
+                Modifier.fillMaxSize().padding(PaddingValues(vertical = 8.dp)).graphicsLayer {
+                    alpha = ((t - 0.15f) * 1.6f).coerceIn(0f, 1f)
+                    translationY = (1f - t.coerceIn(0f, 1f)) * 12.dp.toPx()
+                },
+            ) {
+                actions.forEach { action ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(rowHeight)
+                            .clickable(interactionSource = null, indication = null, role = Role.Button) {
+                                onExpandedChange(false)
+                                action.onClick()
+                            }
+                            .padding(horizontal = 22.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Icon(action.icon, null, tint = plait.text, modifier = Modifier.size(24.dp))
+                        Text(action.label, style = PlaitType.bodyStrong, color = plait.text)
+                    }
+                }
+            }
+        }
+    }
+}

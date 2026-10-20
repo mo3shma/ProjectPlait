@@ -1,0 +1,192 @@
+package app.plait
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.EnterTransition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import app.plait.share.ShareInbox
+import app.plait.ui.screens.AttachSheet
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.navArgument
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import app.plait.ui.Entrance
+import app.plait.ui.screens.EventScreen
+import app.plait.ui.screens.HubScreen
+import app.plait.ui.screens.RecordScreen
+import app.plait.ui.screens.TodayScreen
+import app.plait.ui.glass.ProvideGlassEnv
+import app.plait.ui.theme.PlaitTheme
+
+/** A meeting to open, asked for by a notification or the widget. */
+object Launch {
+    var event by androidx.compose.runtime.mutableStateOf<Pair<String, Int>?>(null)
+
+    fun from(intent: Intent?) {
+        val id = intent?.getStringExtra(app.plait.reminder.Reminders.EXTRA_EVENT) ?: return
+        event = id to intent.getIntExtra("plait_tab", 0)
+        intent.removeExtra(app.plait.reminder.Reminders.EXTRA_EVENT)
+    }
+}
+
+/** Spatial (slide) and effects (fade) springs of the Material 3 Expressive motion scheme. */
+private fun pageIn(dir: Int): EnterTransition {
+    val calm = app.plait.ui.theme.Appearance.calm
+    return slideInHorizontally(
+        if (calm) tween(120) else androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 380f),
+    ) { dir * it / (if (calm) 20 else 4) } + fadeIn(if (calm) tween(100) else androidx.compose.animation.core.spring(stiffness = 1600f))
+}
+private fun pageOut(dir: Int): ExitTransition {
+    val calm = app.plait.ui.theme.Appearance.calm
+    return slideOutHorizontally(
+        if (calm) tween(120) else androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 380f),
+    ) { dir * it / (if (calm) 24 else 6) } + fadeOut(if (calm) tween(80) else androidx.compose.animation.core.spring(stiffness = 1600f))
+}
+
+class MainActivity : ComponentActivity() {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        ShareInbox.handle(this, intent)
+        Launch.from(intent)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // The widget shows the same day as the app; bring it up to date whenever you leave.
+        val ctx = applicationContext
+        Thread { runCatching { app.plait.widget.NextMeetingWidget.updateAll(ctx) } }.start()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        app.plait.diag.Diag.init(this)
+        // Phones stay upright; tablets and foldables can turn.
+        requestedOrientation = if (resources.configuration.smallestScreenWidthDp < 600) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        app.plait.data.sync.Tombstones.init(this)
+        // Count any model files already on the phone (including ones copied into the drop folder), so nothing is downloaded twice.
+        Thread { runCatching { app.plait.ai.ModelCenter.refresh(applicationContext); app.plait.ai.ModelFinder.scanThisPhone(applicationContext) } }.start()
+        Entrance.arrived()
+        if (savedInstanceState == null) { ShareInbox.handle(this, intent); Launch.from(intent) }
+        setContent {
+            PlaitTheme {
+              ProvideGlassEnv {
+                val nav = rememberNavController()
+                Box(Modifier.fillMaxSize()) {
+                NavHost(
+                    navController = nav,
+                    startDestination = "today",
+                    // Material 3 Expressive page motion in both styles: a spring slide with a quick fade. With "Reduce animations"
+                    // the slide is small and quick, but it is still there as feedback.
+                    enterTransition = { pageIn(1) },
+                    exitTransition = { pageOut(-1) },
+                    popEnterTransition = { pageIn(-1) },
+                    popExitTransition = { pageOut(1) },
+                ) {
+                    composable("today") {
+                        TodayScreen(
+                            onOpenEvent = { id -> if (id.isNotEmpty()) { Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}") } },
+                            onOpenAt = { id, tab -> if (id.isNotEmpty()) { Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}?tab=$tab") } },
+                            onOpenNotes = { id -> Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}?tab=2") },
+                            onRecord = { id, call -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id.ifEmpty { "_none_" })}?call=$call") },
+                            onOpenHub = { Entrance.arrived(); nav.navigate("hub") },
+                        )
+                    }
+                    composable("hub") {
+                        HubScreen(onBack = { nav.popBackStack() })
+                    }
+                    composable(
+                        "event/{id}?tab={tab}",
+                        arguments = listOf(
+                            navArgument("id") { type = NavType.StringType },
+                            navArgument("tab") { type = NavType.IntType; defaultValue = 0 },
+                        ),
+                    ) { entry ->
+                        val id = entry.arguments?.getString("id").orEmpty()
+                        EventScreen(
+                            eventId = id,
+                            startTab = entry.arguments?.getInt("tab") ?: 0,
+                            onBack = { nav.popBackStack() },
+                            onRecord = { id, call -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id)}?call=$call") },
+                        )
+                    }
+                    composable(
+                        "record/{id}?call={call}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType }, navArgument("call") { type = NavType.BoolType; defaultValue = false }),
+                        enterTransition = { slideInVertically(tween(450)) { it / 6 } + fadeIn(tween(450)) },
+                        exitTransition = { ExitTransition.None },
+                        popExitTransition = { slideOutVertically(tween(350)) { it / 6 } + fadeOut(tween(300)) },
+                    ) { entry ->
+                        val id = entry.arguments?.getString("id").orEmpty().let { if (it == "_none_") "" else it }
+                        RecordScreen(
+                            eventId = id,
+                            callMode = entry.arguments?.getBoolean("call") ?: false,
+                            onClose = { nav.popBackStack() },
+                            onSaved = { _ ->
+                                // Go back to where the recording started, so the new note is the first thing seen there.
+                                // If it started elsewhere (Today, the Calendar), open the meeting without losing that spot.
+                                val cameFrom = nav.previousBackStackEntry?.arguments?.getString("id")
+                                if (id.isEmpty() || cameFrom == id) nav.popBackStack()
+                                else {
+                                    nav.popBackStack()
+                                    Entrance.arrived()
+                                    nav.navigate("event/${Uri.encode(id)}")
+                                }
+                            },
+                        )
+                    }
+                }
+                if (app.plait.diag.FrameMonitor.enabled) {
+                    androidx.compose.material3.Text(
+                        app.plait.diag.FrameMonitor.summary, color = androidx.compose.ui.graphics.Color.White, fontSize = 11.sp,
+                        modifier = Modifier.align(androidx.compose.ui.Alignment.TopStart).statusBarsPadding().padding(start = 8.dp, top = 4.dp)
+                            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f)).padding(4.dp),
+                    )
+                }
+                Launch.event?.let { (id, tab) ->
+                    androidx.compose.runtime.LaunchedEffect(id, tab) {
+                        Entrance.arrived()
+                        nav.navigate("event/${Uri.encode(id)}?tab=$tab")
+                        Launch.event = null
+                    }
+                }
+                ShareInbox.pending?.let { shared ->
+                    AttachSheet(
+                        shared = shared,
+                        onAttached = { ev ->
+                            ShareInbox.pending = null
+                            nav.navigate("event/${Uri.encode(ev.id)}?tab=1")
+                        },
+                        onDismiss = { ShareInbox.pending = null },
+                    )
+                }
+                }
+              }
+            }
+        }
+    }
+}

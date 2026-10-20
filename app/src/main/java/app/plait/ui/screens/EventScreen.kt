@@ -1,0 +1,502 @@
+package app.plait.ui.screens
+
+import app.plait.ui.plaitCard
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EditCalendar
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.plait.ai.NoteAiPrompt
+import app.plait.ai.Ai
+import app.plait.ai.AiPrefs
+import app.plait.audio.NotePlayer
+import app.plait.audio.NoteProcessor
+import app.plait.ui.ButtonSize
+import app.plait.ui.TextUtil
+import app.plait.ui.ButtonStyle
+import app.plait.ui.ConfirmDeleteButton
+import app.plait.ui.PlaitButton
+import app.plait.ui.pressable
+import kotlinx.coroutines.launch
+import app.plait.data.CallLinks
+import app.plait.data.brief.BriefBuilder
+import app.plait.data.brief.Summarizer
+import app.plait.data.NoteStore
+import app.plait.data.memo.MemoStore
+import app.plait.data.Calendars
+import app.plait.data.SavedNote
+import app.plait.data.Source
+import app.plait.ui.CircleIconButton
+import app.plait.ui.glass.GlassIconButton
+import app.plait.ui.glass.GlassPillButton
+import app.plait.ui.glass.GlassTab
+import app.plait.ui.glass.GlassTabBar
+import app.plait.ui.glass.TabContainer
+import app.plait.ui.glass.liquidGlass
+import app.plait.ui.rise
+import app.plait.ui.theme.PlaitType
+import app.plait.ui.theme.plait
+import kotlinx.coroutines.delay
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+
+@Composable
+fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord: (String, Boolean) -> Unit) {
+    val context = LocalContext.current
+    val found = remember(eventId) { if (eventId.isEmpty()) null else Calendars.find(eventId) }
+    if (found == null) { LaunchedEffect(Unit) { onBack() }; return }
+    val ev = found
+    val link = ev.callLink
+    val store = remember { NoteStore.get(context) }
+    val notes = store.notes.filter { it.eventId == ev.id }
+    val memoStore = remember { MemoStore.get(context) }
+    val brief = remember(ev.id, store.notes.size) { BriefBuilder.build(ev, store.notes.toList()) }
+    val backdrop = rememberLayerBackdrop()
+    val ambient = rememberLayerBackdrop()
+    // A repeating meeting carries the notes and lists of its earlier meetings forward.
+    val earlierVoice = store.notes.filter { app.plait.data.Series.carriesTo(ev, it.eventId, it.createdAt, it.title) { id -> Calendars.find(id) } }
+    val earlierMemos = memoStore.items.filter { app.plait.data.Series.carriesTo(ev, it.eventId, it.createdAt) { id -> Calendars.find(id) } }
+    val look = remember(ev.id) { MeetingLook(ambient, ServicePalette.of(ev)) }
+    var recordMenu by remember { mutableStateOf(false) }
+    var manageOpen by remember { mutableStateOf(false) }
+    val undo = remember { UndoDelete() }
+    var tab by rememberSaveable(eventId) { mutableIntStateOf(when (startTab) { 2 -> 1; 3 -> 2; else -> 0 }) }
+    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val tabs = remember { listOf(GlassTab("Brief"), GlassTab("Notes"), GlassTab("Transcript")) }
+
+    Box(Modifier.fillMaxSize().background(plait.ground)) {
+        // Content layer
+        Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+            Box(Modifier.fillMaxSize().layerBackdrop(ambient)) { AmbientBackground(look.colors) }
+            LazyColumn(
+                Modifier.widthIn(max = 720.dp).fillMaxHeight().align(Alignment.TopCenter),
+                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = statusTop + 84.dp, bottom = 170.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                item {
+                    Column(Modifier.rise(1)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            KindPill(brief.kind, brief.kind.tone())
+                            if (brief.withLine.isNotBlank()) Text(brief.withLine, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Text(eventDate(ev) + " · ${ev.time}" + (if (ev.duration.isNotBlank()) " · ${ev.duration}" else ""), style = PlaitType.monoLabel, color = plait.muted)
+                        Spacer(Modifier.height(10.dp))
+                        Text(ev.title, style = PlaitType.title.copy(fontSize = 44.sp, lineHeight = 43.sp), color = plait.text)
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            if (link != null) "${link.provider.label} · ${link.url.removePrefix("https://")}" else ev.place,
+                            style = PlaitType.monoLabel, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                item {
+                    GlassTabBar(
+                        tabs = tabs,
+                        selected = tab,
+                        onSelect = { tab = it },
+                        backdrop = ambient,
+                        container = TabContainer.Glass,
+                        height = 56.dp,
+                        selectedColor = plait.text,
+                        modifier = Modifier.rise(2),
+                    )
+                }
+                item {
+                  androidx.compose.runtime.CompositionLocalProvider(LocalMeetingLook provides look) {
+                    when (tab) {
+                        0 -> BriefTab(ev, brief, { onRecord(ev.id, false) }, notes + earlierVoice, memoStore.items.filter { it.eventId == ev.id } + earlierMemos)
+                        1 -> NotesTab(ev.id, notes, store, undo, earlierVoice, earlierMemos) { onRecord(ev.id, false) }
+                        else -> TranscriptTab(ev.id, notes)
+                    }
+                  }
+                }
+            }
+            // Scroll edge effect
+            Box(
+                Modifier.align(Alignment.TopCenter).fillMaxWidth().height(statusTop + 76.dp)
+                    .background(Brush.verticalGradient(listOf(plait.ground.copy(alpha = 0.94f), Color.Transparent)))
+            )
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(180.dp)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, plait.ground.copy(alpha = 0.92f))))
+            )
+        }
+
+        undo.Host(Modifier.align(Alignment.BottomCenter).padding(bottom = 112.dp))
+
+        // Functional layer: toolbar. Back, then the account pill at its own width; the manage button sits at the far right.
+        val canManageHere = ev.id.startsWith("d:") || ev.id.startsWith("g:")
+        Box(Modifier.align(Alignment.TopCenter).widthIn(max = 720.dp).fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp).rise(0)) {
+            Row(
+                Modifier.align(Alignment.CenterStart).padding(end = if (canManageHere) 60.dp else 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back to today", onBack, backdrop)
+                val account = TextUtil.shortenAccount(ev.account.ifBlank { ev.source.label }.let { if (it.contains('@') || !ev.id.startsWith("g:")) it else ev.source.label })
+                if (app.plait.ui.glass.LocalGlassEnv.current.material) {
+                    androidx.compose.material3.Surface(
+                        shape = CircleShape, color = androidx.compose.material3.MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.height(48.dp),
+                    ) {
+                        Row(Modifier.padding(start = 8.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Box(Modifier.size(32.dp).background(ev.source.color(), CircleShape), contentAlignment = Alignment.Center) {
+                                Text(ev.source.label.take(1), style = PlaitType.label.copy(fontWeight = FontWeight.Bold), color = Color.White)
+                            }
+                            Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp), color = androidx.compose.material3.MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                } else {
+                    Row(
+                        Modifier.height(48.dp).liquidGlass(backdrop).padding(start = 16.dp, end = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Box(Modifier.size(10.dp).background(ev.source.color(), CircleShape))
+                        Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+            if (canManageHere) Box(Modifier.align(Alignment.CenterEnd)) {
+                GlassIconButton(Icons.Filled.EditCalendar, "Manage meeting", { manageOpen = true }, backdrop)
+            }
+        }
+        if (manageOpen) ManageMeetingMenu(ev, onDismiss = { manageOpen = false }, onGone = onBack)
+
+        // Functional layer: primary actions
+        Row(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 14.dp).rise(3),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (link != null) {
+                GlassPillButton(
+                    label = "Join ${link.provider.short}",
+                    onClick = {
+                        if (!CallLinks.open(context, link)) {
+                            Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    backdrop = backdrop,
+                    icon = Icons.Filled.Videocam,
+                    tint = plait.accent,
+                    contentColor = plait.onAccent,
+                    height = 64.dp,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            GlassIconButton(
+                Icons.Filled.Mic, "Record", { recordMenu = true }, backdrop,
+                size = 64.dp, iconSize = 28.dp, tint = plait.signal, iconTint = Color(0xFF0E1316),
+            )
+        }
+
+        if (recordMenu) ActionsDialog(
+            "Record",
+            listOf(
+                NoteAction("Record the call", Icons.Filled.Videocam) { onRecord(ev.id, true) },
+                NoteAction("Take a voice note", Icons.Filled.Mic) { onRecord(ev.id, false) },
+            ),
+            onDismiss = { recordMenu = false },
+        )
+    }
+}
+
+private fun eventDate(ev: app.plait.data.CalEvent): String =
+    if (ev.startMs > 0) java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date(ev.startMs)) else ""
+
+@Composable
+internal fun EmptyHint(text: String) {
+    Text(text, style = PlaitType.body, color = plait.muted, modifier = Modifier.padding(vertical = 8.dp))
+}
+
+@Composable
+private fun NotesTab(
+    eventId: String, notes: List<SavedNote>, store: NoteStore, undo: UndoDelete,
+    earlierVoice: List<SavedNote>, earlierMemos: List<app.plait.data.memo.Memo>, onRecord: () -> Unit,
+) {
+    val context = LocalContext.current
+    val memos = remember { MemoStore.get(context) }
+    val mine = memos.items.filter { it.eventId == eventId && !undo.isHidden("m" + it.id) }
+    val voice = notes.filter { !undo.isHidden("v" + it.id) }
+    var actionsFor by remember { mutableStateOf<Any?>(null) }
+    var editing by remember { mutableStateOf<Any?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        AddNoteCard(eventId, memos, LocalMeetingLook.current?.backdrop, onRecord)
+        mine.forEach { m ->
+            key("m" + m.id) {
+                SwipeToDelete(onDelete = { undo.delete("m" + m.id, "note") { memos.delete(m) } }, cornerRadius = 30) { MemoCard(m, memos, onLongPress = { actionsFor = m }) }
+            }
+        }
+        voice.forEach { n ->
+            key("v" + n.id) {
+                SwipeToDelete(onDelete = { undo.delete("v" + n.id, "note") { store.delete(n) } }, cornerRadius = 30) { RealNoteCard(n, store, onLongPress = { actionsFor = n }) }
+            }
+        }
+        if (voice.isEmpty() && mine.isEmpty()) {
+            EmptyHint("No notes for this meeting yet. Record, write, photograph or start a list above.")
+        }
+        if (earlierVoice.isNotEmpty() || earlierMemos.isNotEmpty()) {
+            Text("From earlier in this series", style = PlaitType.monoLabel, color = plait.muted, modifier = Modifier.padding(top = 8.dp))
+            earlierMemos.forEach { m -> key("em" + m.id) { MemoCard(m, memos, onLongPress = { actionsFor = m }) } }
+            earlierVoice.forEach { n -> key("ev" + n.id) { RealNoteCard(n, store, onLongPress = { actionsFor = n }) } }
+        }
+    }
+    actionsFor?.let { target ->
+        ActionsDialog(
+            "Note",
+            listOf(
+                NoteAction(if (target is SavedNote) "Edit transcript" else "Edit text", Icons.Filled.Edit) { editing = target },
+                NoteAction("Delete", Icons.Filled.Delete, danger = true) {
+                    if (target is SavedNote) undo.delete("v" + target.id, "note") { store.delete(target) }
+                    else if (target is app.plait.data.memo.Memo) undo.delete("m" + target.id, "note") { memos.delete(target) }
+                },
+            ),
+            onDismiss = { actionsFor = null },
+        )
+    }
+    (editing as? app.plait.data.memo.Memo)?.let { m -> EditMemoDialog(m, memos) { editing = null }; return }
+    editing?.let { target ->
+        EditTextDialog(
+            if (target is SavedNote) "Edit transcript" else "Edit note",
+            if (target is SavedNote) app.plait.data.NoteEdit.transcriptText(target) else editableText(target as app.plait.data.memo.Memo),
+            onSave = { text ->
+                if (target is SavedNote) store.update(app.plait.data.NoteEdit.applyTranscript(target, text))
+                else if (target is app.plait.data.memo.Memo) memos.update(editedMemo(target, text))
+            },
+            onDismiss = { editing = null },
+        )
+    }
+}
+
+@Composable
+internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> Unit) {
+    val player = remember(note.id) { NotePlayer(store.audioFile(note), note.durationMs) }
+    DisposableEffect(player) { onDispose { player.release() } }
+    LaunchedEffect(player.isPlaying) {
+        while (player.isPlaying) {
+            player.sync()
+            delay(100)
+        }
+    }
+    val bars = remember(note.id) {
+        val rnd = java.util.Random(note.id.hashCode().toLong())
+        List(28) { 10 + rnd.nextInt(34) }
+    }
+    val hasAudio = remember(note.id) { store.audioFile(note).exists() }
+    Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(30.dp)).pressable({}, lift = 2.dp, onLongClick = onLongPress).padding(20.dp)) {
+        if (!hasAudio) Text("The recording is on another phone. The transcript and summary came across.", style = PlaitType.caption, color = plait.muted)
+        else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            CircleIconButton(
+                if (player.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                if (player.isPlaying) "Pause voice note" else "Play voice note",
+                { player.toggle() }, plait.signal, Color(0xFF0E1316), size = 56.dp,
+            )
+            Row(Modifier.weight(1f).height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                bars.forEachIndexed { i, h ->
+                    Box(
+                        Modifier.weight(1f).height(h.dp)
+                            .background(if (i < player.progress * bars.size) plait.signal else plait.surfaceHigh, RoundedCornerShape(2.dp))
+                    )
+                }
+            }
+            Text(formatClock(if (player.isPlaying || player.positionMs > 0) player.positionMs else note.durationMs), style = PlaitType.monoSmall.copy(fontSize = 13.sp), color = plait.muted)
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                (note.author?.let { "From $it · " } ?: "") + "Recorded " + app.plait.data.TimeFmt.stamp(note.createdAt),
+                style = PlaitType.caption, color = plait.muted, modifier = Modifier.weight(1f),
+            )
+        }
+        val texts = remember(note.id) { note.lines.map { it.text } }
+        val bullets = remember(note.id) { Summarizer.bullets(texts, 3) }
+        val actions = remember(note.id) { Summarizer.actionItems(texts) }
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        var aiReady by remember { mutableStateOf(false) }
+        val speechSpec = remember(AiPrefs.speechModelId) { app.plait.ai.ModelCatalog.byId(AiPrefs.speechModelId)?.takeIf { app.plait.ai.ModelCenter.isInstalled(context, it.id) } }
+        var aiBusy by remember { mutableStateOf(false) }
+        LaunchedEffect(note.id, note.ai) { AiPrefs.load(context); if (note.lines.size >= 2) aiReady = Ai.ready(context) }
+        val ai = remember(note.ai) { note.ai?.let { NoteAiPrompt.parse(it) } }
+        NoteProcessor.working[note.id]?.let { status ->
+            Spacer(Modifier.height(12.dp))
+            Text(status, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.accent)
+        }
+        if (speechSpec != null && NoteProcessor.working[note.id] == null) {
+            Spacer(Modifier.height(10.dp))
+            PlaitButton(
+                "Improve transcript (${speechSpec.title})",
+                { scope.launch { NoteProcessor.improveNow(context, store, note, speechSpec) } },
+                size = ButtonSize.Small,
+            )
+        }
+        if (ai != null) {
+            Spacer(Modifier.height(14.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Filled.AutoAwesome, null, tint = plait.accent, modifier = Modifier.size(16.dp))
+                Text("Summary", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+            }
+            ai.summary?.let { Text(it, style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 6.dp)) }
+            if (ai.decisions.isNotEmpty()) {
+                Text("Decisions", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
+                ai.decisions.forEach { Text("• $it", style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
+            }
+            if (ai.followUps.isNotEmpty()) {
+                Text("Follow-ups", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
+                ai.followUps.forEach { Text("• $it", style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
+            }
+            if (aiReady && NoteProcessor.working[note.id] == null) {
+                Spacer(Modifier.height(8.dp))
+                PlaitButton(
+                    if (aiBusy) "Writing…" else "Write again",
+                    { if (!aiBusy) { aiBusy = true; scope.launch { NoteProcessor.summariseNow(context, store, note); aiBusy = false } } },
+                    size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.AutoAwesome,
+                )
+            }
+        } else {
+            if (aiReady && NoteProcessor.working[note.id] == null) {
+                Spacer(Modifier.height(12.dp))
+                PlaitButton(
+                    if (aiBusy) "Summarising…" else "Summarise",
+                    { if (!aiBusy) { aiBusy = true; scope.launch { NoteProcessor.summariseNow(context, store, note); aiBusy = false } } },
+                    size = ButtonSize.Small, icon = Icons.Filled.AutoAwesome,
+                )
+            }
+        }
+        if (ai == null && bullets.isNotEmpty()) {
+            Spacer(Modifier.height(14.dp))
+            Text("Summary", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+            Spacer(Modifier.height(6.dp))
+            bullets.forEach { b ->
+                Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.accent, CircleShape))
+                    Text(b, style = PlaitType.body, color = plait.text)
+                }
+            }
+        }
+        if (ai == null && actions.isNotEmpty()) {
+            Spacer(Modifier.height(14.dp))
+            Text("Follow-ups", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+            Spacer(Modifier.height(6.dp))
+            actions.forEach { a ->
+                Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.signal, CircleShape))
+                    Text(a, style = PlaitType.body, color = plait.text)
+                }
+            }
+        }
+        if (note.bookmarksMs.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                note.bookmarksMs.take(4).forEach { ms ->
+                    Box(
+                        Modifier.height(36.dp).clip(CircleShape).background(plait.surfaceHigh)
+                            .pressable({ player.seekTo(ms) }).padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(formatClock(ms), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.accent) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
+    if (notes.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            notes.forEach { n ->
+                Text(
+                    "Recorded " + app.plait.data.TimeFmt.stamp(n.createdAt),
+                    style = PlaitType.monoLabel, color = plait.muted,
+                )
+                if (n.lines.isEmpty()) EmptyHint("No speech was detected in this note.")
+                n.lines.forEach { ln ->
+                    Row(
+                        Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(horizontal = 20.dp, vertical = 18.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Text(formatClock(ln.atMs), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.muted, modifier = Modifier.width(44.dp).padding(top = 3.dp))
+                        Column {
+                            val shaky = ln.conf < 0.6f
+                            Text(
+                                ln.text.replaceFirstChar { it.uppercase() },
+                                style = PlaitType.body, color = if (shaky) plait.muted else plait.text,
+                                fontStyle = if (shaky) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
+                            )
+                            if (shaky) Text("Not sure about this one. Play the note to check.", style = PlaitType.caption, color = plait.muted)
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+    EmptyHint("Transcripts appear here after you record a voice note.")
+}

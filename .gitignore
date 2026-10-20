@@ -1,0 +1,15 @@
+# Build output
+build/
+app/build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+# Machine-specific
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+# Downloaded models never go in the repo
+models/

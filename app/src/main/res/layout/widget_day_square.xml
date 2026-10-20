@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_morning"
+    android:orientation="vertical" android:padding="14dp" >
+    <TextView android:id="@+id/widget_greeting"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#B30E1316" android:textSize="11sp"
+        android:maxLines="1" android:ellipsize="end" android:fontFamily="sans-serif-medium" />
+    <TextView android:id="@+id/widget_count"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textColor="#FF0E1316" android:textSize="40sp" android:textStyle="bold" android:includeFontPadding="false" />
+    <TextView android:id="@+id/widget_count_label"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#CC0E1316" android:textSize="12sp"
+        android:maxLines="1" android:ellipsize="end" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+    <TextView android:id="@+id/widget_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#FF0E1316" android:textSize="14sp" android:textStyle="bold"
+        android:maxLines="2" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_when"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#CC0E1316" android:textSize="12sp"
+        android:maxLines="1" android:ellipsize="end" />
+</LinearLayout>
