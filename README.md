@@ -104,12 +104,12 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
   1. In [console.cloud.google.com](https://console.cloud.google.com), create a project and enable the **Google Calendar API**.
   2. Set up the OAuth consent screen: External, add yourself as a test user, and add the `calendar.readonly` and `calendar.events` scopes.
   3. Credentials → OAuth client ID → **Android**, with package `app.plait` and the SHA-1 of the APK you installed. For the APK from the Releases page that's `77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC`.
-  4. In Plait, go to Settings → Google account → Turn on.
+  4. In Plait, go to Settings → Advanced and switch on **Read Google directly**.
 
 ### Good to know
 
 - **Updating.** Download the new APK and open it. It installs over the old one and keeps your notes and settings.
-- **Moving phones.** Settings → You and backups → Export, then Import on the new phone. Importing only adds what's missing and never deletes anything.
+- **Moving phones.** Settings → You and backups → Export backup, then Import backup on the new phone. Importing only adds what's missing and never deletes anything.
 - **Recording.** Plait records your own microphone only, not the other side of a call. Depending on where you are, recording a conversation can need the other people's consent.
 
 ## Using it
