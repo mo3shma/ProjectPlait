@@ -196,6 +196,15 @@ To build it you need JDK 17+ and the Android SDK (platform 36). Then run:
 
 What changed in each version is in the [changelog](CHANGELOG.md).
 
+### Releasing
+
+Releases are built and published by GitHub Actions ([`release.yml`](.github/workflows/release.yml)). To release, do three things and push to `main`:
+1. Raise `versionCode` and `versionName` in `app/build.gradle.kts`.
+2. Add a `## <version>: <title>` section at the top of `CHANGELOG.md`. It becomes the release notes.
+3. Push.
+
+The workflow runs the tests, builds the APK, checks that it is signed with the Plait key, and publishes release `v<version>` with `plait.apk` attached. A version that is already released is skipped. It needs four repository secrets: `PLAIT_KEYSTORE_BASE64`, `PLAIT_STORE_PASSWORD`, `PLAIT_KEY_ALIAS` and `PLAIT_KEY_PASSWORD`.
+
 ## Support the creator
 
 Plait is made by one person. If it makes your days easier, following on X is the best way to say thanks and to hear about new features first.

@@ -1,0 +1,100 @@
+# Builds, tests and publishes a release whenever main has a version that isn't released yet.
+# To release: raise versionCode and versionName in app/build.gradle.kts, add a "## <version>: ..." section to
+# CHANGELOG.md, and push to main. The release is tagged v<version> and carries plait.apk.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - "gradle.properties"
+      - "CHANGELOG.md"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # The certificate every Plait release is signed with. A build signed with anything else is not published,
+      # because phones would refuse to install it over the version they have.
+      EXPECTED_SHA1: "77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the version
+        id: version
+        run: |
+          v=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -1)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" > /dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "v$v is already released. Nothing to do."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+            echo "Releasing v$v."
+          fi
+
+      - name: Unpack the signing key
+        if: steps.version.outputs.new == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PLAIT_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::The PLAIT_KEYSTORE_BASE64 secret is missing. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/plait.keystore"
+
+      - uses: actions/setup-java@v4
+        if: steps.version.outputs.new == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+        if: steps.version.outputs.new == 'true'
+
+      - name: Test and build
+        if: steps.version.outputs.new == 'true'
+        env:
+          PLAIT_KEYSTORE: ${{ runner.temp }}/plait.keystore
+          PLAIT_STORE_PASSWORD: ${{ secrets.PLAIT_STORE_PASSWORD }}
+          PLAIT_KEY_ALIAS: ${{ secrets.PLAIT_KEY_ALIAS }}
+          PLAIT_KEY_PASSWORD: ${{ secrets.PLAIT_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
+
+      - name: Check the signature
+        if: steps.version.outputs.new == 'true'
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk plait.apk
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          sha1=$("$apksigner" verify --print-certs plait.apk | sed -n 's/.*certificate SHA-1 digest: //p' | head -1 | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          echo "Signed with $sha1"
+          if [ "$sha1" != "$EXPECTED_SHA1" ]; then
+            echo "::error::plait.apk is signed with $sha1, not the Plait key $EXPECTED_SHA1. Check the signing secrets."
+            exit 1
+          fi
+
+      - name: Publish the release
+        if: steps.version.outputs.new == 'true'
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          # The release notes are this version's section of CHANGELOG.md.
+          awk -v v="$v" '$0 ~ "^## "v":" {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "Android 8 or newer. Download plait.apk below and open it on your phone." > notes.md; fi
+          title=$(sed -n "s/^## $v: //p" CHANGELOG.md | head -1)
+          gh release create "v$v" plait.apk --target "$GITHUB_SHA" --title "Plait $v${title:+: $title}" --notes-file notes.md --latest

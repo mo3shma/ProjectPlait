@@ -25,12 +25,24 @@ android {
         }
     }
 
+    // Releases built by GitHub Actions are signed with the key from the repository's secrets (see
+    // .github/workflows/release.yml). Local builds use this machine's debug key, as before.
+    val releaseKeystore = System.getenv("PLAIT_KEYSTORE")?.takeIf { file(it).exists() }
+    signingConfigs {
+        if (releaseKeystore != null) create("release") {
+            storeFile = file(releaseKeystore)
+            storePassword = System.getenv("PLAIT_STORE_PASSWORD")
+            keyAlias = System.getenv("PLAIT_KEY_ALIAS")
+            keyPassword = System.getenv("PLAIT_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
-            // A release build runs Compose far faster than a debug one. It is signed with the same debug key, so it
-            // installs over earlier test builds and keeps their data.
+            // A release build runs Compose far faster than a debug one. It is signed with the same key every time, so
+            // it installs over earlier builds and keeps their data.
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (releaseKeystore != null) "release" else "debug")
         }
     }
     compileOptions {
