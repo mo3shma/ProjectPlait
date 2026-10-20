@@ -225,7 +225,7 @@ private fun SpeechCards() {
         }
         Text("Language of your voice notes", style = PlaitType.monoSmall, color = plait.muted, modifier = Modifier.padding(top = 4.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AiPrefs.speechLanguages.forEach { (code, name) ->
+            (AiPrefs.speechLanguages + AiPrefs.mixedLanguages).forEach { (code, name) ->
                 PlaitChip(name, AiPrefs.speechLang == code, { AiPrefs.setSpeechLang(context, code) })
             }
         }

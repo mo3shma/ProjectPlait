@@ -26,7 +26,15 @@ object AiPrefs {
         "fa" to "Persian", "ur" to "Urdu", "hi" to "Hindi", "id" to "Indonesian", "zh" to "Chinese", "ja" to "Japanese", "ko" to "Korean",
     )
 
-    fun languageName(code: String): String = speechLanguages.firstOrNull { it.first == code }?.second?.let { if (code == "auto") "Any language" else it } ?: code
+    /** Two languages spoken in one note: each sentence is written in its own language. The first is the main one. */
+    val mixedLanguages = listOf(
+        "ar+en" to "Arabic + English", "en+ar" to "English + Arabic", "fr+en" to "French + English", "fr+ar" to "French + Arabic",
+        "es+en" to "Spanish + English", "de+en" to "German + English", "tr+en" to "Turkish + English", "hi+en" to "Hindi + English",
+        "ur+en" to "Urdu + English",
+    )
+
+    fun languageName(code: String): String =
+        (speechLanguages + mixedLanguages).firstOrNull { it.first == code }?.second?.let { if (code == "auto") "Any language" else it } ?: code
 
     /** The live words while recording come from a small English-only recogniser, so they are only shown for English. */
     val liveWordsMakeSense: Boolean get() = speechLang == "en" || speechLang == "auto"

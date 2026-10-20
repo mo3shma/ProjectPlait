@@ -3,6 +3,7 @@ package app.plait.ui.screens
 import android.app.ActivityManager
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.SwapHoriz
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -64,7 +65,7 @@ internal fun SpeechUpgradeCard() {
         )
         Text("I mostly speak", style = PlaitType.monoSmall, color = plait.muted)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("en" to "English", "ar" to "Arabic", "auto" to "Both").forEach { (code, label) ->
+            listOf("en" to "English", "ar" to "Arabic", "ar+en" to "Both, mixed").forEach { (code, label) ->
                 PlaitButton(label, { AiPrefs.setSpeechLang(context, code) }, style = if (AiPrefs.speechLang == code) ButtonStyle.Primary else ButtonStyle.Secondary, size = ButtonSize.Small)
             }
         }
@@ -99,10 +100,12 @@ internal fun LanguagePicker(modifier: Modifier = Modifier, label: String? = null
     )
     if (open) ActionsDialog(
         "I'm speaking",
-        AiPrefs.speechLanguages.map { (code, name) ->
+        // One language, "any", then two languages mixed in one note.
+        (AiPrefs.speechLanguages.take(3) + AiPrefs.mixedLanguages.take(2) + AiPrefs.speechLanguages.drop(3) + AiPrefs.mixedLanguages.drop(2)).map { (code, name) ->
+            val label = if ('+' in code) "$name (mixed)" else name
             NoteAction(
-                if (code == AiPrefs.speechLang) "$name  ✓" else name,
-                if (code == "auto") androidx.compose.material.icons.Icons.Filled.AutoAwesome else androidx.compose.material.icons.Icons.Filled.Translate,
+                if (code == AiPrefs.speechLang) "$label  ✓" else label,
+                when { code == "auto" -> androidx.compose.material.icons.Icons.Filled.AutoAwesome; '+' in code -> androidx.compose.material.icons.Icons.Filled.SwapHoriz; else -> androidx.compose.material.icons.Icons.Filled.Translate },
             ) { AiPrefs.setSpeechLang(context, code); onPicked(code) }
         },
         onDismiss = { open = false },

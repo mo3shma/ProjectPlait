@@ -2,6 +2,12 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.23.0: mixed languages
+
+- **Two languages in one note.** The language button now offers mixed pairs: Arabic + English, English + Arabic, French + English, French + Arabic, Spanish, German, Turkish, Hindi and Urdu with English. A mixed note is cut into short pieces at pauses, about a sentence each, and every piece is written in its own language: Whisper hears which one it is, and a guess outside the pair (Egyptian Arabic heard as another language) is redone in the main language. Pieces too short to tell take the language of the one before. Arabic sentences come out in Arabic and English ones in English, instead of one being translated or spelled in the other's letters.
+- **No more stuck transcripts.** Whisper sometimes got stuck repeating itself ("ha-ha-ha-ha…", the same word over and over) on unclear or mixed speech, and the rest of the piece was lost. Repeats are now collapsed to one, for every language.
+- On the "rough transcript" card, "Both" is now Arabic + English mixed.
+
 ## 0.22.1: one note, one flowing transcript
 
 - **Pauses no longer split the note.** The transcript used to show every phrase after a pause as its own card. It now reads as paragraphs: phrases join up, and a new paragraph starts only after a real pause (about six seconds) or when one grows long. The live words while recording read the same way. Shared and exported notes too.
