@@ -102,4 +102,14 @@ class TasksAndAboutTest {
         assertEquals("MOBIHITS & Mobizone…", app.plait.ui.screens.shortTitle("MOBIHITS & Mobizone / Weekly Call"))
         assertEquals("Design review", app.plait.ui.screens.shortTitle("Design review"))
     }
+
+    @Test fun longSpeechIsCutAtTheQuietestMoment() {
+        // A minute of talk with a pause at 21.3 s and at 44.0 s: the cuts land there, not at 25 s and 50 s.
+        val pauses = listOf(21_300L, 44_000L)
+        val parts = app.plait.audio.WavSegments.chunk(listOf(app.plait.audio.Segment(0, 60_000)), 25_000, 0, 700, 60_000) { from, to ->
+            pauses.firstOrNull { it in from..to } ?: to
+        }
+        assertEquals(listOf(0L to 21_300L, 21_300L to 44_000L, 44_000L to 60_000L), parts.map { it.startMs to it.endMs })
+        assertTrue(parts.all { it.lengthMs <= 25_000 })
+    }
 }

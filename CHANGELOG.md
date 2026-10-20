@@ -2,6 +2,13 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.22.0: transcripts that understand you
+
+- **Whisper, one tap away.** The built-in live recogniser is small and English only, so it mishears accents, and its text was what stayed in the note unless Whisper had been picked in Settings. A voice note with only that rough text now shows a card: say whether you mostly speak English, Arabic or both, and get Whisper (Small on most phones, Base on phones with little memory) in one tap. The download carries on in the background.
+- **Old notes get better too.** When a speech model arrives, every voice note still on the rough transcript is read again with it, newest first, then summarised and searched for tasks again.
+- **Whisper Turbo.** The most accurate option, close to cloud services and best with strong accents and mixed English and Arabic. 1 GB, for phones with 8 GB of RAM.
+- **Cleaner cuts.** Long stretches of talk are now split for Whisper at the quietest moment instead of every 25 seconds, so words are no longer cut in half. Whisper also uses more of the phone's cores, so it finishes sooner.
+
 ## 0.21.1: cards that open and close smoothly
 
 - **Cards grow open and shrink closed.** Tapping a home card (or any card that opens into a pop-up, and the press-and-hold menus) now grows it out of the card with a spring, and Close shrinks it away instead of it vanishing.

@@ -1,6 +1,7 @@
 package app.plait.ai
 
 import android.content.Context
+import app.plait.audio.NoteProcessor
 import app.plait.diag.Diag
 import android.net.ConnectivityManager
 import androidx.compose.runtime.mutableStateMapOf
@@ -133,6 +134,8 @@ object ModelCenter {
                 states[spec.id] = ModelState.Installed
                 setPending(app, spec.id, false)
                 AiPrefs.makeDefault(app, spec)
+                // A new speech model rewrites the rough transcripts already on the phone.
+                if (spec.kind == ModelKind.Speech) NoteProcessor.improveAll(app)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 states[spec.id] = ModelState.NotInstalled
                 throw e

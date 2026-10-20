@@ -390,10 +390,11 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
             Spacer(Modifier.height(12.dp))
             Text(status, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.accent)
         }
+        if (speechSpec == null && hasAudio && NoteProcessor.working[note.id] == null) SpeechUpgradeCard()
         if (speechSpec != null && NoteProcessor.working[note.id] == null) {
             Spacer(Modifier.height(10.dp))
             PlaitButton(
-                "Improve transcript (${speechSpec.title})",
+                if (NoteProcessor.hasWhisper(context, note.id)) "Transcribe again (${speechSpec.title})" else "Improve transcript (${speechSpec.title})",
                 { scope.launch { NoteProcessor.improveNow(context, store, note, speechSpec) } },
                 size = ButtonSize.Small,
             )

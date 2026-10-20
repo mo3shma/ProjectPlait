@@ -17,26 +17,40 @@ object WavSegments {
 
     fun find(file: File, maxMs: Long = 25_000, padMs: Long = 250, joinGapMs: Long = 500): List<Segment> {
         val raw = ArrayList<Segment>()
+        val loud = ArrayList<Float>()
         RandomAccessFile(file, "r").use { f ->
             f.seek(HEADER_BYTES)
             val vad = Vad(SAMPLE_RATE)
             val bytes = ByteArray(32_000)
             var start = -1L
+            // Loudness of every 100 ms, so a long stretch of talk can be cut at its quietest moment.
+            var acc = 0.0; var count = 0
             while (true) {
                 val n = f.read(bytes)
                 if (n <= 0) break
                 val shorts = ShortArray(n / 2) { i -> ((bytes[2 * i + 1].toInt() shl 8) or (bytes[2 * i].toInt() and 0xFF)).toShort() }
+                for (v in shorts) {
+                    acc += v.toDouble() * v; count++
+                    if (count == SAMPLE_RATE / 10) { loud.add((acc / count).toFloat()); acc = 0.0; count = 0 }
+                }
                 val out = vad.feed(shorts)
                 if (out.started) start = vad.speechStartMs
                 if (out.ended && start >= 0) { raw.add(Segment(start, vad.elapsedMs)); start = -1 }
             }
             if (start >= 0) raw.add(Segment(start, vad.elapsedMs))
         }
-        return chunk(raw, maxMs, padMs, joinGapMs, totalMs = ((file.length() - HEADER_BYTES) / 2) * 1000L / SAMPLE_RATE)
+        return chunk(raw, maxMs, padMs, joinGapMs, totalMs = ((file.length() - HEADER_BYTES) / 2) * 1000L / SAMPLE_RATE) { from, to ->
+            // The quietest 100 ms between [from] and [to], so the cut falls between words.
+            val a = (from / 100).toInt().coerceIn(0, loud.size); val b = (to / 100).toInt().coerceIn(a, loud.size)
+            if (b <= a) to else (a until b).minByOrNull { loud[it] }!!.toLong() * 100
+        }
     }
 
     /** Joins stretches separated by a short pause, pads them, and cuts anything longer than [maxMs]. */
-    fun chunk(raw: List<Segment>, maxMs: Long, padMs: Long, joinGapMs: Long, totalMs: Long): List<Segment> {
+    fun chunk(
+        raw: List<Segment>, maxMs: Long, padMs: Long, joinGapMs: Long, totalMs: Long,
+        quietest: ((fromMs: Long, toMs: Long) -> Long)? = null,
+    ): List<Segment> {
         val joined = ArrayList<Segment>()
         for (s in raw) {
             val last = joined.lastOrNull()
@@ -47,7 +61,17 @@ object WavSegments {
         val padded = joined.map { Segment((it.startMs - padMs).coerceAtLeast(0), (it.endMs + padMs).coerceAtMost(totalMs)) }
         return padded.flatMap { s ->
             if (s.lengthMs <= maxMs) listOf(s)
-            else generateSequence(s.startMs) { it + maxMs }.takeWhile { it < s.endMs }.map { Segment(it, minOf(it + maxMs, s.endMs)) }.toList()
+            else {
+                // Too long for Whisper: cut it, at the quietest moment in the last stretch before the limit when known.
+                val parts = ArrayList<Segment>()
+                var at = s.startMs
+                while (s.endMs - at > maxMs) {
+                    val cut = quietest?.invoke(at + maxMs * 3 / 5, at + maxMs)?.coerceIn(at + maxMs * 3 / 5, at + maxMs) ?: (at + maxMs)
+                    parts.add(Segment(at, cut)); at = cut
+                }
+                parts.add(Segment(at, s.endMs))
+                parts
+            }
         }.filter { it.lengthMs >= 300 }
     }
 

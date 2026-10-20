@@ -61,6 +61,7 @@ object NoteProcessor {
         if (lines.isNullOrEmpty()) return null
         val updated = note.copy(lines = lines, ai = null, aiBy = null)
         store.update(updated)
+        markWhisper(context, note.id)
         return updated
     }
 
@@ -76,6 +77,39 @@ object NoteProcessor {
         val updated = note.copy(ai = text, aiBy = result.label)
         store.update(updated)
         return updated
+    }
+
+    private fun prefs(c: Context) = c.applicationContext.getSharedPreferences("plait", Context.MODE_PRIVATE)
+
+    /** True once Whisper has written this note's transcript (not just the rough live one). */
+    fun hasWhisper(context: Context, id: String): Boolean = id in prefs(context).getStringSet("whisper_notes", emptySet()).orEmpty()
+    private fun markWhisper(context: Context, id: String) {
+        val p = prefs(context)
+        p.edit().putStringSet("whisper_notes", p.getStringSet("whisper_notes", emptySet()).orEmpty() + id).apply()
+    }
+
+    /**
+     * After a speech model arrives: every voice note that still has only the rough live transcript is read again with
+     * it, newest first, and then summarised and searched for tasks again. Runs in the background, one note at a time.
+     */
+    fun improveAll(context: Context) {
+        val app = context.applicationContext
+        scope.launch {
+            AiPrefs.load(app)
+            val speech = ModelCatalog.byId(AiPrefs.speechModelId)?.takeIf { ModelCenter.isInstalled(app, it.id) } ?: return@launch
+            val store = NoteStore.get(app)
+            for (note in store.notes.toList().sortedByDescending { it.createdAt }) {
+                if (hasWhisper(app, note.id) || !store.audioFile(note).exists()) continue
+                try {
+                    val better = improveTranscript(app, store, note, speech) ?: continue
+                    val done = summarise(app, store, better) ?: better
+                    TaskSuggester.suggestAsync(app, done.id, done.eventId, done.lines.joinToString(" ") { it.text })
+                } finally {
+                    working.remove(note.id)
+                }
+            }
+            SyncEngine.requestAsync(app, force = true)
+        }
     }
 
     /** The button on a note card. */

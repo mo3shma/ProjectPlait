@@ -40,7 +40,7 @@ object WhisperTranscriber {
                     encoder = path("$size-encoder.int8.onnx"), decoder = path("$size-decoder.int8.onnx"),
                     language = if (lang == "auto") "" else lang, task = "transcribe", tailPaddings = 1000,
                 ),
-                tokens = path("$size-tokens.txt"), numThreads = 2, debug = false, provider = "cpu", modelType = "whisper",
+                tokens = path("$size-tokens.txt"), numThreads = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 4), debug = false, provider = "cpu", modelType = "whisper",
             ),
             decodingMethod = "greedy_search",
         )
