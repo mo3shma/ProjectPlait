@@ -88,7 +88,9 @@ Choose the engine in **Settings → AI on this phone**. Models show their size b
 | Engine | What it does |
 | --- | --- |
 | Gemini Nano (ML Kit GenAI) | Writing and answers on phones that ship it |
-| Qwen 2.5 0.5B / 1.5B (MediaPipe LLM Inference) | Writing and answers on any phone, after a one-time download |
+| Qwen3 0.6B (347 MB) / Qwen3 1.7B (977 MB) (LiteRT-LM) | Writing and answers on 64-bit phones, after a one-time download |
+| Gemma 4 E2B (2.6 GB, LiteRT-LM) | The best writing, Arabic included, on phones with 8 GB of RAM |
+| Qwen 2.5 0.5B / 1.5B (MediaPipe LLM Inference) | Writing and answers on any phone, 32-bit ones included |
 | Whisper Tiny / Base / Small (sherpa-onnx) | The final transcript of a voice note, Arabic included |
 | Vosk small English (bundled) | Live words while you record |
 | Text embedder (6 MB) | Search by meaning |
@@ -176,7 +178,7 @@ Native Android in Kotlin and Jetpack Compose. The app ships as a release build w
 | Language and UI | Kotlin 2.4, Jetpack Compose, Material 3 1.5 (expressive components). Android 8.0 (API 26) to Android 16 (API 36) |
 | Glass | [Kyant Backdrop](https://github.com/Kyant0/AndroidLiquidGlass): backdrop blur and lens refraction |
 | Calendars | Android `CalendarContract` (read and write), Google Calendar API, an iCalendar parser with `RRULE` expansion |
-| Language models | MediaPipe `tasks-genai` 0.10.35, ML Kit GenAI Prompt (Gemini Nano) |
+| Language models | LiteRT-LM 0.18.1 (`.litertlm` models), MediaPipe `tasks-genai` 0.10.35 (`.task` models), ML Kit GenAI Prompt (Gemini Nano) |
 | Speech | Vosk 0.3.75 for live words, Whisper through sherpa-onnx for the final transcript |
 | Text in photos | ML Kit Text Recognition (Latin), Tesseract 4 (Arabic) |
 | Backup and sync | AES-256-GCM with a PBKDF2-SHA256 key and sealed 1 MB chunks. A merge only adds notes and carries deletions, so a sync can't lose a note |

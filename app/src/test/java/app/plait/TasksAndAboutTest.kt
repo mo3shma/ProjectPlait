@@ -84,4 +84,17 @@ class TasksAndAboutTest {
         assertEquals("Tomorrow 9:00 AM", app.plait.reminder.TaskReminders.label(ms(2026, 10, 21, 9), now, zone))
         assertEquals("Fri 9:00 AM", app.plait.reminder.TaskReminders.label(ms(2026, 10, 23, 9), now, zone))
     }
+
+    @Test fun thinkingIsStrippedFromAnswers() {
+        assertEquals("{\"about\": \"x\"}", app.plait.ai.LocalLlm.stripThinking("<think>\nLet me see.\n</think>\n{\"about\": \"x\"}"))
+        assertEquals("plain", app.plait.ai.LocalLlm.stripThinking("plain"))
+    }
+
+    @Test fun bestModelIsByQualityNotSize() {
+        val best = app.plait.ai.ModelCatalog.textModels.maxByOrNull { it.quality }!!
+        assertEquals("text-gemma4-e2b", best.id)
+        val q3 = app.plait.ai.ModelCatalog.byId("text-qwen3-1.7b")!!
+        val q25 = app.plait.ai.ModelCatalog.byId("text-qwen25-1.5b")!!
+        assertTrue(q3.quality > q25.quality && q3.bytes < q25.bytes)
+    }
 }

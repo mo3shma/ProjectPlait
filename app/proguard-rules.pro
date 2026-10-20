@@ -12,6 +12,10 @@
 -keep class com.google.protobuf.** { *; }
 -keep class com.google.odml.** { *; }
 
+-keep class com.google.ai.edge.litertlm.** { *; }
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.ai.edge.litertlm.**
+
 # Text in photos.
 -keep class com.googlecode.tesseract.** { *; }
 -keep class com.googlecode.leptonica.** { *; }

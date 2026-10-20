@@ -189,7 +189,7 @@ private fun TextAiCards() {
                 null -> StatusLine("Checking…")
             }
         }
-        ModelCatalog.textModels.forEach { spec ->
+        ModelCatalog.textModels.filter { it.supported }.forEach { spec ->
             ModelOption(
                 spec = spec,
                 selected = AiPrefs.textChoice == AiPrefs.TextChoice.Local && AiPrefs.textModelId == spec.id,

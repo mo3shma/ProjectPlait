@@ -2,6 +2,14 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.21.0: newer, smaller AI models
+
+- **Qwen3 0.6B, the new small model.** 347 MB instead of 547 MB for Qwen 2.5 0.5B, newer and better at following Plait's rules. A good first download for most phones.
+- **Qwen3 1.7B.** A clear step up for summaries, prep and answers, in under 1 GB.
+- **Gemma 4 E2B.** Google's best small model and the best writing in Plait, Arabic included. 2.6 GB, for phones with 8 GB of RAM.
+- **Picked by quality.** With several models on the phone, Plait uses the best one, not the biggest file; writing nobody asked for still uses the smallest.
+- The new models run on Google's LiteRT-LM engine, on 64-bit phones. The Qwen 2.5 models stay for 32-bit phones and anyone who has them. All are Apache-2.0, need no account, and run with "thinking" off so answers stay short.
+
 ## 0.20.0: updates in the app, a smaller download, a welcome tour
 
 - **Updates in the app.** Plait checks GitHub for a new version when it opens (at most twice a day, sending nothing about you) and shows a card with what's new. Update now downloads it in the background with progress and hands it to Android's installer, which keeps your notes and settings. The first time, Android asks you to let Plait install apps. Settings → Updates and help can check by hand or switch the automatic check off.

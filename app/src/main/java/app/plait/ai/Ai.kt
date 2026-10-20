@@ -18,7 +18,7 @@ object Ai {
     data class Result(val text: String, val label: String)
 
     private fun bestInstalledLocal(context: Context): ModelSpec? =
-        ModelCatalog.textModels.filter { ModelCenter.isInstalled(context, it.id) }.maxByOrNull { it.bytes }
+        ModelCatalog.textModels.filter { it.supported && ModelCenter.isInstalled(context, it.id) }.maxByOrNull { it.quality }
 
     suspend fun status(context: Context): Status {
         AiPrefs.load(context)
@@ -49,7 +49,7 @@ object Ai {
         if (background) kotlinx.coroutines.delay(1500) // let the screen settle before the model starts working
         // Writing nobody asked for runs on the smallest downloaded model, so a big one does not slow the phone down.
         val local = if (background && s.engine == Engine.Local && lightAuto(context)) {
-            ModelCatalog.textModels.filter { ModelCenter.isInstalled(context, it.id) }.minByOrNull { it.bytes } ?: ModelCatalog.byId(s.modelId)
+            ModelCatalog.textModels.filter { it.supported && ModelCenter.isInstalled(context, it.id) }.minByOrNull { it.bytes } ?: ModelCatalog.byId(s.modelId)
         } else ModelCatalog.byId(s.modelId)
         val text = when (s.engine) {
             Engine.Rules -> null

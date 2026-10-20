@@ -18,8 +18,8 @@ android {
         applicationId = "app.plait"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40
-        versionName = "0.20.0"
+        versionCode = 41
+        versionName = "0.21.0"
     }
 
     // Releases built by GitHub Actions are signed with the key from the repository's secrets (see
@@ -97,6 +97,8 @@ dependencies {
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mediapipe:tasks-genai:0.10.35")
+    // LiteRT-LM runs the newer .litertlm models (Qwen3, Gemma 4) on 64-bit phones.
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.1")
     implementation("com.google.mediapipe:tasks-text:0.10.35")
     implementation("com.github.adaptech-cz.Tesseract4Android:tesseract4android:4.9.0")
 

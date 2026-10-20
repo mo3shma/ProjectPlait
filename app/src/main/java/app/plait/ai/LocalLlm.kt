@@ -13,12 +13,14 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Runs a downloaded model on the phone with Google's MediaPipe LLM runtime. The model is loaded when first needed
- * and let go after two idle minutes, because it holds as much memory as the file is big.
+ * Runs a downloaded model on the phone, with Google's MediaPipe LLM runtime (.task models) or LiteRT-LM (.litertlm
+ * models, 64-bit phones). The model is loaded when first needed and let go after two idle minutes, because it holds
+ * as much memory as the file is big.
  */
 object LocalLlm {
     private val lock = Mutex()
     private var llm: LlmInference? = null
+    private var lm: com.google.ai.edge.litertlm.Engine? = null
     private var loadedId: String? = null
     private var idle: Job? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -36,6 +38,7 @@ object LocalLlm {
         withContext(Dispatchers.Default) {
             runCatching {
                 idle?.cancel()
+                if (spec.runtime == Runtime.LiteRtLm) return@runCatching liteRt(context.applicationContext, spec, prompt, system, temperature)
                 val engine = load(context.applicationContext, spec)
                 val text = chat(spec, prompt, system)
                 val out = if (temperature == null) engine.generateResponse(text) else {
@@ -49,9 +52,41 @@ object LocalLlm {
         }.also { scheduleRelease() }
     }
 
+    /**
+     * LiteRT-LM: the rules go in the system instruction, the same careful sampling as MediaPipe when a temperature is
+     * given, and the model's "thinking" is off so the answer is just the answer.
+     */
+    private fun liteRt(context: Context, spec: ModelSpec, prompt: String, system: String?, temperature: Float?): String? {
+        val engine = if (loadedId == spec.id && lm != null) lm!! else {
+            release()
+            com.google.ai.edge.litertlm.Engine(
+                com.google.ai.edge.litertlm.EngineConfig(
+                    modelPath = ModelCenter.file(context, spec.id, spec.files.first().name).path,
+                    backend = com.google.ai.edge.litertlm.Backend.CPU(),
+                    cacheDir = context.cacheDir.path,
+                ),
+            ).also { it.initialize(); lm = it; loadedId = spec.id }
+        }
+        val sampler = if (temperature != null) com.google.ai.edge.litertlm.SamplerConfig(20, 0.9, temperature.toDouble(), 7)
+            else com.google.ai.edge.litertlm.SamplerConfig(40, 0.95, 0.7, 0)
+        val config = com.google.ai.edge.litertlm.ConversationConfig(
+            systemInstruction = com.google.ai.edge.litertlm.Contents.of(system ?: "You are a careful assistant. Answer only from the text you are given."),
+            samplerConfig = sampler,
+            thinkingConfig = com.google.ai.edge.litertlm.ThinkingConfig(false),
+        )
+        return engine.createConversation(config).use { conv ->
+            val reply = conv.sendMessage(prompt)
+            stripThinking(reply.contents.contents.filterIsInstance<com.google.ai.edge.litertlm.Content.Text>().joinToString("") { it.text })
+        }.trim().takeIf { it.isNotBlank() }
+    }
+
+    /** Some models still write their reasoning between <think> tags; only the answer after it is kept. */
+    internal fun stripThinking(text: String): String =
+        text.replace(Regex("(?s)<think>.*?</think>"), "").substringAfter("</think>").trim()
+
     private fun load(context: Context, spec: ModelSpec): LlmInference {
         if (loadedId == spec.id) llm?.let { return it }
-        llm?.close()
+        release()
         val options = LlmInference.LlmInferenceOptions.builder()
             .setModelPath(ModelCenter.file(context, spec.id, spec.files.first().name).path)
             .setMaxTokens(1280)
@@ -66,7 +101,9 @@ object LocalLlm {
 
     fun release() {
         runCatching { llm?.close() }
+        runCatching { lm?.close() }
         llm = null
+        lm = null
         loadedId = null
     }
 }
