@@ -182,7 +182,7 @@ class NoteAction(val label: String, val icon: ImageVector, val danger: Boolean =
 /** What press-and-hold on a note offers: open it, edit it, delete it. */
 @Composable
 fun ActionsDialog(title: String, actions: List<NoteAction>, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) { PopIn { ActionsMenu(title, actions, onDismiss) } }
+    ExpandDialog(onDismiss) { close -> ActionsMenu(title, actions, close) }
 }
 
 /** The body of [ActionsDialog]: a title and one button per action, in the chosen style. */
@@ -226,10 +226,31 @@ fun PopIn(content: @Composable () -> Unit) {
     ) { content() }
 }
 
+/**
+ * A pop-up that grows out of the card that opened it and shrinks back when it closes, instead of appearing and
+ * vanishing. The dialog stays up until the closing animation has played; [content] gets the action that closes it.
+ */
+@Composable
+fun ExpandDialog(onDismiss: () -> Unit, fullScreen: Boolean = false, content: @Composable (close: () -> Unit) -> Unit) {
+    val state = remember { androidx.compose.animation.core.MutableTransitionState(false).apply { targetState = true } }
+    val close: () -> Unit = { state.targetState = false }
+    if (!state.targetState && state.isIdle && !state.currentState) androidx.compose.runtime.SideEffect { onDismiss() }
+    val calm = app.plait.ui.glass.LocalGlassEnv.current.reduceMotion
+    Dialog(onDismissRequest = close, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = !fullScreen)) {
+        AnimatedVisibility(
+            state,
+            enter = androidx.compose.animation.scaleIn(spring(dampingRatio = 0.8f, stiffness = 420f), initialScale = if (calm) 0.97f else 0.86f) +
+                fadeIn(androidx.compose.animation.core.tween(160)),
+            exit = androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing), targetScale = if (calm) 0.97f else 0.9f) +
+                fadeOut(androidx.compose.animation.core.tween(180)),
+        ) { content(close) }
+    }
+}
+
 /** A solid, scrollable pop-up for the full version of a card: the card shows a short summary, tapping it opens this. */
 @Composable
 fun DetailDialog(title: String, onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Dialog(onDismissRequest = onDismiss) { PopIn {
+    ExpandDialog(onDismiss) { close ->
         Column(
             Modifier.fillMaxWidth().heightIn(max = 600.dp).popupSurface().padding(vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -239,9 +260,9 @@ fun DetailDialog(title: String, onDismiss: () -> Unit, content: @Composable andr
                 Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp), content = content,
             )
-            CloseButton(onDismiss, Modifier.fillMaxWidth().padding(horizontal = 20.dp))
+            CloseButton(close, Modifier.fillMaxWidth().padding(horizontal = 20.dp))
         }
-    } }
+    }
 }
 
 /** Writes text the way it reads best: paragraphs with air between them, and "- " lines as bullets with a hanging indent. */

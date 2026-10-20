@@ -108,13 +108,14 @@ internal val LocalCardBackdrop = androidx.compose.runtime.compositionLocalOf<com
 /** Material 3: each part of the day is one of the scheme's container colours, flat and rounded. */
 @Composable
 private fun cardShell(material: Boolean, cs: androidx.compose.material3.ColorScheme, phase: Phase, backdrop: com.kyant.backdrop.Backdrop, tone: KindTone): Modifier =
-    if (material) Modifier.clip(RoundedCornerShape(36.dp)).background(
-        when (phase) { Phase.Morning -> cs.tertiaryContainer; Phase.Afternoon -> cs.primaryContainer; Phase.Evening -> cs.secondaryContainer },
-    ) else Modifier.liquidGlass(
+    if (material) Modifier.clip(RoundedCornerShape(36.dp)).background(phaseContainer(cs, phase)) else Modifier.liquidGlass(
         backdrop, shape = { com.kyant.shapes.RoundedRectangle(44.dp) },
         tint = tone.bg.copy(alpha = 0.40f), lens = false,
         surfaceColor = Color.White.copy(alpha = if (app.plait.ui.theme.LocalIsDark.current) 0.6f else 0.07f),
     )
+
+private fun phaseContainer(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color =
+    when (phase) { Phase.Morning -> cs.tertiaryContainer; Phase.Afternoon -> cs.primaryContainer; Phase.Evening -> cs.secondaryContainer }
 
 private fun onContainer(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color =
     when (phase) { Phase.Morning -> cs.onTertiaryContainer; Phase.Afternoon -> cs.onPrimaryContainer; Phase.Evening -> cs.onSecondaryContainer }
@@ -260,19 +261,19 @@ internal fun BriefPage(
         val tone = ph.tone()
         val cs = androidx.compose.material3.MaterialTheme.colorScheme
         val material = app.plait.ui.glass.LocalGlassEnv.current.material
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { openPhase = null },
-            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
-        ) {
+        val hour = remember(nowMs / 60_000) { Instant.ofEpochMilli(nowMs).atZone(zone).let { it.hour + it.minute / 60f } }
+        // The open card looks like the card it grew from: the same container colour, or the same tinted sky.
+        ExpandDialog({ openPhase = null }, fullScreen = true) { close ->
             Box(
-                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 28.dp).clip(RoundedCornerShape(36.dp))
-                    .background(if (material) cs.surfaceContainerHigh else androidx.compose.ui.graphics.lerp(Color.White, tone.bg, 0.5f)),
+                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 28.dp).clip(RoundedCornerShape(if (material) 36.dp else 44.dp))
+                    .background(if (material) phaseContainer(cs, ph) else androidx.compose.ui.graphics.lerp(Color.White, tone.bg, 0.5f)),
             ) {
-                CompositionLocalProvider(LocalCardInk provides if (material) plait.text else Color.Black) {
+                if (!material) PhaseSky(ph, hour, Modifier.matchParentSize(), active = true)
+                CompositionLocalProvider(LocalCardInk provides if (material) onContainer(cs, ph) else cardInk(app.plait.ui.theme.LocalIsDark.current)) {
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         CardHeader(ph, nowMs, zone)
                         CardBody(ph, false, today, data, tomorrow, nowMs, zone, aiText, { openPhase = null; onOpenEvent(it) }, { openPhase = null; onOpenNotes(it) }, join, { openPhase = null; onOpenHub() }, onAllowCalendar)
-                        CloseButton({ openPhase = null }, Modifier.fillMaxWidth())
+                        CloseButton(close, Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -560,7 +561,7 @@ private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, zone: ZoneId, c
     else {
         val first = tomorrow.first()
         Body("${DayAnalytics.word(tomorrow.size)} meeting${if (tomorrow.size == 1) "" else "s"}. First is ${first.title} at ${first.time}.")
-        PlaitButton("Open ${first.title.take(24)}", { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+        PlaitButton("Open ${shortTitle(first.title)}", { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
     }
     // A suggestion only: nothing is added to the calendar until you tap.
     val focus = remember(tomorrow) {
@@ -630,4 +631,11 @@ private fun DayStripOnCard(day: DayBrief, kinds: Map<String, MeetingKind>, nowMs
             Text(app.plait.data.TimeFmt.hour(day.loadEndHour % 24), style = PlaitType.monoSmall, color = ink.copy(alpha = 0.6f))
         }
     }
+}
+
+/** A long meeting title cut at a word with "…", for a button label ("Open MOBIHITS & Mobizone…"). */
+internal fun shortTitle(title: String, max: Int = 26): String {
+    val t = title.trim().replace(Regex("\\s+"), " ")
+    if (t.length <= max) return t
+    return t.take(max).substringBeforeLast(' ').trimEnd(' ', '/', '&', '-', ',', '·', ':') + "…"
 }

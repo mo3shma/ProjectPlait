@@ -2,6 +2,8 @@
 
 package app.plait.ui.material
 
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -91,12 +93,28 @@ fun MButton(
     val m = modifier.heightIn(min = size.minHeight)
     val pad = if (label.isEmpty()) PaddingValues(horizontal = 12.dp) else ButtonDefaults.ContentPadding
     when (style) {
-        ButtonStyle.Primary, ButtonStyle.Ink -> Button(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
+        ButtonStyle.Primary -> Button(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
+        // On a home card the buttons take the card's own ink, so they always stand out from the card's container colour.
+        ButtonStyle.Ink -> {
+            val ink = app.plait.ui.screens.LocalCardInk.current
+            Button(
+                onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad,
+                colors = ButtonDefaults.buttonColors(containerColor = ink, contentColor = if (ink.luminance() > 0.5f) Color(0xFF15131A) else Color(0xFFF7F3EA)), content = content,
+            )
+        }
+        ButtonStyle.InkSoft -> {
+            val ink = app.plait.ui.screens.LocalCardInk.current
+            OutlinedButton(
+                onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad,
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = ink.copy(alpha = 0.14f), contentColor = ink),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ink.copy(alpha = 0.5f)), content = content,
+            )
+        }
         ButtonStyle.Danger -> Button(
             onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), content = content,
         )
-        ButtonStyle.Secondary, ButtonStyle.InkSoft -> FilledTonalButton(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
+        ButtonStyle.Secondary -> FilledTonalButton(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
         ButtonStyle.Quiet -> TextButton(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
     }
 }

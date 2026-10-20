@@ -97,4 +97,9 @@ class TasksAndAboutTest {
         val q25 = app.plait.ai.ModelCatalog.byId("text-qwen25-1.5b")!!
         assertTrue(q3.quality > q25.quality && q3.bytes < q25.bytes)
     }
+
+    @Test fun longTitlesAreCutAtAWord() {
+        assertEquals("MOBIHITS & Mobizone…", app.plait.ui.screens.shortTitle("MOBIHITS & Mobizone / Weekly Call"))
+        assertEquals("Design review", app.plait.ui.screens.shortTitle("Design review"))
+    }
 }

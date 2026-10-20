@@ -2,6 +2,13 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.21.1: cards that open and close smoothly
+
+- **Cards grow open and shrink closed.** Tapping a home card (or any card that opens into a pop-up, and the press-and-hold menus) now grows it out of the card with a spring, and Close shrinks it away instead of it vanishing.
+- **The open card matches the card.** In Liquid Glass it has the same tinted sky as the card on Home; in Material 3 Expressive the same container colour and text colour.
+- **Buttons on cards stand out in Material 3 Expressive.** "Open" on the evening card was the same colour as the card. Card buttons now take the card's own text colour, filled or outlined, so they always show.
+- Long meeting names on buttons are cut at a word with "…" ("Open MOBIHITS & Mobizone…") instead of mid-word.
+
 ## 0.21.0: newer, smaller AI models
 
 - **Qwen3 0.6B, the new small model.** 347 MB instead of 547 MB for Qwen 2.5 0.5B, newer and better at following Plait's rules. A good first download for most phones.
