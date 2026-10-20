@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=AR+One+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="trailer.css">
 <style>
 :root{
   --bg:#07080c; --ink:#f4f5f8; --muted:#a3a9b8; --line:rgba(255,255,255,.12);
@@ -111,6 +112,7 @@ header.hero{position:relative;z-index:1;padding:64px 0 24px;text-align:center}
 .label{font-size:clamp(6px,.75vw,9px);letter-spacing:.08em;opacity:.6;font-weight:600}
 .lock{font-size:clamp(50px,9vw,110px);filter:drop-shadow(0 10px 40px rgba(138,150,255,.5))}
 
+
 /* ---------- Page sections ---------- */
 section{position:relative;z-index:1;padding:96px 0 0}
 section h2{font-size:clamp(30px,4.5vw,48px);letter-spacing:-.02em;line-height:1.1;font-weight:700}
@@ -127,7 +129,7 @@ section p.lead{color:var(--muted);max-width:640px;margin-top:12px;font-size:18px
 .download{text-align:center;padding:110px 0 80px}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:28px 0 40px;position:relative;z-index:1}
 footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
-@media (max-width:640px){nav .links{display:none}.stage{aspect-ratio:3/4;border-radius:22px}.side{flex-direction:column-reverse;text-align:center;gap:18px}.side .copy .big{text-align:center}.side .copy p{display:none}.phone{width:46vw}.chips{width:90%}}
+@media (max-width:640px){nav .links{display:none}.stage{border-radius:22px}.side{flex-direction:column-reverse;text-align:center;gap:18px}.side .copy .big{text-align:center}.side .copy p{display:none}.phone{width:46vw}.chips{width:90%}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -147,72 +149,8 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
   </div>
 
   <div class="stage-wrap" id="trailer">
-    <div class="stage" aria-label="Plait launch trailer">
-      <div class="scene" data-t="3200">
-        <div class="logo"><svg viewBox="0 0 100 100"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6c7cff"/><stop offset="1" stop-color="#b07cff"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#lg1)"/><path class="strand" d="M18 50 C 32 20, 46 80, 60 50 S 76 20, 82 50" stroke="#fff"/><path class="strand" d="M18 50 C 32 80, 46 20, 60 50 S 76 80, 82 50" stroke="#ffd98a"/><path class="strand" d="M18 58 C 34 40, 52 74, 82 42" stroke="#9ed8ff"/></svg>
-        <div class="word">Plait</div></div>
-      </div>
-      <div class="scene" data-t="3400">
-        <div class="chips">
-          <div class="chip a"><b style="background:#4285f4"></b>Google</div>
-          <div class="chip b"><b style="background:#0078d4"></b>Outlook</div>
-          <div class="chip c"><b style="background:#ff9f0a"></b>iCloud</div>
-          <div class="chip d"><b style="background:#30d158"></b>Phone</div>
-          <div class="chip one">One day</div>
-        </div>
-        <div class="caption">Every calendar. One day.</div>
-      </div>
-      <div class="scene" data-t="4200">
-        <div class="side">
-          <div class="phone"><div class="screen">
-            <div class="tabs"><span class="sel" id="tm">Morning</span><span id="ta">Midday</span><span id="te">Evening</span></div>
-            <div class="daycard" id="daycard" style="background:var(--morning)">
-              <div class="meta" id="greet">GOOD MORNING · TUE 20 OCT</div>
-              <h3 id="head">Three meetings today.</h3>
-              <div class="banner"><b>Design review</b>10:30 AM – 11:15 AM · Meet</div>
-              <div class="banner"><b>Weekly sync</b>2:00 PM – 2:30 PM · Teams</div>
-            </div>
-          </div></div>
-          <div class="copy"><div class="big" style="font-size:clamp(24px,4vw,48px)">A brief for<br>every part of the day.</div><p>Morning, midday and evening, each with what matters now.</p></div>
-        </div>
-      </div>
-      <div class="scene" data-t="3800">
-        <div class="side">
-          <div class="copy"><div class="big" style="font-size:clamp(24px,4vw,48px)">Join. Record.<br>Done.</div><p>Every call link, one tap. Voice notes transcribed on the phone.</p></div>
-          <div class="phone"><div class="screen">
-            <div class="label">TEAMS · 2:00 PM</div>
-            <div style="font-weight:700;font-size:clamp(12px,1.7vw,19px);line-height:1.05;color:#0e1316">Weekly sync</div>
-            <div class="wave"><span></span><span style="animation-delay:.1s"></span><span style="animation-delay:.3s"></span><span style="animation-delay:.2s"></span><span style="animation-delay:.5s"></span><span style="animation-delay:.15s"></span><span style="animation-delay:.4s"></span><span style="animation-delay:.25s"></span></div>
-            <div class="check"><em></em>Send the deck</div>
-            <div class="check"><em></em>Book the room</div>
-            <div class="check"><em></em>Follow up with design</div>
-            <div class="pills"><i>Join Teams</i><u></u></div>
-          </div></div>
-        </div>
-      </div>
-      <div class="scene" data-t="4200">
-        <div class="side">
-          <div class="phone"><div class="screen">
-            <div style="font-weight:700;font-size:clamp(10px,1.4vw,16px);color:#0e1316">About this meeting</div>
-            <div class="typed" style="color:#0e1316;font-size:clamp(7px,.95vw,11px);display:flex;flex-direction:column;gap:6%">
-              <span style="transition-delay:.6s"><div class="label">PURPOSE</div>Agree the launch date for the app.</span>
-              <span style="transition-delay:1.3s"><div class="label">AGENDA</div>• Open bugs<br>• Launch date</span>
-              <span style="transition-delay:2s"><div class="label">PREPARE</div>Read the bug list.</span>
-            </div>
-          </div></div>
-          <div class="copy"><div class="big" style="font-size:clamp(24px,4vw,48px)">AI that sticks<br>to the facts.</div><p>Runs on your phone, uses only what the invite says, and checks every line.</p></div>
-        </div>
-      </div>
-      <div class="scene" data-t="3200">
-        <div style="text-align:center"><div class="lock">🔒</div><div class="big" style="margin-top:10px">Nothing leaves your phone.</div></div>
-      </div>
-      <div class="scene" data-t="3600">
-        <div class="logo" style="text-align:center"><svg viewBox="0 0 100 100"><defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6c7cff"/><stop offset="1" stop-color="#b07cff"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#lg2)"/><path class="strand" d="M18 50 C 32 20, 46 80, 60 50 S 76 20, 82 50" stroke="#fff"/><path class="strand" d="M18 50 C 32 80, 46 20, 60 50 S 76 80, 82 50" stroke="#ffd98a"/><path class="strand" d="M18 58 C 34 40, 52 74, 82 42" stroke="#9ed8ff"/></svg>
-        <div class="word">Plait</div><div class="caption" style="position:static;margin-top:10px;white-space:nowrap">Free on Android</div></div>
-      </div>
-      <div class="progress"><i id="bar"></i></div>
-    </div>
-    <div class="controls"><button id="play">Pause</button><button id="replay">Replay</button></div>
+    <div class="stage" id="stage" aria-label="Plait launch trailer"><div id="canvas" class="tcanvas"></div><div class="progress"><i id="bar"></i></div></div>
+    <div class="controls"><button id="play">Pause</button><button id="replay">Replay</button><a class="pill ghost" style="height:40px;padding:0 18px" href="trailer.html">Full screen</a></div>
   </div>
 </div></header>
 
@@ -250,62 +188,16 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 <footer><div class="wrap"><span>Plait · made for people with too many calendars.</span><span>Fonts: AR One Sans (SIL OFL).</span></div></footer>
 
 <script>
+// GitHub Pages lives at <owner>.github.io/<repo>/; the release and source links point at github.com/<owner>/<repo>.
 (() => {
-  // GitHub Pages lives at <owner>.github.io/<repo>/; the release and source links point at github.com/<owner>/<repo>.
   const host = location.hostname, path = location.pathname.split('/').filter(Boolean);
   if (host.endsWith('github.io') && path.length) {
     const repo = 'https://github.com/' + host.split('.')[0] + '/' + path[0];
     document.getElementById('dl').href = repo + '/releases/latest';
     document.getElementById('src').href = repo;
   }
-  const scenes = [...document.querySelectorAll('.scene')];
-  const bar = document.getElementById('bar');
-  const total = scenes.reduce((s, el) => s + +el.dataset.t, 0);
-  let i = -1, timer = null, paused = false, startedAt = 0, elapsed = 0, raf;
-  const phases = [
-    ['var(--morning)', 'GOOD MORNING · TUE 20 OCT', 'Three meetings today.', 'tm'],
-    ['var(--midday)', 'GOOD AFTERNOON · TUE 20 OCT', 'One done, two to go.', 'ta'],
-    ['var(--evening)', 'GOOD EVENING · TUE 20 OCT', '1 h 15 m in meetings.', 'te'],
-  ];
-  let phaseTimer;
-  function cyclePhases() {
-    let k = 0;
-    clearInterval(phaseTimer);
-    phaseTimer = setInterval(() => {
-      k = (k + 1) % phases.length;
-      const [bg, g, h, id] = phases[k];
-      document.getElementById('daycard').style.background = bg;
-      document.getElementById('greet').textContent = g;
-      document.getElementById('head').textContent = h;
-      ['tm', 'ta', 'te'].forEach(t => document.getElementById(t).classList.toggle('sel', t === id));
-    }, 1300);
-  }
-  function show(n) {
-    scenes.forEach((s, k) => s.classList.toggle('on', k === n));
-    if (scenes[n].querySelector('#daycard')) cyclePhases(); else clearInterval(phaseTimer);
-  }
-  function next() {
-    i = (i + 1) % scenes.length;
-    if (i === 0) elapsed = 0;
-    show(i);
-    timer = setTimeout(() => { elapsed += +scenes[i].dataset.t; next(); }, +scenes[i].dataset.t);
-    startedAt = performance.now();
-  }
-  function tick() {
-    if (!paused) {
-      const inScene = Math.min(performance.now() - startedAt, +scenes[Math.max(i, 0)].dataset.t);
-      bar.style.width = ((elapsed + inScene) / total * 100) + '%';
-    }
-    raf = requestAnimationFrame(tick);
-  }
-  document.getElementById('play').onclick = e => {
-    paused = !paused;
-    e.target.textContent = paused ? 'Play' : 'Pause';
-    if (paused) clearTimeout(timer); else next();
-  };
-  document.getElementById('replay').onclick = () => { clearTimeout(timer); i = -1; elapsed = 0; paused = false; document.getElementById('play').textContent = 'Pause'; next(); };
-  next(); tick();
 })();
 </script>
+<script src="trailer.js"></script>
 </body>
 </html>
