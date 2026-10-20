@@ -1,6 +1,8 @@
 package app.plait.ui.screens
 
 import android.app.ActivityManager
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Translate
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -80,4 +82,29 @@ internal fun SpeechUpgradeCard() {
             }
         }
     }
+}
+
+/**
+ * The language voice notes are transcribed in: a pill that shows the current one and opens the list. Telling Whisper
+ * the language makes it far more accurate than letting it guess, especially with an accent.
+ */
+@Composable
+internal fun LanguagePicker(modifier: Modifier = Modifier, label: String? = null, onPicked: (String) -> Unit = {}) {
+    val context = LocalContext.current
+    AiPrefs.load(context)
+    var open by remember { mutableStateOf(false) }
+    PlaitButton(
+        label ?: "Language: ${AiPrefs.languageName(AiPrefs.speechLang)}", { open = true }, modifier,
+        style = ButtonStyle.Secondary, size = ButtonSize.Small, icon = androidx.compose.material.icons.Icons.Filled.Translate,
+    )
+    if (open) ActionsDialog(
+        "I'm speaking",
+        AiPrefs.speechLanguages.map { (code, name) ->
+            NoteAction(
+                if (code == AiPrefs.speechLang) "$name  ✓" else name,
+                if (code == "auto") androidx.compose.material.icons.Icons.Filled.AutoAwesome else androidx.compose.material.icons.Icons.Filled.Translate,
+            ) { AiPrefs.setSpeechLang(context, code); onPicked(code) }
+        },
+        onDismiss = { open = false },
+    )
 }

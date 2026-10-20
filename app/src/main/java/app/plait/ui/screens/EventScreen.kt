@@ -393,10 +393,14 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
         if (speechSpec == null && hasAudio && NoteProcessor.working[note.id] == null) SpeechUpgradeCard()
         if (speechSpec != null && NoteProcessor.working[note.id] == null) {
             Spacer(Modifier.height(10.dp))
-            PlaitButton(
-                if (NoteProcessor.hasWhisper(context, note.id)) "Transcribe again (${speechSpec.title})" else "Improve transcript (${speechSpec.title})",
-                { scope.launch { NoteProcessor.improveNow(context, store, note, speechSpec) } },
-                size = ButtonSize.Small,
+            // Pick the language, then the note is transcribed again in it (and summarised again from the new text).
+            LanguagePicker(
+                label = (if (NoteProcessor.hasWhisper(context, note.id)) "Transcribe again" else "Improve transcript") + " · ${AiPrefs.languageName(AiPrefs.speechLang)}",
+                onPicked = {
+                    scope.launch {
+                        if (NoteProcessor.improveNow(context, store, note, speechSpec)) store.notes.firstOrNull { it.id == note.id }?.let { NoteProcessor.summariseNow(context, store, it) }
+                    }
+                },
             )
         }
         if (ai != null) {
@@ -479,20 +483,21 @@ internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
                     style = PlaitType.monoLabel, color = plait.muted,
                 )
                 if (n.lines.isEmpty()) EmptyHint("No speech was detected in this note.")
-                n.lines.forEach { ln ->
-                    Row(
-                        Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(horizontal = 20.dp, vertical = 18.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Text(formatClock(ln.atMs), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.muted, modifier = Modifier.width(44.dp).padding(top = 3.dp))
-                        Column {
-                            val shaky = ln.conf < 0.6f
-                            Text(
-                                ln.text.replaceFirstChar { it.uppercase() },
-                                style = PlaitType.body, color = if (shaky) plait.muted else plait.text,
-                                fontStyle = if (shaky) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
-                            )
-                            if (shaky) Text("Not sure about this one. Play the note to check.", style = PlaitType.caption, color = plait.muted)
+                else Column(
+                    Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(horizontal = 20.dp, vertical = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    // Phrases read as paragraphs; a new one starts only after a real pause.
+                    app.plait.data.Transcript.paragraphs(n.lines).forEach { p ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text(formatClock(p.atMs), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.muted, modifier = Modifier.width(44.dp).padding(top = 3.dp))
+                            Column {
+                                Text(
+                                    p.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content),
+                                    color = if (p.shaky) plait.muted else plait.text,
+                                )
+                                if (p.shaky) Text("Partly unclear. Play the note to check.", style = PlaitType.caption, color = plait.muted)
+                            }
                         }
                     }
                 }

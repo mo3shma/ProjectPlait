@@ -170,12 +170,14 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                 Waveform(controller.levels, paused || env.reduceMotion)
             }
 
-            // Live transcript: finished lines, then the words being recognised right now.
-            val recent = controller.lines.takeLast(3)
+            // Live transcript as one running paragraph, then the words being recognised right now. The live recogniser
+            // only knows English, so for another language the words are written by Whisper after the recording stops.
+            val context = androidx.compose.ui.platform.LocalContext.current
             Column(
-                Modifier.align(Alignment.BottomCenter).padding(bottom = 190.dp).fillMaxWidth().height(200.dp).padding(horizontal = 18.dp),
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 190.dp).fillMaxWidth().height(220.dp).padding(horizontal = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
             ) {
+                LanguagePicker()
                 when {
                     controller.speechReady == null && granted && controller.phase != RecPhase.Failed ->
                         Text("Getting the speech model ready. Your recording has already started.", style = PlaitType.caption, color = plait.muted)
@@ -184,25 +186,28 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                     controller.speechReady == true && controller.phase == RecPhase.Recording ->
                         Text(if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. Silence isn't transcribed.", style = PlaitType.monoSmall, color = if (controller.speaking) plait.signal else plait.muted)
                 }
-                recent.forEachIndexed { i, line ->
-                    key(line.atMs, line.text) {
-                        var visible by remember { mutableStateOf(false) }
-                        LaunchedEffect(Unit) { visible = true }
-                        AnimatedVisibility(visible, enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { it / 2 }) {
-                            Text(
-                                line.text.replaceFirstChar { it.uppercase() },
-                                style = PlaitType.body.copy(fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.Medium),
-                                color = if (i == recent.lastIndex && controller.partial.isEmpty()) plait.text else plait.muted.copy(alpha = 0.75f),
-                                maxLines = 3, overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-                if (controller.partial.isNotEmpty()) {
+                if (!app.plait.ai.AiPrefs.liveWordsMakeSense) {
+                    val whisper = app.plait.ai.ModelCatalog.speechModels.any { app.plait.ai.ModelCenter.isInstalled(context, it.id) }
                     Text(
-                        controller.partial,
-                        style = PlaitType.body.copy(fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic),
-                        color = plait.text, maxLines = 3, overflow = TextOverflow.Ellipsis,
+                        if (whisper) "Speaking ${app.plait.ai.AiPrefs.languageName(app.plait.ai.AiPrefs.speechLang)}: the words are written when you stop."
+                        else "To write ${app.plait.ai.AiPrefs.languageName(app.plait.ai.AiPrefs.speechLang)}, get Whisper in Settings → AI on this phone. Your recording is saved either way.",
+                        style = PlaitType.body, color = plait.muted,
+                    )
+                } else {
+                    val running = remember(controller.lines.size) {
+                        app.plait.data.Transcript.paragraphs(controller.lines.toList()).lastOrNull()?.text?.let { if (it.length > 220) "…" + it.takeLast(220).substringAfter(' ') else it }.orEmpty()
+                    }
+                    if (running.isNotEmpty() || controller.partial.isNotEmpty()) Text(
+                        androidx.compose.ui.text.buildAnnotatedString {
+                            append(running)
+                            if (controller.partial.isNotEmpty()) {
+                                if (running.isNotEmpty()) append(" ")
+                                pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = FontStyle.Italic, color = plait.muted))
+                                append(controller.partial); pop()
+                            }
+                        },
+                        style = PlaitType.body.copy(fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.Medium),
+                        color = plait.text, maxLines = 4, overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

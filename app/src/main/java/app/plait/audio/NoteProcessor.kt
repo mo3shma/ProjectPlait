@@ -70,11 +70,10 @@ object NoteProcessor {
         if (note.lines.size < 2) return null
         val status = Ai.status(context)
         if (!status.ready) return null
-        working[note.id] = "Summarising with ${status.label}…"
-        val result = Ai.generate(context, NoteAiPrompt.build(note, status.promptBudget + 400), background = true) ?: return null
-        val text = NoteAiPrompt.render(NoteAiPrompt.parse(result.text))
-        if (text.isBlank()) return null
-        val updated = note.copy(ai = text, aiBy = result.label)
+        working[note.id] = "Reading the transcript with ${status.label}…"
+        // The whole transcript is read (in parts when it is long), and every line of the summary is checked against it.
+        val text = app.plait.ai.NoteSummary.write(context, note) ?: return null
+        val updated = note.copy(ai = text, aiBy = status.label)
         store.update(updated)
         return updated
     }

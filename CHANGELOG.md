@@ -2,6 +2,12 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.22.1: one note, one flowing transcript
+
+- **Pauses no longer split the note.** The transcript used to show every phrase after a pause as its own card. It now reads as paragraphs: phrases join up, and a new paragraph starts only after a real pause (about six seconds) or when one grows long. The live words while recording read the same way. Shared and exported notes too.
+- **Pick the language you speak.** A language button on the record screen and on every voice note ("Transcribe again · English"), with 17 languages or "Any language". Telling Whisper the language makes it much more accurate than letting it guess. For a language other than English, the English-only live words are hidden instead of showing nonsense; Whisper writes the note when you stop.
+- **Summaries read the whole transcript.** The AI used to see only the first part of a long note. Now a long transcript is read in parts, the key points of each part are noted, and the summary, decisions and follow-ups are written from all of them, through the same harness as About: fixed rules, JSON, every line checked against the transcript. It uses your chosen model, not the smallest one, and writes in the note's language. Transcribing again also summarises again.
+
 ## 0.22.0: transcripts that understand you
 
 - **Whisper, one tap away.** The built-in live recogniser is small and English only, so it mishears accents, and its text was what stayed in the note unless Whisper had been picked in Settings. A voice note with only that rough text now shows a card: say whether you mostly speak English, Arabic or both, and get Whisper (Small on most phones, Base on phones with little memory) in one tap. The download carries on in the background.

@@ -188,9 +188,12 @@ fun ActionsDialog(title: String, actions: List<NoteAction>, onDismiss: () -> Uni
 /** The body of [ActionsDialog]: a title and one button per action, in the chosen style. */
 @Composable
 internal fun ActionsMenu(title: String, actions: List<NoteAction>, onDismiss: () -> Unit) {
-    Column(Modifier.fillMaxWidth().popupSurface().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp))
-        actions.forEach { a -> app.plait.ui.MenuAction(a.label, a.icon, { onDismiss(); a.onClick() }, danger = a.danger) }
+        // A long list (languages) scrolls inside the pop-up.
+        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            actions.forEach { a -> app.plait.ui.MenuAction(a.label, a.icon, { onDismiss(); a.onClick() }, danger = a.danger) }
+        }
     }
 }
 

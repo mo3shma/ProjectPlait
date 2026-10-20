@@ -22,8 +22,14 @@ object AiPrefs {
 
     val speechLanguages = listOf(
         "auto" to "Detect automatically", "en" to "English", "ar" to "Arabic", "fr" to "French", "es" to "Spanish",
-        "de" to "German", "tr" to "Turkish", "ur" to "Urdu", "hi" to "Hindi",
+        "de" to "German", "it" to "Italian", "pt" to "Portuguese", "nl" to "Dutch", "tr" to "Turkish", "ru" to "Russian",
+        "fa" to "Persian", "ur" to "Urdu", "hi" to "Hindi", "id" to "Indonesian", "zh" to "Chinese", "ja" to "Japanese", "ko" to "Korean",
     )
+
+    fun languageName(code: String): String = speechLanguages.firstOrNull { it.first == code }?.second?.let { if (code == "auto") "Any language" else it } ?: code
+
+    /** The live words while recording come from a small English-only recogniser, so they are only shown for English. */
+    val liveWordsMakeSense: Boolean get() = speechLang == "en" || speechLang == "auto"
 
     fun load(context: Context) {
         if (loaded) return
