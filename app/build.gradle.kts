@@ -18,11 +18,8 @@ android {
         applicationId = "app.plait"
         minSdk = 26
         targetSdk = 36
-        versionCode = 39
-        versionName = "0.19.0"
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        }
+        versionCode = 40
+        versionName = "0.20.0"
     }
 
     // Releases built by GitHub Actions are signed with the key from the repository's secrets (see
@@ -41,7 +38,9 @@ android {
         release {
             // A release build runs Compose far faster than a debug one. It is signed with the same key every time, so
             // it installs over earlier builds and keeps their data.
-            isMinifyEnabled = false
+            // R8 drops code the app never calls; see proguard-rules.pro for what is kept whole.
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName(if (releaseKeystore != null) "release" else "debug")
         }
     }
@@ -55,6 +54,19 @@ android {
     lint {
         checkReleaseBuilds = false
         abortOnError = false
+    }
+    // CHANGELOG.md travels with the app, for the "What's new" card after an update.
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/changelog"))
+
+    // One APK per kind of processor, so a phone downloads only the native code it can run: plait.apk for 64-bit
+    // phones (nearly all of them) and plait-armv7.apk for older 32-bit ones. The in-app updater picks the right one.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
+        }
     }
     packaging {
         jniLibs {
@@ -91,3 +103,9 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }
+
+val copyChangelog by tasks.registering(Copy::class) {
+    from(rootProject.file("CHANGELOG.md"))
+    into(layout.buildDirectory.dir("generated/changelog"))
+}
+tasks.named("preBuild") { dependsOn(copyChangelog) }

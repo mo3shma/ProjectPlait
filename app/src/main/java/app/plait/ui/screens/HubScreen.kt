@@ -640,6 +640,53 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
+                fold(section, "updates", "Updates and help", "Plait ${app.plait.data.update.Updater.currentVersion(context)}") {
+                item { FoldNote("Plait checks GitHub for a new version twice a day at most and installs it when you say so. The check sends nothing about you.") }
+                item {
+                    HubCard {
+                        val st = app.plait.data.update.Updater.state
+                        var showUpdate by remember { mutableStateOf(false) }
+                        var showNews by remember { mutableStateOf(false) }
+                        Text("Plait ${app.plait.data.update.Updater.currentVersion(context)}", style = PlaitType.bodyStrong, color = plait.text)
+                        Text(
+                            when (st) {
+                                is app.plait.data.update.UpdateState.Checking -> "Checking…"
+                                is app.plait.data.update.UpdateState.UpToDate -> "You have the latest version."
+                                is app.plait.data.update.UpdateState.Available -> "Plait ${st.info.version} is ready to install."
+                                is app.plait.data.update.UpdateState.Downloading -> "Downloading Plait ${st.info.version}…"
+                                is app.plait.data.update.UpdateState.NeedsPermission -> "Waiting for permission to install."
+                                is app.plait.data.update.UpdateState.Installing -> "Installing…"
+                                is app.plait.data.update.UpdateState.Failed -> st.reason
+                                else -> "Tap Check to look for a new version."
+                            },
+                            style = PlaitType.caption, color = plait.muted,
+                        )
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading ||
+                                st is app.plait.data.update.UpdateState.NeedsPermission || (st is app.plait.data.update.UpdateState.Failed && st.info != null)
+                            if (waiting) PlaitButton("Update", { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            else PlaitButton("Check for updates", { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            PlaitButton("What's new", { showNews = true }, size = ButtonSize.Small)
+                            PlaitButton("Take the tour", { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            var auto by remember { mutableStateOf(app.plait.data.update.Updater.autoCheck(context)) }
+                            Column(Modifier.weight(1f)) {
+                                Text("Check for updates by itself", style = PlaitType.bodyStrong, color = plait.text)
+                                Text("When Plait opens, at most twice a day.", style = PlaitType.caption, color = plait.muted)
+                            }
+                            PlaitSwitch(auto, { auto = !auto; app.plait.data.update.Updater.setAutoCheck(context, auto) }, "Check for updates by itself")
+                        }
+                        if (showUpdate) UpdatePrompt(forceOpen = true) { showUpdate = false }
+                        if (showNews) {
+                            val news = remember { app.plait.data.update.WhatsNew.current(context) }
+                            if (news != null) WhatsNewDialog(news) { showNews = false }
+                            else DetailDialog("What's new", { showNews = false }) { Text("The notes for this version aren't in this build.", style = PlaitType.body, color = plait.text) }
+                        }
+                    }
+                }
+                }
+
                 fold(section, "adv", "Advanced", "Read Google directly") {
                 item { FoldNote("Only if you set up Google Cloud yourself (see the README). The steps above need none of this.") }
                 item {

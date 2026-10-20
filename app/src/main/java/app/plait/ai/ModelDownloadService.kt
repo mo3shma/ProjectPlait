@@ -15,6 +15,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import app.plait.MainActivity
+import app.plait.data.update.Updater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,6 +44,7 @@ class ModelDownloadService : Service() {
         ensureChannels(this)
         if (intent?.action == ACTION_CANCEL) {
             ModelCenter.cancelAll(this)
+            Updater.cancel()
         }
         goForeground(progressNotification())
         holdLocks()
@@ -57,7 +59,7 @@ class ModelDownloadService : Service() {
                     val active = ModelCenter.downloading()
                     active.forEach { seen += it.first.id }
                     finished().forEach { notifyReady(it) }
-                    if (active.isEmpty()) break
+                    if (active.isEmpty() && Updater.downloading() == null) break
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, progressNotification())
                     delay(1000)
                 }
@@ -109,11 +111,14 @@ class ModelDownloadService : Service() {
 
     private fun progressNotification(): Notification {
         val active = ModelCenter.downloading()
-        val done = active.sumOf { it.second.done }
-        val total = active.sumOf { it.second.total }.coerceAtLeast(1)
-        val title = when (active.size) {
-            0 -> "Getting the download ready"
-            1 -> "Downloading ${active[0].first.title}"
+        val update = Updater.downloading()
+        val done = active.sumOf { it.second.done } + (update?.done ?: 0L)
+        val total = (active.sumOf { it.second.total } + (update?.info?.bytes ?: 0L)).coerceAtLeast(1)
+        val title = when {
+            update != null && active.isEmpty() -> "Downloading Plait ${update.info.version}"
+            update != null -> "Downloading Plait and ${active.size} model${if (active.size == 1) "" else "s"}"
+            active.isEmpty() -> "Getting the download ready"
+            active.size == 1 -> "Downloading ${active[0].first.title}"
             else -> "Downloading ${active.size} models"
         }
         val cancel = PendingIntent.getService(
@@ -123,8 +128,8 @@ class ModelDownloadService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_PROGRESS)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentTitle(title)
-            .setContentText(if (active.isEmpty()) "Plait keeps downloading in the background." else "${ModelCatalog.formatSize(done)} of ${ModelCatalog.formatSize(total)}")
-            .setProgress(1000, (done * 1000 / total).toInt(), active.isEmpty())
+            .setContentText(if (active.isEmpty() && update == null) "Plait keeps downloading in the background." else "${ModelCatalog.formatSize(done)} of ${ModelCatalog.formatSize(total)}")
+            .setProgress(1000, (done * 1000 / total).toInt(), active.isEmpty() && update == null)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

@@ -272,14 +272,16 @@ footer .wrap{display:flex;gap:12px 20px;flex-wrap:wrap;justify-content:space-bet
 <section id="privacy"><div class="wrap">
   <div class="eyebrow">Privacy and permissions</div>
   <h2>Your calendar is nobody's business.</h2>
-  <p class="lead">No account, no analytics, no ads, no server of its own. Recordings, notes, photos and models stay in the app's storage. The network is used only for calendar links, Google Calendar if you connect it, model downloads you start, and the sync folder you choose.</p>
+  <p class="lead">No account, no analytics, no ads, no server of its own. Recordings, notes, photos and models stay in the app's storage. The network is used only for calendar links, Google Calendar if you connect it, model downloads you start, the sync folder you choose, and a check for new versions of Plait on GitHub (at most twice a day, nothing about you is sent, and it can be switched off).</p>
   <div class="tablebox"><table>
     <tr><th>Permission</th><th>Why it is needed</th></tr>
     <tr><td><code>READ_CALENDAR</code>, <code>WRITE_CALENDAR</code></td><td>Showing your calendars; saving new meetings, edits, reschedules, cancellations and replies</td></tr>
     <tr><td><code>RECORD_AUDIO</code>, <code>FOREGROUND_SERVICE_MICROPHONE</code></td><td>Voice notes, including while the screen is off. Only your own microphone is recorded</td></tr>
     <tr><td><code>POST_NOTIFICATIONS</code>, <code>SCHEDULE_EXACT_ALARM</code></td><td>Meeting alerts with Join, and the evening notes reminder</td></tr>
     <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Putting the alerts back after the phone restarts</td></tr>
-    <tr><td><code>INTERNET</code></td><td>Calendar links, Google Calendar, model downloads and sync, nothing else</td></tr>
+    <tr><td><code>INTERNET</code></td><td>Calendar links, Google Calendar, model downloads, sync and update checks, nothing else</td></tr>
+    <tr><td><code>FOREGROUND_SERVICE_DATA_SYNC</code>, <code>WAKE_LOCK</code></td><td>Keeping a model or update download going when you leave the app</td></tr>
+    <tr><td><code>REQUEST_INSTALL_PACKAGES</code></td><td>Installing Plait's own updates, after you allow it once</td></tr>
     <tr><td>Contacts and photos</td><td>Through Android's own pickers. Plait sees only the contact or picture you pick</td></tr>
   </table></div>
 </div></section>
@@ -288,7 +290,7 @@ footer .wrap{display:flex;gap:12px 20px;flex-wrap:wrap;justify-content:space-bet
   <div class="eyebrow">Install</div>
   <h2>Up and running in a minute.</h2>
   <ol class="steps">
-    <li><b>Download <code>plait.apk</code></b> from the <a href="../../releases/latest" id="rel">latest release</a> on your Android phone (Android 8 or newer).</li>
+    <li><b>Download <code>plait.apk</code></b> from the <a href="../../releases/latest" id="rel">latest release</a> on your Android phone (Android 8 or newer). On an older 32-bit phone, take <code>plait-armv7.apk</code>.</li>
     <li><b>Open it.</b> If Android asks, allow your browser or file manager to install apps.</li>
     <li><b>Tap Use my phone's calendars</b> and allow access. Every account on the phone appears straight away.</li>
     <li><b>Optional:</b> add calendar links or Google in Settings, and pick an AI model under Settings → AI.</li>

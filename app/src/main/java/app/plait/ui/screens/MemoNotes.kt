@@ -1,5 +1,6 @@
 package app.plait.ui.screens
 
+import app.plait.ui.fauxGlass
 import app.plait.ui.plaitCard
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -117,19 +118,28 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> if (uri != null) addPhoto(uri) }
 
     @Composable
-    fun Pill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
-        if (backdrop != null) app.plait.ui.glass.GlassPillButton(label, onClick, backdrop, modifier = modifier, icon = icon, height = 48.dp)
-        else PlaitButton(label, onClick, modifier = modifier, size = ButtonSize.Regular, icon = icon)
+    fun Pill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+        // Clear glass with a light colour of its own, so the four kinds of note are told apart at a glance.
+        val tint = color.copy(alpha = 0.28f)
+        if (backdrop != null) app.plait.ui.glass.GlassPillButton(label, onClick, backdrop, modifier = modifier, icon = icon, tint = tint, height = 48.dp)
+        else androidx.compose.foundation.layout.Row(
+            modifier.height(48.dp).fauxGlass(androidx.compose.foundation.shape.CircleShape, tint).pressable(onClick).padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+        ) {
+            Icon(icon, null, tint = plait.text, modifier = Modifier.size(22.dp))
+            Text(label, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1)
+        }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Two equal pills to a row, so every one has room for its icon and its word.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
             val m = Modifier.weight(1f)
-            if (onRecord != null) Pill("Voice", Icons.Filled.Mic, m, onRecord)
-            Pill("Write", Icons.Filled.Edit, m) { writing = true }
-            Pill("Photo", Icons.Filled.CameraAlt, m) { photoMenu = true }
-            Pill("List", Icons.Filled.Checklist, m) { listing = true }
+            if (onRecord != null) Pill("Voice", Icons.Filled.Mic, m, NoteColors.voice, onRecord)
+            Pill("Write", Icons.Filled.Edit, m, NoteColors.write) { writing = true }
+            Pill("Photo", Icons.Filled.CameraAlt, m, NoteColors.photo) { photoMenu = true }
+            Pill("List", Icons.Filled.Checklist, m, NoteColors.list) { listing = true }
         }
         if (busy) Text(if (lang == OcrLang.Latin) "Reading the picture…" else "Reading the picture. Arabic takes a few seconds.", style = PlaitType.caption, color = plait.muted)
     }
@@ -277,4 +287,12 @@ internal fun EditMemoDialog(memo: Memo, memos: MemoStore, onDismiss: () -> Unit)
         memos.update(memo.copy(text = app.plait.data.memo.Checklist.format(items)))
     }, onDismiss = onDismiss)
     else EditTextDialog("Edit note", memo.text, onSave = { t -> memos.update(memo.copy(text = t.trim())) }, onDismiss = onDismiss)
+}
+
+/** One colour per kind of note, used lightly on the add-note pills. */
+internal object NoteColors {
+    val voice = androidx.compose.ui.graphics.Color(0xFFE8725F)
+    val write = androidx.compose.ui.graphics.Color(0xFF8A96FF)
+    val photo = androidx.compose.ui.graphics.Color(0xFF3FBFA8)
+    val list = androidx.compose.ui.graphics.Color(0xFFF2B35B)
 }

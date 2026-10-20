@@ -19,10 +19,11 @@ import app.plait.ui.theme.mContainerHigh
 import app.plait.ui.theme.LocalIsDark
 
 /**
- * The look of Liquid Glass for small controls, drawn directly: a translucent gradient body, a bright
- * edge that fades from the top-left, and a soft sheen across the top. It samples nothing behind it, so it is
- * cheap and safe to put inside cards and lists (real refraction needs a backdrop layer and is used for the
- * floating bars and the home cards). [tint] colours the glass; leave it unspecified for clear glass.
+ * The look of Liquid Glass for small controls, drawn directly, like the clear glass pills over the home background: a
+ * flat, see-through body (no milky gradient), a crisp light rim that fades from the top-left, and only a hairline of
+ * sheen at the top edge. It samples nothing behind it, so it is cheap and safe inside cards and lists. [tint] colours
+ * the glass: a strong tint (above 0.6) makes a solid coloured button like Join or Record, a light one a coloured pill;
+ * leave it unspecified for clear glass.
  */
 @Composable
 fun Modifier.fauxGlass(shape: Shape, tint: Color = Color.Unspecified, strength: Float = 1f): Modifier {
@@ -33,22 +34,29 @@ fun Modifier.fauxGlass(shape: Shape, tint: Color = Color.Unspecified, strength: 
         val fill = if (tint.isSpecified && tint.alpha > 0.6f) tint.copy(alpha = 1f) else app.plait.ui.theme.LocalPlait.current.surfaceHigh
         return this.clip(shape).background(fill)
     }
-    val base = if (dark) Color.White else Color.Black
-    val top = if (tint.isSpecified) tint.copy(alpha = (tint.alpha * 0.95f).coerceAtMost(1f)) else base.copy(alpha = (if (dark) 0.20f else 0.08f) * strength)
-    val bottom = if (tint.isSpecified) tint.copy(alpha = (tint.alpha * 0.78f).coerceAtMost(1f)) else base.copy(alpha = (if (dark) 0.09f else 0.04f) * strength)
+    val strong = tint.isSpecified && tint.alpha > 0.6f
+    // Clear glass: a flat, light veil, so what is behind still shows and nothing looks foggy.
+    val clear = if (dark) Color.White.copy(alpha = 0.07f * strength) else Color.White.copy(alpha = 0.55f * strength)
     val edge = Brush.linearGradient(
-        listOf(Color.White.copy(alpha = if (dark) 0.70f else 0.95f), Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = if (dark) 0.34f else 0.6f)),
+        listOf(Color.White.copy(alpha = if (dark) 0.55f else 0.95f), Color.White.copy(alpha = if (dark) 0.10f else 0.35f), Color.White.copy(alpha = if (dark) 0.30f else 0.7f)),
         start = Offset.Zero, end = Offset(220f, 220f),
     )
-    // Like the record button: a coloured glow under tinted glass, so it reads as lit from within.
-    val glow = if (!env.reduceMotion && tint.isSpecified && tint.alpha > 0.6f) Modifier.shadow(10.dp, shape, clip = false, ambientColor = tint.copy(alpha = 1f), spotColor = tint.copy(alpha = 1f)) else Modifier
+    // Like the record button: a coloured glow under a solid coloured button, so it reads as lit from within.
+    val glow = if (!env.reduceMotion && strong) Modifier.shadow(10.dp, shape, clip = false, ambientColor = tint.copy(alpha = 1f), spotColor = tint.copy(alpha = 1f)) else Modifier
     return this
         .then(glow)
         .clip(shape)
-        .background(Brush.verticalGradient(listOf(top, bottom)))
+        .background(clear)
+        .then(
+            when {
+                strong -> Modifier.background(Brush.verticalGradient(listOf(tint.copy(alpha = (tint.alpha * 0.98f).coerceAtMost(1f)), tint.copy(alpha = (tint.alpha * 0.86f).coerceAtMost(1f)))))
+                tint.isSpecified -> Modifier.background(tint.copy(alpha = tint.alpha.coerceAtMost(0.4f)))
+                else -> Modifier
+            }
+        )
         .drawBehind {
-            drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = if (dark) 0.26f else 0.55f), Color.Transparent), endY = size.height * 0.5f))
-            drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.White.copy(alpha = if (dark) 0.10f else 0.18f)), startY = size.height * 0.7f))
+            // A hairline of light along the top edge only.
+            drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = if (dark) 0.10f else 0.35f), Color.Transparent), endY = size.height * 0.18f))
         }
         .border(1.dp, edge, shape)
 }

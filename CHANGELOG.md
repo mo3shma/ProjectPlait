@@ -2,6 +2,14 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.20.0: updates in the app, a smaller download, a welcome tour
+
+- **Updates in the app.** Plait checks GitHub for a new version when it opens (at most twice a day, sending nothing about you) and shows a card with what's new. Update now downloads it in the background with progress and hands it to Android's installer, which keeps your notes and settings. The first time, Android asks you to let Plait install apps. Settings → Updates and help can check by hand or switch the automatic check off.
+- **A smaller download.** 85 MB instead of 130 MB. Each APK now carries only the native code for its kind of phone (plait.apk for 64-bit phones, plait-armv7.apk for older 32-bit ones; the updater picks the right one), and unused library code is removed when the app is built.
+- **A welcome tour.** A new install opens with six short pages on what Plait does, ending with connecting the phone's calendars. Settings → Updates and help → Take the tour shows it again.
+- **What's new after each update.** The first time a new version opens, a card lists what changed. It is also in Settings → Updates and help.
+- **Clear buttons, no fog.** Buttons, pills and the search bar are clear glass with a crisp rim, like the glass pills over the home background, instead of a milky gradient. The add-note pills each have a light colour of their own: Voice coral, Write violet, Photo teal, List amber.
+
 ## 0.19.0: brief About, suggested tasks, downloads that keep going
 
 - **About this meeting is one short paragraph.** From the invite: at most two sentences, about 35 words, only what the invite says. With no details in the invite: one careful line from the title ("Likely a check-in on the dashboard"). The guess must share a subject word with the title, so it cannot wander off; with no AI, it reads "Likely about <title>".

@@ -174,6 +174,7 @@ class MainActivity : ComponentActivity() {
                         Launch.event = null
                     }
                 }
+                app.plait.ui.screens.LaunchCards()
                 ShareInbox.pending?.let { shared ->
                     AttachSheet(
                         shared = shared,

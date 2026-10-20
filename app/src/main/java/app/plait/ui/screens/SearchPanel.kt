@@ -1,5 +1,8 @@
 package app.plait.ui.screens
 
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import app.plait.ui.fauxGlass
 import app.plait.ui.plaitCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -117,7 +120,7 @@ internal fun SearchPanel(onOpenAt: (eventId: String, tab: Int) -> Unit) {
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(onSearch = { smart() }),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner ->
-                Box(Modifier.fillMaxWidth().heightIn(min = 52.dp).plaitCard(RoundedCornerShape(26.dp)).padding(horizontal = 18.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
+                Box(Modifier.fillMaxWidth().heightIn(min = 52.dp).fauxGlass(RoundedCornerShape(26.dp), plait.accent.copy(alpha = 0.16f)).padding(horizontal = 18.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
                     if (query.isEmpty()) Text("Search or ask: what did we decide with…", style = PlaitType.body, color = plait.muted, maxLines = 1)
                     inner()
                 }

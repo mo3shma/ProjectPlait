@@ -1,6 +1,7 @@
 # Builds, tests and publishes a release whenever main has a version that isn't released yet.
 # To release: raise versionCode and versionName in app/build.gradle.kts, add a "## <version>: ..." section to
-# CHANGELOG.md, and push to main. The release is tagged v<version> and carries plait.apk.
+# CHANGELOG.md, and push to main. The release is tagged v<version> and carries plait.apk (64-bit phones) and
+# plait-armv7.apk (32-bit phones). The app's own updater reads this release.
 name: Release
 
 on:
@@ -84,14 +85,18 @@ jobs:
       - name: Check the signature
         if: steps.key.outputs.ready == 'true'
         run: |
-          cp app/build/outputs/apk/release/app-release.apk plait.apk
+          # plait.apk is for 64-bit phones (nearly all), plait-armv7.apk for older 32-bit ones.
+          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk plait.apk
+          cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk plait-armv7.apk
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
-          sha1=$("$apksigner" verify --print-certs plait.apk | sed -n 's/.*certificate SHA-1 digest: //p' | head -1 | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
-          echo "Signed with $sha1"
-          if [ "$sha1" != "$EXPECTED_SHA1" ]; then
-            echo "::error::plait.apk is signed with $sha1, not the Plait key $EXPECTED_SHA1. Check the signing secrets."
-            exit 1
-          fi
+          for apk in plait.apk plait-armv7.apk; do
+            sha1=$("$apksigner" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-1 digest: //p' | head -1 | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+            echo "$apk is signed with $sha1"
+            if [ "$sha1" != "$EXPECTED_SHA1" ]; then
+              echo "::error::$apk is signed with $sha1, not the Plait key $EXPECTED_SHA1. Check the signing secrets."
+              exit 1
+            fi
+          done
 
       - name: Publish the release
         if: steps.key.outputs.ready == 'true'
@@ -101,4 +106,4 @@ jobs:
           awk -v v="$v" '$0 ~ "^## "v":" {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
           if [ ! -s notes.md ]; then echo "Android 8 or newer. Download plait.apk below and open it on your phone." > notes.md; fi
           title=$(sed -n "s/^## $v: //p" CHANGELOG.md | head -1)
-          gh release create "v$v" plait.apk --target "$GITHUB_SHA" --title "Plait $v${title:+: $title}" --notes-file notes.md --latest
+          gh release create "v$v" plait.apk plait-armv7.apk --target "$GITHUB_SHA" --title "Plait $v${title:+: $title}" --notes-file notes.md --latest

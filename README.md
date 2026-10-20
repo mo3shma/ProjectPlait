@@ -109,7 +109,7 @@ Writing you didn't ask for, such as the day summary, prep and About, waits for t
 
 Plait isn't on Google Play yet, so you install the APK yourself. It takes about a minute.
 
-1. On your Android phone (Android 8 or newer), download **`plait.apk`** from the [latest release](../../releases/latest).
+1. On your Android phone (Android 8 or newer), download **`plait.apk`** from the [latest release](../../releases/latest). On an older 32-bit phone, take `plait-armv7.apk` instead (if `plait.apk` says it can't be installed, that's the one).
 2. Open it. If Android asks, allow your browser or file manager to install apps.
 3. Open Plait, tap **Use my phone's calendars** and allow access. Every account on the phone appears straight away.
 4. Optional: add calendar links or Google in Settings, and pick an AI model under **Settings → AI on this phone**.
@@ -131,7 +131,7 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
 
 ### Good to know
 
-- **Updating.** Download the new APK and open it. It installs over the old one and keeps your notes and settings.
+- **Updating.** Plait tells you when a new version is out and installs it for you, keeping your notes and settings. The first time, Android asks you to let Plait install apps. You can also check by hand in Settings → Updates and help.
 - **Moving phones.** Settings → You and backups → Export backup, then Import backup on the new phone. Importing only adds what's missing and never deletes anything.
 - **Recording.** Plait records your own microphone only, not the other side of a call. Depending on where you are, recording a conversation can need the other people's consent.
 
@@ -154,7 +154,7 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
 
 ## Privacy and permissions
 
-Plait has no account, no analytics, no ads and no server of its own. Your recordings, notes, photos and models stay in the app's storage on the phone. The network is used for only four things: calendar links, Google Calendar if you connect it, model downloads you start, and the sync folder you choose.
+Plait has no account, no analytics, no ads and no server of its own. Your recordings, notes, photos and models stay in the app's storage on the phone. The network is used for only five things: calendar links, Google Calendar if you connect it, model downloads you start, the sync folder you choose, and a check of GitHub for a new version of Plait (at most twice a day, sending nothing about you; it can be switched off).
 
 | Permission | Why it is needed |
 | --- | --- |
@@ -162,7 +162,9 @@ Plait has no account, no analytics, no ads and no server of its own. Your record
 | `RECORD_AUDIO`, `FOREGROUND_SERVICE_MICROPHONE` | Voice notes, including while the screen is off |
 | `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM` | Meeting alerts with Join, and the evening notes reminder |
 | `RECEIVE_BOOT_COMPLETED` | Putting the alerts back after the phone restarts |
-| `INTERNET` | Calendar links, Google Calendar, model downloads and sync |
+| `INTERNET` | Calendar links, Google Calendar, model downloads, sync and update checks |
+| `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK` | Keeping a model or update download going when you leave the app |
+| `REQUEST_INSTALL_PACKAGES` | Installing Plait's own updates, after you allow it once |
 | Contacts and photos | Through Android's own pickers, so Plait sees only the contact or picture you pick |
 
 ## How it is built
