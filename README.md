@@ -72,7 +72,7 @@ The app holds no client ID or secret. Google recognises it by package name and s
 4. APIs & Services → Credentials → Create credentials → OAuth client ID → **Android**.
    - Package name: `app.plait`
    - SHA-1: the fingerprint of the key that signed the APK you install.
-     - APK built in the Claude cloud session: `77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC`
+     - APK from the Releases page: `77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC`
      - APK built on your own machine: run `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
 5. In Plait open the sliders button → Google account → Turn on, and approve read-only access. Events from three months back to six months ahead appear, from every calendar you have switched on in Google Calendar.
 
