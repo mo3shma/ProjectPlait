@@ -18,6 +18,7 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="Plait"
         android:supportsRtl="true"
         android:theme="@style/Theme.Plait">
@@ -73,6 +74,12 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next_info" />
+        </receiver>
+        <receiver android:name=".widget.NextMeetingWidgetSmall" android:exported="true" android:label="Plait brief, small">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next_small_info" />
         </receiver>
         <provider
             android:name="androidx.core.content.FileProvider"

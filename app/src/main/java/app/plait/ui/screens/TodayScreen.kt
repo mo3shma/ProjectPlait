@@ -48,7 +48,7 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.animation.togetherWith
-import app.plait.ui.PlaitLogo
+import app.plait.ui.PlaitMark
 import androidx.compose.runtime.Composable
 import android.widget.Toast
 import androidx.compose.material.icons.filled.Add
@@ -173,20 +173,18 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             HomeState.prepTried.clear()
             val prep = app.plait.data.prep.PrepStore.get(context)
             prep.entries.filterValues { it.by != "You" }.keys.toList().forEach { prep.clear(it) }
-            MeetingInfoCache.clear(context)
             HomeState.refreshTick++
-            Toast.makeText(context, "Refreshing calendars and rewriting summaries…", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Refreshing calendars…", Toast.LENGTH_SHORT).show()
         }
     }
 
     val tab = HomeState.tab
     val phaseNow = remember(nowMs / 600_000) { app.plait.data.brief.Phase.at(nowMs, zone) }
-    val pager = androidx.compose.foundation.pager.rememberPagerState(
-        initialPage = if (HomeState.page >= 0 && HomeState.pagePhase == phaseNow.ordinal) HomeState.page else phaseNow.ordinal,
-    ) { app.plait.data.brief.Phase.entries.size }
-    LaunchedEffect(pager) {
-        androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { HomeState.page = it; HomeState.pagePhase = phaseNow.ordinal }
+    // Which part of the day the feed shows: the one you are in, or the one last chosen in this part of the day.
+    var phaseIdx by androidx.compose.runtime.saveable.rememberSaveable {
+        androidx.compose.runtime.mutableIntStateOf(if (HomeState.page >= 0 && HomeState.pagePhase == phaseNow.ordinal) HomeState.page else phaseNow.ordinal)
     }
+    LaunchedEffect(phaseIdx) { HomeState.page = phaseIdx; HomeState.pagePhase = phaseNow.ordinal }
     var menuOpen by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
     val scrim by animateFloatAsState(if (menuOpen) 0.45f else 0f, tween(220), label = "scrim")
@@ -214,7 +212,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 label = "home-tab",
             ) { t ->
                 when (t) {
-                    0 -> BriefPage(today, nowMs, tomorrow, ambient, pager, onOpenEvent, onOpenNotes, onOpenHub, calendarAccess)
+                    0 -> BriefPage(today, nowMs, tomorrow, ambient, app.plait.data.brief.Phase.entries[phaseIdx], onOpenEvent, onOpenNotes, onOpenHub, calendarAccess)
                     1 -> CalendarContent(calendarState, calendarEvents, nowMs, zone, ambient, onOpenEvent)
                     else -> NotesLibrary(ambient, onOpenEvent, onOpenAt) { onRecord(it, false) }
                 }
@@ -239,7 +237,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitLogo(40.dp)
+                PlaitMark(40.dp)
                 Text("Plait", style = PlaitType.section.copy(fontSize = 26.sp, lineHeight = 28.sp), color = plait.text)
             }
             if (tab == 1) {
@@ -258,14 +256,14 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
         }
 
         if (tab == 0) {
-            // Morning / Midday / Evening under the icons, as wide as the card, following the swipe.
+            // Morning / Midday / Evening under the icons, as wide as the card; the feed below shows the chosen one.
             Box(Modifier.align(Alignment.TopCenter).widthIn(max = 720.dp).fillMaxWidth().statusBarsPadding().padding(top = 72.dp, start = 18.dp, end = 18.dp)) {
                 GlassTabBar(
                     tabs = phaseTabs,
-                    selected = pager.currentPage,
-                    onSelect = { scope.launch { pager.animateScrollToPage(it) } },
+                    selected = phaseIdx,
+                    onSelect = { phaseIdx = it },
                     backdrop = backdrop,
-                    height = 48.dp,
+                    height = app.plait.ui.ControlHeights.Medium,
                 )
             }
         }
@@ -287,6 +285,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             )
         }
 
+        if (menuOpen) androidx.activity.compose.BackHandler { menuOpen = false }
         if (scrim > 0.001f) {
             Box(
                 Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim))
@@ -294,7 +293,8 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             )
         }
 
-        // One round "+" button with three choices; on a wide screen it sits at the edge of the centred column.
+        // One round "+" button with three choices, as tall as the bar beside it and sharing its bottom inset; on a wide screen it
+        // sits at the edge of the centred column.
         val sideGap = ((LocalConfiguration.current.screenWidthDp - 720) / 2).coerceAtLeast(0).dp
         Box(Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end = 18.dp + sideGap, bottom = 14.dp)) {
             GlassMorphMenu(

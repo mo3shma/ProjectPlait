@@ -9,7 +9,9 @@ import app.plait.data.tasks.AttentionTasks
 import app.plait.data.tasks.Due
 import app.plait.data.tasks.TaskIdea
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -25,7 +27,7 @@ class AttentionTest {
     )
     private fun memo(id: String, event: String, text: String, at: Long = ms(20, 10)) = Memo(id, event, MemoKind.Checklist, at, text)
     private fun idea(id: String, event: String, text: String, at: Long = ms(20, 10)) = TaskIdea(id, "src", event, text, Due.None, at)
-    private fun collect(ideas: List<TaskIdea>, memos: List<Memo>) = AttentionTasks.collect(ideas, memos, { events[it] }, now)
+    private fun collect(ideas: List<TaskIdea>, memos: List<Memo>) = AttentionTasks.collect(ideas, memos, { events[it] }, now, zone)
 
     @Test fun suggestionsAndOpenItemsOfPastMeetings() {
         val out = collect(listOf(idea("i1", "past", "Book a test")), listOf(memo("m1", "past", "[x] Send deck\n[ ] Call Sam")))
@@ -57,7 +59,8 @@ class AttentionTest {
             listOf(idea("i1", "past", "Zeta")),
             listOf(memo("m1", "older", "[ ] Old"), memo("m2", "", "[ ] Newest", ms(21, 8)), memo("m3", "past", "[ ] Alpha")),
         )
-        assertEquals(listOf("Old", "Alpha", "Zeta", "Newest"), out.map { it.text })
+        // Suggestions come before the other open items.
+        assertEquals(listOf("Zeta", "Old", "Alpha", "Newest"), out.map { it.text })
     }
 
     @Test fun ago() {
@@ -74,5 +77,46 @@ class AttentionTest {
         assertNull(AttentionTasks.ticked(list, 0, "Other"))
         assertNull(AttentionTasks.ticked(list, 2, "Done"))
         assertNull(AttentionTasks.ticked(list, 9, "Call Sam"))
+    }
+
+    private fun due(ms: Long) = " \u23F0" + java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(java.time.Instant.ofEpochMilli(ms).atZone(zone))
+
+    @Test fun urgentAtExactly24h() {
+        val out = collect(emptyList(), listOf(memo("m1", "past", "[ ] In: ${due(now + 24 * 3_600_000L)}\n[ ] Out: ${due(now + 24 * 3_600_000L + 60_000L)}\n[ ] Undated")))
+        assertTrue(out.single { it.text.startsWith("In") }.urgent)
+        assertFalse(out.single { it.text.startsWith("Out") }.urgent)
+        assertFalse(out.single { it.text == "Undated" }.urgent)
+        assertEquals(1, AttentionTasks.urgentCount(out))
+    }
+
+    @Test fun urgentFirstOverdueThenSoonest_thenSuggestionsThenRest() {
+        val h = 3_600_000L
+        val out = collect(
+            listOf(idea("i1", "past", "Suggest")),
+            listOf(memo("m1", "past", "[ ] Soon${due(now + 3 * h)}\n[ ] Overdue2${due(now - 48 * h)}\n[ ] Later${due(now + 72 * h)}\n[ ] Overdue1${due(now - 2 * h)}\n[ ] Plain\n[x] Done${due(now - h)}")),
+        )
+        assertEquals(listOf("Overdue2", "Overdue1", "Soon", "Suggest", "Later", "Plain"), out.map { it.text })
+        assertEquals(now - 48 * h, out.first().dueMs)
+        assertNull(out.single { it.text == "Plain" }.dueMs)
+    }
+
+    @Test fun futureMeetingChecklistOnlyIncludesItemsDueWithin24h() {
+        val out = collect(emptyList(), listOf(memo("m1", "future", "[ ] Agenda\n[ ] Prep${due(now + 5 * 3_600_000L)}\n[ ] Far${due(now + 100 * 3_600_000L)}")))
+        assertEquals(listOf("Prep"), out.map { it.text })
+        assertTrue(out.single().urgent)
+    }
+
+    @Test fun dueLabels() {
+        val h = 3_600_000L
+        assertEquals("Overdue by 2 days", AttentionTasks.dueLabel(now - 49 * h, now, zone))
+        assertEquals("Overdue by 1 day", AttentionTasks.dueLabel(now - 30 * h, now, zone))
+        assertEquals("Overdue by 3 h", AttentionTasks.dueLabel(now - 3 * h - 5 * 60_000L, now, zone))
+        assertEquals("Overdue by 20 min", AttentionTasks.dueLabel(now - 20 * 60_000L, now, zone))
+        assertEquals("Due in 5 h", AttentionTasks.dueLabel(now + 5 * h + 1, now, zone))
+        assertEquals("Due in 30 min", AttentionTasks.dueLabel(now + 30 * 60_000L, now, zone))
+        assertEquals("Due today 7:00 PM", AttentionTasks.dueLabel(ms(21, 19), now, zone))
+        assertEquals("Due tomorrow 9:00 AM", AttentionTasks.dueLabel(ms(22, 9), now, zone))
+        assertEquals("Due Mon 5:00 PM", AttentionTasks.dueLabel(ms(26, 17), now, zone))
+        assertEquals("Due Wed 28 Oct, 5:00 PM", AttentionTasks.dueLabel(ms(28, 17), now, zone))
     }
 }

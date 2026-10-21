@@ -38,8 +38,11 @@ import app.plait.ai.ModelState
 import app.plait.ai.OnDeviceAi
 import app.plait.ui.ButtonSize
 import app.plait.ui.ButtonStyle
-import app.plait.ui.PlaitButton
-import app.plait.ui.PlaitChip
+import app.plait.ui.BadgeKind
+import app.plait.ui.PlaitBadge
+import app.plait.ui.ToneStyles
+import app.plait.ui.toneGlass
+import app.plait.ui.toneSurface
 import app.plait.ui.pressable
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
@@ -51,6 +54,7 @@ import kotlinx.coroutines.launch
  * what transcribes voice notes, with the size of every download shown up front. Nothing downloads until you tap it.
  */
 fun LazyListScope.aiSection() {
+    item { BetterVoiceCard() }
     item {
         val context = LocalContext.current
         remember { AiPrefs.load(context); ModelCenter.refresh(context) }
@@ -75,7 +79,8 @@ private fun DefaultsCard() {
     LaunchedEffect(AiPrefs.textChoice, AiPrefs.textModelId, ModelCenter.states.toMap()) { status = Ai.status(context) }
     val speech = ModelCatalog.byId(AiPrefs.speechModelId)?.takeIf { ModelCenter.state(it.id) is ModelState.Installed }
     val search = ModelCatalog.searchModels.firstOrNull { ModelCenter.state(it.id) is ModelState.Installed }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(plait.accent.copy(alpha = 0.14f)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val look = LocalHubLook.current
+    Column(Modifier.fillMaxWidth().toneSurface(RoundedCornerShape(24.dp), look.tone, look.rotation, inner = true, strong = true).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Your defaults", style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = plait.text)
         DefaultRow("Writing", (status?.label ?: "…") + (status?.note?.let { " · $it" } ?: ""), "Summaries, prep, follow-ups, answers, the morning brief")
         DefaultRow("Voice notes", speech?.title ?: "None yet", "Transcripts of everything you record")
@@ -88,7 +93,7 @@ private fun DefaultsCard() {
 private fun DefaultRow(what: String, engine: String, covers: String) {
     Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(what, style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.muted, modifier = Modifier.padding(top = 2.dp))
+            Text(what, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.muted, modifier = Modifier.padding(top = 1.dp))
             Text(engine, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold), color = plait.text, modifier = Modifier.weight(1f))
         }
         Text(covers, style = PlaitType.caption, color = plait.muted)
@@ -126,19 +131,20 @@ private fun ExistingModels() {
         val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.plait.ai.ModelFinder.scanThisPhone(context) }
         if (r.copied.isNotEmpty()) show(r, "on this phone")
     }
-    Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(26.dp)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    val look = LocalHubLook.current
+    Column(Modifier.fillMaxWidth().toneSurface(RoundedCornerShape(24.dp), look.tone, look.rotation, inner = true).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Already have a model?", style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = plait.text)
         Text(
             "Plait never downloads a model it can already find. Point it at files you downloaded earlier and it will copy them in instead of fetching them again.",
             style = PlaitType.body.copy(fontSize = 14.sp, lineHeight = 20.sp), color = plait.text.copy(alpha = 0.85f),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PlaitButton(if (busy) "Looking…" else "Choose a folder", { folder.launch(null) }, size = ButtonSize.Small, enabled = !busy)
-            PlaitButton("Choose files", { files.launch(arrayOf("*/*")) }, size = ButtonSize.Small, enabled = !busy)
-            PlaitButton("Check this phone", { scope.launch { busy = true; val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.plait.ai.ModelFinder.scanThisPhone(context) }; show(r, "on this phone"); busy = false } }, style = ButtonStyle.Quiet, size = ButtonSize.Small, enabled = !busy)
+            HubBtn(if (busy) "Looking…" else "Choose a folder", { folder.launch(null) }, size = ButtonSize.Small, enabled = !busy)
+            HubBtn("Choose files", { files.launch(arrayOf("*/*")) }, size = ButtonSize.Small, enabled = !busy)
+            HubBtn("Check this phone", { scope.launch { busy = true; val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.plait.ai.ModelFinder.scanThisPhone(context) }; show(r, "on this phone"); busy = false } }, style = ButtonStyle.Quiet, size = ButtonSize.Small, enabled = !busy)
         }
         if (drop != null) Text("Or copy the files over USB into: $drop", style = PlaitType.caption, color = plait.muted)
-        note?.let { Text(it, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.accent) }
+        note?.let { Text(it, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.text) }
     }
 }
 
@@ -154,15 +160,20 @@ private fun TextAiCards() {
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Summaries and answers", style = PlaitType.bodyStrong, color = plait.text)
-        status?.let { Text("Using now: ${it.label}" + (it.note?.let { n -> " · $n" } ?: ""), style = PlaitType.caption, color = plait.accent) }
+        status?.let {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                PlaitBadge("Using now", BadgeKind.Included)
+                Text(it.label + (it.note?.let { n -> " · $n" } ?: ""), style = PlaitType.caption, color = plait.muted, modifier = Modifier.weight(1f))
+            }
+        }
 
         OptionCard(
-            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Auto, title = "Automatic", badge = if (AiPrefs.textChoice == AiPrefs.TextChoice.Auto) "Default" else "Recommended",
+            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Auto, title = "Automatic",
             body = "Gemini Nano when the phone has it, then a downloaded model, then Plait's own rules.",
             onSelect = { AiPrefs.setTextChoice(context, AiPrefs.TextChoice.Auto) },
         )
         OptionCard(
-            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Nano, title = "Gemini Nano", badge = if (AiPrefs.textChoice == AiPrefs.TextChoice.Nano) "Default" else "Built into Android",
+            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Nano, title = "Gemini Nano", badges = listOf(BadgeSpec("Built into Android", BadgeKind.Info)),
             body = "Google's model that ships with some recent phones. Free, private, and no download inside Plait.",
             meta = "Size is set by Android and isn't reported to apps.",
             onSelect = { AiPrefs.setTextChoice(context, AiPrefs.TextChoice.Nano) },
@@ -170,8 +181,8 @@ private fun TextAiCards() {
             when (nano) {
                 OnDeviceAi.State.Ready -> StatusLine("Ready on this phone")
                 OnDeviceAi.State.Downloadable, OnDeviceAi.State.Downloading -> {
-                    StatusLine("Your phone can run it but Android hasn't fetched it yet")
-                    PlaitButton(nanoNote ?: "Download with Android", {
+                    Text("Your phone can run it but Android hasn't fetched it yet", style = PlaitType.caption, color = plait.muted)
+                    HubBtn(nanoNote ?: "Download with Android", {
                         scope.launch {
                             nanoNote = "Downloading…"
                             OnDeviceAi.download().collect { s ->
@@ -185,8 +196,8 @@ private fun TextAiCards() {
                         }
                     }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = nanoNote == null)
                 }
-                OnDeviceAi.State.Unavailable -> StatusLine("Not available on this phone", warn = true)
-                null -> StatusLine("Checking…")
+                OnDeviceAi.State.Unavailable -> StatusLine("Not available on this phone", BadgeKind.Warning)
+                null -> StatusLine("Checking…", BadgeKind.Info)
             }
         }
         ModelCatalog.textModels.filter { it.supported }.forEach { spec ->
@@ -197,9 +208,8 @@ private fun TextAiCards() {
             )
         }
         OptionCard(
-            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Rules, title = "Plait's own rules only", badge = if (AiPrefs.textChoice == AiPrefs.TextChoice.Rules) "Default" else null,
+            selected = AiPrefs.textChoice == AiPrefs.TextChoice.Rules, title = "Plait's own rules only", badges = listOf(BadgeSpec("Default", BadgeKind.Default), BadgeSpec("0 MB", BadgeKind.Size)),
             body = "No AI model. Plait picks out dates, decisions, risks and follow-ups with fixed rules. Fast and light, but it can't write sentences.",
-            meta = "0 MB",
             onSelect = { AiPrefs.setTextChoice(context, AiPrefs.TextChoice.Rules) },
         )
     }
@@ -211,22 +221,21 @@ private fun SpeechCards() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Voice notes", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 8.dp))
         Text(
-            "A Whisper model writes your words live while you record, one phrase after each pause, then re-reads the whole recording for a better transcript. It works in many languages. Without one, recordings are saved as audio only.",
+            "Recording only records. When you stop, a Whisper model writes the transcript from the saved audio, then your writing model summarises it and suggests tasks. It works in many languages. Without one, recordings are saved as audio only.",
             style = PlaitType.caption, color = plait.muted,
         )
         OptionCard(
-            selected = AiPrefs.speechModelId == null, title = "No transcription", badge = if (AiPrefs.speechModelId == null) "Default" else "Nothing to download",
-            body = "The recording is saved as audio. Pick a Whisper model to have it written down.",
-            meta = "Nothing to download",
+            selected = AiPrefs.speechModelId == null, title = "No transcription", badges = noTranscriptionBadges(AiPrefs.speechModelId == null),
+            body = "Nothing chosen. Plait uses a Whisper model if one is installed; otherwise the recording is saved as audio.",
             onSelect = { AiPrefs.setSpeechModel(context, null) },
         )
         ModelCatalog.speechModels.forEach { spec ->
             ModelOption(spec, selected = AiPrefs.speechModelId == spec.id, onSelect = { AiPrefs.setSpeechModel(context, spec.id) })
         }
-        Text("Language of your voice notes", style = PlaitType.monoSmall, color = plait.muted, modifier = Modifier.padding(top = 4.dp))
+        Text("Language of your voice notes", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 4.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             (AiPrefs.speechLanguages + AiPrefs.mixedLanguages).forEach { (code, name) ->
-                PlaitChip(name, AiPrefs.speechLang == code, { AiPrefs.setSpeechLang(context, code) })
+                HubChip(name, AiPrefs.speechLang == code, { AiPrefs.setSpeechLang(context, code) })
             }
         }
     }
@@ -255,9 +264,7 @@ private fun StorageNote() {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun StatusLine(text: String, warn: Boolean = false) {
-    Text(text, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = if (warn) plait.signal else plait.accent)
-}
+private fun StatusLine(text: String, kind: BadgeKind = BadgeKind.Included) = PlaitBadge(text, kind)
 
 /** A downloadable model: size up front, what it is good and bad at, and download, cancel or delete. */
 @Composable
@@ -268,7 +275,7 @@ private fun ModelOption(spec: ModelSpec, selected: Boolean, onSelect: (() -> Uni
     val installed = state is ModelState.Installed
     OptionCard(
         selected = selected && installed || (onSelect == null && installed), title = spec.title,
-        badge = if (selected && installed || (onSelect == null && installed)) "Default · ${spec.sizeLabel}" else spec.sizeLabel,
+        badges = modelBadges(spec.sizeLabel, isDefault = selected && installed && onSelect != null, included = onSelect == null && installed),
         body = spec.blurb,
         meta = buildString {
             append(spec.strengths).append(" ").append(spec.limits)
@@ -279,22 +286,23 @@ private fun ModelOption(spec: ModelSpec, selected: Boolean, onSelect: (() -> Uni
     ) {
         when (state) {
             is ModelState.Installed -> {
-                StatusLine("Downloaded · ${spec.sizeLabel}")
-                PlaitButton("Delete (frees ${spec.sizeLabel})", { ModelCenter.delete(context, spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                StatusLine("Downloaded")
+                HubBtn("Delete (frees ${spec.sizeLabel})", { ModelCenter.delete(context, spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
             is ModelState.Downloading -> {
                 val frac = if (state.total > 0) (state.done.toFloat() / state.total).coerceIn(0f, 1f) else 0f
-                Box(Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(plait.surfaceHigh)) {
-                    Box(Modifier.fillMaxWidth(frac).height(8.dp).clip(CircleShape).background(plait.accent))
+                val tone = LocalHubLook.current.tone
+                Box(Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(plait.text.copy(alpha = 0.12f))) {
+                    Box(Modifier.fillMaxWidth(frac).height(8.dp).clip(CircleShape).background(tone.deep))
                 }
-                StatusLine("${ModelCatalog.formatSize(state.done)} of ${ModelCatalog.formatSize(state.total)} · ${(frac * 100).toInt()}%")
+                StatusLine("${ModelCatalog.formatSize(state.done)} of ${ModelCatalog.formatSize(state.total)} · ${(frac * 100).toInt()}%", BadgeKind.Size)
                 Text("Keep Plait open. It carries on from here if interrupted.", style = PlaitType.caption, color = plait.muted)
-                PlaitButton("Cancel", { ModelCenter.cancel(context, spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                HubBtn("Cancel", { ModelCenter.cancel(context, spec.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
             else -> {
-                (state as? ModelState.Failed)?.let { Text(it.reason, style = PlaitType.caption, color = plait.signal) }
+                (state as? ModelState.Failed)?.let { StatusLine("Download failed", BadgeKind.Warning); Text(it.reason, style = PlaitType.caption, color = plait.muted) }
                 val metered = ModelCenter.isMetered(context) && spec.bytes > 50_000_000L
-                PlaitButton(
+                HubBtn(
                     if (metered && confirmData) "Download ${spec.sizeLabel} on mobile data" else "Download · ${spec.sizeLabel}",
                     { if (metered && !confirmData) confirmData = true else { confirmData = false; ModelCenter.download(context, spec) } },
                     style = ButtonStyle.Primary, size = ButtonSize.Small,
@@ -305,29 +313,29 @@ private fun ModelOption(spec: ModelSpec, selected: Boolean, onSelect: (() -> Uni
     }
 }
 
-/** One choice in a list: radio on the left, title and size on the first line, details beneath. */
+/** One choice in a list: a tone-tinted selector on the left, title and badges on top, details beneath. */
 @Composable
 private fun OptionCard(
     selected: Boolean, title: String, body: String, onSelect: (() -> Unit)?,
-    badge: String? = null, meta: String? = null, extra: @Composable (() -> Unit)? = null,
+    badges: List<BadgeSpec> = emptyList(), meta: String? = null, extra: @Composable (() -> Unit)? = null,
 ) {
+    val look = LocalHubLook.current
+    val ink = ToneStyles.ink(app.plait.ui.theme.LocalIsDark.current)
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp))
-            .background(if (selected) plait.accent.copy(alpha = 0.16f) else plait.surface)
+        Modifier.fillMaxWidth()
+            .toneSurface(RoundedCornerShape(24.dp), look.tone, look.rotation, inner = true, strong = selected)
             .then(if (onSelect != null) Modifier.pressable(onSelect, androidx.compose.ui.semantics.Role.RadioButton, lift = 3.dp) else Modifier)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(
-                Modifier.padding(top = 2.dp).size(22.dp).clip(CircleShape)
-                    .background(if (selected) plait.accent else plait.surfaceHigh),
-                contentAlignment = Alignment.Center,
-            ) { if (selected) Box(Modifier.size(8.dp).background(plait.onAccent, CircleShape)) }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(Modifier.padding(top = 1.dp).size(24.dp).toneGlass(CircleShape, look.tone, selected), contentAlignment = Alignment.Center) {
+                if (selected) Box(Modifier.size(10.dp).background(ink, CircleShape))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(title, style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = plait.text)
-                if (badge != null) {
-                    Text(badge, style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.accent)
+                if (badges.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    badges.forEach { PlaitBadge(it.label, it.kind) }
                 }
                 Text(body, style = PlaitType.body.copy(fontSize = 14.sp, lineHeight = 20.sp), color = plait.text.copy(alpha = 0.85f))
             }
@@ -336,3 +344,14 @@ private fun OptionCard(
         extra?.invoke()
     }
 }
+
+internal data class BadgeSpec(val label: String, val kind: BadgeKind)
+
+/** "Default" for the model in use, "Included" for an optional one that is on the phone, and always its size. */
+internal fun modelBadges(sizeLabel: String, isDefault: Boolean, included: Boolean = false): List<BadgeSpec> = listOfNotNull(
+    if (included) BadgeSpec("Included", BadgeKind.Included) else if (isDefault) BadgeSpec("Default", BadgeKind.Default) else null,
+    BadgeSpec(sizeLabel, BadgeKind.Size),
+)
+
+internal fun noTranscriptionBadges(selected: Boolean): List<BadgeSpec> =
+    (if (selected) listOf(BadgeSpec("Default", BadgeKind.Default)) else emptyList()) + BadgeSpec("Nothing to download", BadgeKind.Info)

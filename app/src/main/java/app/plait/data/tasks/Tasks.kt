@@ -11,6 +11,7 @@ import app.plait.data.memo.Checklist
 import app.plait.data.memo.Memo
 import app.plait.data.memo.MemoKind
 import app.plait.data.memo.MemoStore
+import app.plait.data.week.WorkWeek
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.DayOfWeek
@@ -124,6 +125,23 @@ Example: {"tasks": [{"task": "Send the prototype link to the team", "due": "toda
         }
     }
 
+    /**
+     * The concrete due time for a suggestion when it is added: today 6 PM (2 hours from now if that has passed),
+     * tomorrow 5 PM, the last work day of the week at 5 PM (tomorrow 5 PM if that is today or past), next work week's
+     * first day at 10 AM. None stays null.
+     */
+    fun dueMs(due: Due, nowMs: Long, zone: ZoneId = ZoneId.systemDefault(), weekStart: DayOfWeek = WorkWeek.startDay): Long? {
+        val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
+        fun at(d: LocalDate, h: Int) = d.atTime(LocalTime.of(h, 0)).atZone(zone).toInstant().toEpochMilli()
+        return when (due) {
+            Due.None -> null
+            Due.Today -> at(today, 18).takeIf { it > nowMs } ?: (nowMs / 60_000L * 60_000L + 2 * 3_600_000L)
+            Due.Tomorrow -> at(today.plusDays(1), 17)
+            Due.ThisWeek -> WorkWeek.lastWorkDay(today, weekStart).takeIf { it.isAfter(today) }?.let { at(it, 17) } ?: at(today.plusDays(1), 17)
+            Due.NextWeek -> at(WorkWeek.nextWorkWeek(today, weekStart).first(), 10)
+        }
+    }
+
     fun id(sourceId: String, text: String): String =
         "t" + (sourceId + "|" + text.lowercase().replace(Regex("\\W+"), " ").trim()).hashCode().toUInt().toString(16)
 }
@@ -173,24 +191,54 @@ object TaskIdeas {
     }
 }
 
-/** Adding a task: it joins the meeting's checklist (a new one if there is none) and gets a reminder. */
+/** Adding a task: it joins the meeting's checklist (a new one if there is none) with a due time, and gets a reminder. */
 object Tasks {
+    /** One reminder per task line, whether it came from a suggestion or was dated in the checklist. */
+    fun reminderId(eventId: String, text: String) = TaskSuggester.id(eventId, text)
+
     fun add(context: Context, idea: TaskIdea, title: String) {
         val app = context.applicationContext
-        addToChecklist(app, idea.eventId, idea.text)
+        val now = System.currentTimeMillis()
+        val dueMs = TaskSuggester.dueMs(idea.due, now)
+        addToChecklist(app, idea.eventId, idea.text, dueMs)
         TaskIdeas.decide(app, idea)
-        TaskReminders.schedule(app, idea.id, idea.eventId, idea.text, title, TaskSuggester.remindAt(idea.due, System.currentTimeMillis()))
+        TaskReminders.schedule(app, reminderId(idea.eventId, idea.text), idea.eventId, idea.text, title, dueMs ?: TaskSuggester.remindAt(idea.due, now))
         SyncEngine.requestAsync(app, force = true)
     }
 
-    fun addToChecklist(context: Context, eventId: String, text: String) {
+    fun addToChecklist(context: Context, eventId: String, text: String, dueMs: Long? = null) {
         val store = MemoStore.get(context)
         val list = store.forEvent(eventId).filter { it.kind == MemoKind.Checklist }.maxByOrNull { it.createdAt }
         if (list == null) {
-            store.add(Memo(UUID.randomUUID().toString(), eventId, MemoKind.Checklist, System.currentTimeMillis(), Checklist.format(listOf(Checklist.Item(text, false)))))
-        } else if (Checklist.parse(list.text).none { it.text.equals(text, true) }) {
-            store.update(list.copy(text = Checklist.format(Checklist.parse(list.text) + Checklist.Item(text, false))))
+            store.add(Memo(UUID.randomUUID().toString(), eventId, MemoKind.Checklist, System.currentTimeMillis(), Checklist.format(listOf(Checklist.Item(text, false, dueMs)))))
+        } else {
+            val items = Checklist.parse(list.text)
+            val i = items.indexOfFirst { it.text.equals(text, true) }
+            if (i < 0) store.update(list.copy(text = Checklist.format(items + Checklist.Item(text, false, dueMs))))
+            else if (dueMs != null && items[i].dueMs == null) store.update(list.copy(text = Checklist.format(items.mapIndexed { j, it -> if (j == i) it.copy(dueMs = dueMs) else it })))
         }
+    }
+
+    /** Reminders to drop and to set when a checklist goes from [old] to [new]: only open dated lines have one. */
+    internal data class ReminderPlan(val cancel: List<String>, val schedule: List<Checklist.Item>)
+
+    internal fun reminderPlan(old: List<Checklist.Item>, new: List<Checklist.Item>, nowMs: Long): ReminderPlan {
+        fun dated(l: List<Checklist.Item>) = l.filter { !it.done && it.dueMs != null }.associateBy { it.text.lowercase() }
+        val was = dated(old); val now = dated(new)
+        val schedule = now.values.filter { was[it.text.lowercase()]?.dueMs != it.dueMs && it.dueMs!! > nowMs }
+        val set = schedule.map { it.text.lowercase() }.toSet()
+        val cancel = was.values.filter { it.text.lowercase() !in set && was[it.text.lowercase()]?.dueMs != now[it.text.lowercase()]?.dueMs }.map { it.text }
+        return ReminderPlan(cancel, schedule)
+    }
+
+    /** Keeps task reminders in step with a checklist memo that was added, edited or deleted (either side may be null). */
+    fun syncReminders(context: Context, old: Memo?, new: Memo?) {
+        val m = new ?: old ?: return
+        if (m.kind != MemoKind.Checklist) return
+        val plan = reminderPlan(old?.let { Checklist.parse(it.text) }.orEmpty(), new?.let { Checklist.parse(it.text) }.orEmpty(), System.currentTimeMillis())
+        val title = Calendars.find(m.eventId)?.title.orEmpty()
+        plan.cancel.forEach { TaskReminders.cancel(context, reminderId(m.eventId, it)) }
+        plan.schedule.forEach { TaskReminders.schedule(context, reminderId(m.eventId, it.text), m.eventId, it.text, title, it.dueMs!!) }
     }
 
     /** Ticks the task off in the meeting's checklists. */

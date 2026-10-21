@@ -5,16 +5,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+/** A fresh install uses Plait's own rules; a saved choice (including the old "Auto") is kept. */
+internal fun textChoiceOf(saved: String?): AiPrefs.TextChoice =
+    runCatching { AiPrefs.TextChoice.valueOf(saved.orEmpty()) }.getOrDefault(AiPrefs.TextChoice.Rules)
+
 /** Which AI the user wants for writing and for speech. Kept on the phone. */
 object AiPrefs {
     enum class TextChoice(val label: String) {
         Auto("Automatic"), Nano("Gemini Nano"), Local("Downloaded model"), Rules("Plait's own rules only"),
     }
 
-    var textChoice by mutableStateOf(TextChoice.Auto); private set
+    var textChoice by mutableStateOf(TextChoice.Rules); private set
     /** Which downloaded text model to use when [textChoice] is Local. */
     var textModelId by mutableStateOf<String?>(null); private set
-    /** Which downloaded speech model transcribes voice notes afterwards, or null for none (the recording is then saved as audio only). */
+    /** Which downloaded speech model transcribes voice notes afterwards, or null for none (a recording is then saved as audio only, unless a Whisper model is installed). */
     var speechModelId by mutableStateOf<String?>(null); private set
     /** "auto" lets Whisper work out the language, otherwise a code like "en" or "ar". */
     var speechLang by mutableStateOf("auto"); private set
@@ -40,7 +44,7 @@ object AiPrefs {
         if (loaded) return
         loaded = true
         val p = prefs(context)
-        textChoice = runCatching { TextChoice.valueOf(p.getString("ai_text", "Auto").orEmpty()) }.getOrDefault(TextChoice.Auto)
+        textChoice = textChoiceOf(p.getString("ai_text", null))
         textModelId = p.getString("ai_text_model", null)
         speechModelId = p.getString("ai_speech_model", null)
         speechLang = p.getString("ai_speech_lang", "auto").orEmpty().ifBlank { "auto" }

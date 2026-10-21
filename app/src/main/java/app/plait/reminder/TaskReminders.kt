@@ -58,6 +58,14 @@ object TaskReminders {
         if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, e.at, pi) else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, e.at, pi)
     }
 
+    /** Drops the reminder for [id] (task ticked off, deleted, or its due date cleared or moved past). */
+    fun cancel(context: Context, id: String) {
+        val all = entries(context)
+        all.firstOrNull { it.id == id }?.let { (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(pending(context, ACTION_FIRE, it)) }
+        save(context, all.filter { it.id != id })
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(code(id))
+    }
+
     /** After a restart: every reminder still to come is set again; ones missed while the phone was off fire now. */
     fun scheduleAll(context: Context) {
         val now = System.currentTimeMillis()
@@ -68,7 +76,7 @@ object TaskReminders {
         val e = Entry(i.getStringExtra("id") ?: return, i.getStringExtra("event").orEmpty(), i.getStringExtra("text").orEmpty(), i.getStringExtra("title").orEmpty(), 0)
         Reminders.ensureChannel(context)
         val n = NotificationCompat.Builder(context, Reminders.CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_plait)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(e.text)
             .setContentText(if (e.title.isNotBlank()) "Follow-up from ${e.title}" else "Follow-up")
             .setCategory(NotificationCompat.CATEGORY_REMINDER)

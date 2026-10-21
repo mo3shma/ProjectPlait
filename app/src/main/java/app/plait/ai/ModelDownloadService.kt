@@ -1,5 +1,6 @@
 package app.plait.ai
 
+import app.plait.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -126,7 +127,7 @@ class ModelDownloadService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         return NotificationCompat.Builder(this, CHANNEL_PROGRESS)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(if (active.isEmpty() && update == null) "Plait keeps downloading in the background." else "${ModelCatalog.formatSize(done)} of ${ModelCatalog.formatSize(total)}")
             .setProgress(1000, (done * 1000 / total).toInt(), active.isEmpty() && update == null)
@@ -141,7 +142,7 @@ class ModelDownloadService : Service() {
 
     private fun notifyReady(spec: ModelSpec) {
         val n = NotificationCompat.Builder(this, CHANNEL_DONE)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("${spec.title} is ready")
             .setContentText("Downloaded and in use. Nothing leaves your phone.")
             .setAutoCancel(true)

@@ -51,7 +51,7 @@ object ShareOut {
             about = if (brief.aboutIsGuess) "" else brief.about, agenda = brief.agenda,
             prep = PrepStore.get(context).entries[ev.id]?.text,
             voice = notes.map { VoiceBlock(TimeFmt.stamp(it.createdAt), NoteDigest.text(it).ifBlank { null }, app.plait.data.Transcript.text(it.lines)) },
-            written = memos.filter { it.text.isNotBlank() }.map { TextBlock(TimeFmt.stamp(it.createdAt), if (it.kind == MemoKind.Photo) "Photo" else "Note", it.text) },
+            written = memos.filter { it.text.isNotBlank() }.map { TextBlock(TimeFmt.stamp(it.createdAt), if (it.kind == MemoKind.Photo) "Photo" else "Note", if (it.kind == MemoKind.Checklist) app.plait.data.memo.Checklist.export(it.text) else it.text) },
             emails = emails.map { it.subject.ifBlank { "(no subject)" } + if (it.from.isNotBlank()) " — ${it.from}" else "" },
             followups = Followups.collect(notes, memos).filter { FollowupState.isOpen(it.id, now) }.map { it.text },
         )

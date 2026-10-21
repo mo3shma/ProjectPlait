@@ -2,6 +2,20 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.26.0: a card feed, glass everywhere, a new logo
+
+- **A new Home.** The brief is now a vertical feed of cards that are all the same size. The active card takes three quarters of the screen and its neighbour fades into the other quarter. Swipe and the next card settles in with a spring. The tasks card has its own colours, and a clear day shows a short productivity quote from a well-known business leader, athlete or scientist.
+- **Voice notes are written after you stop.** No more live words while recording, which saves battery. When you stop, Whisper writes the transcript, then your chosen model (Qwen) writes the summary and suggests tasks. By default Plait uses its own rules and no transcription; the Notes tab and Settings suggest Whisper Turbo and Qwen3 0.6B for the best results, with one tap to get both.
+- **A new recording screen.** Colourful waves that move with your voice, drawn at your screen's full refresh rate.
+- **Tasks have due dates.** Set a date and time on any task, from a checklist or a suggestion. Reminders fire at the due time, and anything due within 24 hours, or overdue, shows up in "Needs your attention".
+- **About this meeting stays.** The paragraph is kept. Tapping refresh with the same AI engine does nothing unless new notes or tasks were linked to the meeting, and the Home refresh no longer rewrites it. When the AI has notes or tasks to go on, it uses them.
+- **Two widgets.** A 4x2 and a 2x2, both in translucent glass, showing the next meeting, a Join button, and what comes after. No countdown, so they use less battery.
+- **A new logo.** A three-strand braid in indigo, coral and gold, on the app icon (including themed icons), notifications, the splash screen and inside the app.
+- **Glass buttons and menus.** Buttons, chips, labels and badges share the tinted-glass look of the Notes tab. The "+" menu and dialogs are glass panels. Every control uses one height scale, which fixes the "+" button not lining up with the bottom bar in Material style.
+- **Settings redesigned** as tinted glass rows with icons, matching the Notes tab.
+- Smaller fixes: the double space in "Weekly Call  at 1:30 PM", and the week recap now waits for your calendars to load instead of saying the week was empty.
+- Not yet checked on a phone: Material style and dark mode on the new screens, and the widgets on a home screen.
+
 ## 0.25.0: two cards, a work-week recap, next-week briefs
 
 - **Two cards on Morning and Midday.** Under the meetings brief there is now a second card in a contrasting colour (coral in the morning, mint at midday) called "Needs your attention". It lists the tasks you have not cleared: suggestions waiting for you to add or dismiss them, and unchecked lines of your checklists on meetings that have already started, stalest first. Tick, add or dismiss them right there, or tap one to open its meeting.

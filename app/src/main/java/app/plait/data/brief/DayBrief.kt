@@ -81,9 +81,9 @@ object DayBriefBuilder {
 
         val headline = when {
             timed.isNotEmpty() && left.isEmpty() -> "That's a wrap."
-            running != null -> "In ${running.title.take(40)} now."
+            running != null -> "In ${tidyTitle(running.title).take(40)} now."
             next != null && (next.startMs - nowMs) / 60_000 < 15 ->
-                "${next.title.take(40)} starts in ${((next.startMs - nowMs) / 60_000).coerceAtLeast(1)} min."
+                "${tidyTitle(next.title).take(40)} starts in ${((next.startMs - nowMs) / 60_000).coerceAtLeast(1)} min."
             left.size == 1 -> "One meeting left."
             left.isNotEmpty() -> "${num(left.size)} meetings ahead."
             else -> "Only all-day items today."
@@ -93,7 +93,7 @@ object DayBriefBuilder {
         if (timed.isNotEmpty() && left.isEmpty()) {
             parts.add("${timed.size} meeting${if (timed.size == 1) "" else "s"} done. Nothing else today.")
         } else if (left.isNotEmpty()) {
-            if (running == null && next != null) parts.add("Next is ${next.title} at ${hm(next.startMs, zone)}.")
+            if (running == null && next != null) parts.add("Next is ${tidyTitle(next.title)} at ${hm(next.startMs, zone)}.")
             if (external > 0) parts.add("$external with people outside your organisation.")
             val b2b = backToBack(left)
             if (b2b >= 3) parts.add("$b2b back to back from ${hm(left.first().startMs, zone)}.")
@@ -104,7 +104,7 @@ object DayBriefBuilder {
         }
         val prep = flags.entries.firstOrNull { briefs[it.key]?.kind != null && (left.any { e -> e.id == it.key }) }
         if (prep != null) {
-            val title = today.first { it.id == prep.key }.title
+            val title = tidyTitle(today.first { it.id == prep.key }.title)
             parts.add("Prep: $title — ${prep.value.lowercase().replaceFirstChar { it.uppercase() }}.")
         }
         return DayBrief(headline, parts.joinToString(" "), flags, load, startHour, endHour)
@@ -151,7 +151,7 @@ object DayBriefPrompt {
             val b = briefs[ev.id]
             val at = if (ev.allDay) "all day" else Instant.ofEpochMilli(ev.startMs).atZone(zone).format(clock)
             val extra = listOfNotNull(b?.kind?.label, b?.withLine?.takeIf { it.isNotBlank() }, day.flags[ev.id]).joinToString("; ")
-            "- $at ${ev.title}" + if (extra.isNotBlank()) " ($extra)" else ""
+            "- $at ${tidyTitle(ev.title)}" + if (extra.isNotBlank()) " ($extra)" else ""
         }
         return "You write a short morning briefing for a busy person. Use only the facts below. Do not invent anything.\n" +
             "Write 2 or 3 plain sentences, no lists, no greeting. Say what the day looks like and what needs attention first.\n\n" +

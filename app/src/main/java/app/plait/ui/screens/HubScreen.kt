@@ -24,6 +24,29 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.ui.graphics.vector.ImageVector
+import app.plait.ui.BadgeKind
+import app.plait.ui.GlassTone
+import app.plait.ui.PlaitBadge
+import app.plait.ui.ToneIcon
+import app.plait.ui.ToneStyles
+import app.plait.ui.lighter
+import app.plait.ui.toneGlass
+import app.plait.ui.toneSurface
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -42,6 +65,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -132,12 +156,15 @@ internal fun rememberGoogleSync(): () -> Unit {
 internal fun PlaitSwitch(on: Boolean, onToggle: () -> Unit, label: String) {
     if (app.plait.ui.glass.LocalGlassEnv.current.material) { app.plait.ui.material.MSwitch(on, onToggle, label); return }
     val x by animateDpAsState(if (on) 22.dp else 0.dp, label = "switch")
+    val tone = LocalHubLook.current.tone
+    val dark = app.plait.ui.theme.LocalIsDark.current
+    val flat = app.plait.ui.glass.LocalGlassEnv.current.solid
+    val track = ToneStyles.resolve(tone, dark, selected = on, rimStrength = if (flat) ToneStyles.FLAT_RIM else 1f)
     Box(
-        Modifier.size(width = 54.dp, height = 32.dp).clip(CircleShape)
-            .background(if (on) plait.accent else plait.surfaceHigh)
+        Modifier.size(width = 54.dp, height = 32.dp).toneGlass(CircleShape, if (on) track.copy(fill = tone.deep.copy(alpha = if (dark) 0.75f else 0.85f)) else track.lighter(0.8f))
             .pressable(onToggle, Role.Switch).padding(3.dp),
     ) {
-        Box(Modifier.offset(x = x).size(26.dp).background(if (on) plait.onAccent else plait.muted, CircleShape))
+        Box(Modifier.offset(x = x).size(24.dp).background(if (on) Color.White else track.ink.copy(alpha = 0.55f), CircleShape))
     }
 }
 
@@ -240,9 +267,13 @@ fun HubScreen(onBack: () -> Unit) {
             AiPrefs.TextChoice.Local -> app.plait.ai.ModelCatalog.byId(p.textModelId)?.title ?: "Downloaded model"
             AiPrefs.TextChoice.Rules -> "Rules only"
         }
-        "Writing: $text · Voice: " + (app.plait.ai.ModelCatalog.byId(p.speechModelId)?.title ?: "none yet")
+        aiSummaryText(text, app.plait.ai.ModelCatalog.byId(p.speechModelId)?.title)
     }
-    val remindersSummary = if (app.plait.reminder.ReminderPrefs.before(context)) "${app.plait.reminder.ReminderPrefs.leadMin(context)} min before" + (if (app.plait.reminder.ReminderPrefs.nudge(context)) " · evening reminder" else "") else "Off"
+    val aiBadge = aiRecommendedBadge(
+        app.plait.ai.ModelCenter.state(QWEN) is app.plait.ai.ModelState.Installed || app.plait.ai.ModelCenter.isInstalled(context, QWEN),
+        app.plait.ai.ModelCenter.state(TURBO) is app.plait.ai.ModelState.Installed || app.plait.ai.ModelCenter.isInstalled(context, TURBO),
+    )
+    val remindersSummary = remindersSummaryText(app.plait.reminder.ReminderPrefs.before(context), app.plait.reminder.ReminderPrefs.leadMin(context), app.plait.reminder.ReminderPrefs.nudge(context))
     val appearanceSummary = (if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass) "Liquid Glass" else "Material 3 Expressive") + (if (!app.plait.ui.theme.Appearance.glass) " · no glass effects" else "") + (if (app.plait.ui.theme.Appearance.calm) " · calm" else "")
     val youSummary = app.plait.data.Profile.name.ifBlank { "Name, backup, import" }
     val syncSummary = if (app.plait.data.sync.SyncEngine.configured(context)) "On" + app.plait.data.sync.SyncEngine.status.let { if (it.isBlank()) "" else " · $it" } else "Off"
@@ -260,16 +291,15 @@ fun HubScreen(onBack: () -> Unit) {
     Box(Modifier.fillMaxSize().background(plait.ground)) {
         Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
             AmbientBackground()
-            LazyColumn(
+            CompositionLocalProvider(LocalHubLook provides (section?.let { HubLook(hubTone(it), hubSectionIds.indexOf(it)) } ?: HubLook(GlassTone.Sky, 0))) { LazyColumn(
                 Modifier.widthIn(max = 720.dp).fillMaxHeight().align(Alignment.TopCenter)
                     .graphicsLayer { val p = enter.value; translationX = (1f - p) * 72.dp.toPx() * slideFrom * (if (calm) 0f else 1f); alpha = p.coerceIn(0f, 1f) },
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 18.dp, end = 18.dp, top = statusTop + 76.dp, bottom = 60.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (section == null) item {
                     Column(Modifier.rise(0), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("SETTINGS", style = PlaitType.monoLabel, color = plait.muted)
-                        Text("Settings", style = PlaitType.title, color = plait.text)
+                        Text("Settings", style = PlaitType.dateTitle, color = plait.text)
                         Text(
                             if (Calendars.connected) countLabel(Calendars.events.size, "event") + " from " +
                                 countLabel(cals.count { it.id !in Calendars.hidden } + Calendars.feeds.size + (if (Calendars.googleOn) 1 else 0), "calendar") +
@@ -306,6 +336,7 @@ fun HubScreen(onBack: () -> Unit) {
                         item(key = "acct-${acct.name}-${acct.type}") {
                             val on = Calendars.accountEnabled(acct.name)
                             var open by remember { mutableStateOf(false) }
+                            val look = LocalHubLook.current
                             HubCard(Modifier.rise(i + 1)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Box(
@@ -322,11 +353,11 @@ fun HubScreen(onBack: () -> Unit) {
                                     PlaitSwitch(on, { Calendars.setAccountEnabled(context, acct.name, !on) }, "Show ${acct.name}")
                                 }
                                 if (on) {
-                                    PlaitButton(if (open) "Hide calendars" else "Choose calendars", { open = !open }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                                    HubBtn(if (open) "Hide calendars" else "Choose calendars", { open = !open }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                                     if (open) acct.calendars.forEach { cal ->
                                         val chosen = dest?.id == cal.id
                                         Column(
-                                            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(plait.surfaceHigh.copy(alpha = 0.6f)).padding(14.dp),
+                                            Modifier.fillMaxWidth().toneSurface(RoundedCornerShape(20.dp), look.tone, look.rotation, inner = true).padding(14.dp),
                                             verticalArrangement = Arrangement.spacedBy(10.dp),
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -335,7 +366,7 @@ fun HubScreen(onBack: () -> Unit) {
                                                 PlaitSwitch(cal.id !in Calendars.hidden, { Calendars.setCalendarVisible(context, cal.id, cal.id in Calendars.hidden) }, "Show ${cal.name}")
                                             }
                                             if (cal.writable) {
-                                                PlaitChip(
+                                                HubChip(
                                                     if (chosen) "✓  New meetings are saved here" else "Save new meetings here",
                                                     chosen, { Calendars.setDestination(context, cal.id) },
                                                 )
@@ -372,25 +403,12 @@ fun HubScreen(onBack: () -> Unit) {
                 item { FoldNote("A link keeps itself up to date. A file is a one-time copy.") }
                 item {
                     HubCard {
-                        Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(start = 16.dp, end = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            BasicTextField(
-                                value = url, onValueChange = { url = it; linkError = null }, singleLine = true,
-                                textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { addLink() }),
-                                modifier = Modifier.weight(1f),
-                                decorationBox = { inner ->
-                                    Box(Modifier.height(50.dp), contentAlignment = Alignment.CenterStart) {
-                                        if (url.isEmpty()) Text("Paste a calendar link (https:// or webcal://)", style = PlaitType.body, color = plait.muted, maxLines = 1)
-                                        inner()
-                                    }
-                                },
-                            )
-                            PlaitButton(if (Calendars.syncing) "Adding…" else "Add", addLink, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                        }
+                        HubField(
+                            url, { url = it; linkError = null }, "Paste a calendar link (https:// or webcal://)",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { addLink() }),
+                            trailing = { HubBtn(if (Calendars.syncing) "Adding…" else "Add", addLink, style = ButtonStyle.Primary, size = ButtonSize.Small) },
+                        )
                         linkError?.let { Text(it, style = PlaitType.caption, color = plait.signal) }
                         HubButton("Import a .ics file") { pickFile.launch(arrayOf("text/calendar", "application/octet-stream", "text/plain", "*/*")) }
                         fileNote?.let { Text(it, style = PlaitType.caption, color = plait.muted) }
@@ -445,7 +463,7 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "ai", "AI on this phone", aiSummary) {
+                fold(section, "ai", "AI on this phone", aiSummary, badge = aiBadge) {
                 item {
                     var light by remember { mutableStateOf(app.plait.ai.Ai.lightAuto(context)) }
                     HubCard {
@@ -477,7 +495,7 @@ fun HubScreen(onBack: () -> Unit) {
                             PlaitSwitch(before, { before = !before; app.plait.reminder.ReminderPrefs.setBefore(context, before) }, "Reminders before meetings")
                         }
                         if (before) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(5, 10, 15, 30).forEach { m -> PlaitChip("$m min before", lead == m, { lead = m; app.plait.reminder.ReminderPrefs.setLead(context, m) }) }
+                            listOf(5, 10, 15, 30).forEach { m -> HubChip("$m min before", lead == m, { lead = m; app.plait.reminder.ReminderPrefs.setLead(context, m) }) }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
@@ -486,7 +504,7 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                             PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, "Evening note reminder")
                         }
-                        Text("Widget: press and hold the home screen, choose Widgets, then Plait. It shows the next meeting with a live countdown and a Join button.", style = PlaitType.caption, color = plait.muted)
+                        Text("Widget: press and hold the home screen, choose Widgets, then Plait. It comes in two sizes, 4×2 and 2×2, and shows the next meeting with a Join button.", style = PlaitType.caption, color = plait.muted)
                     }
                 }
 
@@ -499,7 +517,7 @@ fun HubScreen(onBack: () -> Unit) {
                         Text("First work day", style = PlaitType.bodyStrong, color = plait.text)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             java.time.DayOfWeek.entries.forEach { d ->
-                                PlaitChip(d.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH), app.plait.data.week.WorkWeek.startDay == d, { app.plait.data.week.WorkWeek.set(context, d) })
+                                HubChip(d.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH), app.plait.data.week.WorkWeek.startDay == d, { app.plait.data.week.WorkWeek.set(context, d) })
                             }
                         }
                     }
@@ -524,12 +542,12 @@ fun HubScreen(onBack: () -> Unit) {
                         Text("Style", style = PlaitType.bodyStrong, color = plait.text)
                         Text("Liquid Glass is translucent and refracts what is behind it. Material 3 Expressive is solid, tonal and bouncier.", style = PlaitType.caption, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PlaitChip("Liquid Glass", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Glass); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
-                            PlaitChip("Material 3 Expressive", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Material); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
+                            HubChip("Liquid Glass", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Glass); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
+                            HubChip("Material 3 Expressive", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Material); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
                         }
                         if (app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle) {
                             Text("Restart Plait to finish switching the whole app to this style.", style = PlaitType.caption, color = plait.signal)
-                            PlaitButton("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
+                            HubBtn("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
                         }
                     }
                 }
@@ -559,18 +577,8 @@ fun HubScreen(onBack: () -> Unit) {
                 item {
                     HubCard {
                         var name by remember { mutableStateOf(app.plait.data.Profile.name) }
-                        Text("Your name", style = PlaitType.monoSmall, color = plait.muted)
-                        BasicTextField(
-                            value = name, onValueChange = { name = it; app.plait.data.Profile.setName(context, it) }, singleLine = true,
-                            textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
-                            modifier = Modifier.fillMaxWidth(),
-                            decorationBox = { inner ->
-                                Box(Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
-                                    if (name.isEmpty()) Text("What should Plait call you?", style = PlaitType.body, color = plait.muted)
-                                    inner()
-                                }
-                            },
-                        )
+                        Text("Your name", style = PlaitType.bodyStrong, color = plait.text)
+                        HubField(name, { name = it; app.plait.data.Profile.setName(context, it) }, "What should Plait call you?")
                         Text("This phone: ${app.plait.data.Profile.device}", style = PlaitType.caption, color = plait.muted)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
@@ -579,33 +587,22 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                             PlaitSwitch(includeMedia, { includeMedia = !includeMedia }, "Include recordings and photos")
                         }
-                        Text("Passphrase (optional)", style = PlaitType.monoSmall, color = plait.muted)
-                        BasicTextField(
-                            value = passphrase, onValueChange = { passphrase = it }, singleLine = true,
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
-                            modifier = Modifier.fillMaxWidth(),
-                            decorationBox = { inner ->
-                                Box(Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
-                                    if (passphrase.isEmpty()) Text("Locks the file. Leave empty for none.", style = PlaitType.body, color = plait.muted)
-                                    inner()
-                                }
-                            },
-                        )
+                        Text("Passphrase (optional)", style = PlaitType.bodyStrong, color = plait.text)
+                        HubField(passphrase, { passphrase = it }, "Locks the file. Leave empty for none.", password = true)
                         Text("With a passphrase the file is encrypted (AES-256). Nobody, including us, can recover it if you forget it.", style = PlaitType.caption, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            PlaitButton(
+                            HubBtn(
                                 if (backupBusy) "Working…" else "Export backup",
                                 { exportFile.launch("plait-backup-" + java.time.LocalDate.now() + ".zip") },
                                 style = ButtonStyle.Primary, enabled = !backupBusy,
                             )
-                            PlaitButton("Notes as Markdown for a computer", { exportMarkdown.launch("plait-notes-" + java.time.LocalDate.now() + ".zip") }, style = ButtonStyle.Quiet, enabled = !backupBusy)
-                            PlaitButton("Import backup", { importFile.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }, enabled = !backupBusy)
-                            pendingImport?.let { u -> PlaitButton("Try again with this passphrase", { runImport(u) }, style = ButtonStyle.Primary, enabled = !backupBusy && passphrase.isNotEmpty()) }
+                            HubBtn("Notes as Markdown for a computer", { exportMarkdown.launch("plait-notes-" + java.time.LocalDate.now() + ".zip") }, style = ButtonStyle.Quiet, enabled = !backupBusy)
+                            HubBtn("Import backup", { importFile.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }, enabled = !backupBusy)
+                            pendingImport?.let { u -> HubBtn("Try again with this passphrase", { runImport(u) }, style = ButtonStyle.Primary, enabled = !backupBusy && passphrase.isNotEmpty()) }
                         }
                         backupNote?.let { Text(it, style = PlaitType.caption, color = plait.text) }
                         Text(
-                            "Importing only adds what this phone doesn't have; nothing here is replaced. Without a passphrase the file isn't encrypted, so keep it private. Syncing live between phones will come later.",
+                            "Importing only adds what this phone doesn't have; nothing here is replaced. Without a passphrase the file isn't encrypted, so keep it private.",
                             style = PlaitType.caption, color = plait.muted,
                         )
                     }
@@ -626,9 +623,9 @@ fun HubScreen(onBack: () -> Unit) {
                         var checks by remember { mutableStateOf<List<app.plait.diag.Check>?>(null) }
                         var showLog by remember { mutableStateOf(false) }
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PlaitButton("Run self-check", { scope.launch { checks = app.plait.diag.SelfCheck.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            PlaitButton(if (showLog) "Hide log" else "Show log", { showLog = !showLog }, size = ButtonSize.Small)
-                            PlaitButton(if (app.plait.diag.FrameMonitor.enabled) "Hide frame stats" else "Show frame stats", { app.plait.diag.FrameMonitor.turn(!app.plait.diag.FrameMonitor.enabled) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                            HubBtn("Run self-check", { scope.launch { checks = app.plait.diag.SelfCheck.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            HubBtn(if (showLog) "Hide log" else "Show log", { showLog = !showLog }, size = ButtonSize.Small)
+                            HubBtn(if (app.plait.diag.FrameMonitor.enabled) "Hide frame stats" else "Show frame stats", { app.plait.diag.FrameMonitor.turn(!app.plait.diag.FrameMonitor.enabled) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                         }
                         checks?.forEach { c ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
@@ -643,11 +640,11 @@ fun HubScreen(onBack: () -> Unit) {
                             val log = remember(showLog) { app.plait.diag.Diag.read().ifBlank { "Nothing logged yet." } }
                             Text(log.takeLast(2500), style = PlaitType.monoSmall, color = plait.text.copy(alpha = 0.8f))
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                PlaitButton("Share log", {
+                                HubBtn("Share log", {
                                     val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, app.plait.diag.Diag.read())
                                     runCatching { context.startActivity(android.content.Intent.createChooser(send, "Share log").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                                 }, size = ButtonSize.Small)
-                                PlaitButton("Clear", { app.plait.diag.Diag.clear(); showLog = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                                HubBtn("Clear", { app.plait.diag.Diag.clear(); showLog = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                             }
                         }
                     }
@@ -679,10 +676,10 @@ fun HubScreen(onBack: () -> Unit) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading ||
                                 st is app.plait.data.update.UpdateState.NeedsPermission || (st is app.plait.data.update.UpdateState.Failed && st.info != null)
-                            if (waiting) PlaitButton("Update", { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            else PlaitButton("Check for updates", { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            PlaitButton("What's new", { showNews = true }, size = ButtonSize.Small)
-                            PlaitButton("Take the tour", { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
+                            if (waiting) HubBtn("Update", { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            else HubBtn("Check for updates", { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            HubBtn("What's new", { showNews = true }, size = ButtonSize.Small)
+                            HubBtn("Take the tour", { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             var auto by remember { mutableStateOf(app.plait.data.update.Updater.autoCheck(context)) }
@@ -717,7 +714,7 @@ fun HubScreen(onBack: () -> Unit) {
                 }
                 }
 
-            }
+            } }
         }
         app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         Box(Modifier.statusBarsPaddingCompat().padding(start = 18.dp, top = 12.dp)) {
@@ -730,8 +727,8 @@ fun HubScreen(onBack: () -> Unit) {
                 style = PlaitType.body, color = plait.text,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
-                PlaitButton("Later", { askRestart = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                HubBtn("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
+                HubBtn("Later", { askRestart = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
             }
         }
     }
@@ -753,8 +750,9 @@ internal fun SectionTitle(title: String, detail: String) {
 
 @Composable
 internal fun HubCard(modifier: Modifier = Modifier, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    val look = LocalHubLook.current
     Column(
-        modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(18.dp),
+        modifier.fillMaxWidth().toneSurface(RoundedCornerShape(24.dp), look.tone, look.rotation, inner = true).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content,
     )
@@ -762,9 +760,88 @@ internal fun HubCard(modifier: Modifier = Modifier, content: @Composable android
 
 @Composable
 internal fun HubButton(label: String, primary: Boolean = false, onClick: () -> Unit) {
-    PlaitButton(label, onClick, style = if (primary) ButtonStyle.Primary else ButtonStyle.Secondary)
+    HubBtn(label, onClick, style = if (primary) ButtonStyle.Primary else ButtonStyle.Tinted)
 }
 
+/** The hub's buttons and chips take the open section's tone. */
+@Composable
+internal fun HubBtn(
+    label: String, onClick: () -> Unit, modifier: Modifier = Modifier, style: ButtonStyle = ButtonStyle.Tinted,
+    size: ButtonSize = ButtonSize.Regular, icon: ImageVector? = null, enabled: Boolean = true,
+) = PlaitButton(label, onClick, modifier, style, size, icon, enabled, LocalHubLook.current.tone)
+
+@Composable
+internal fun HubChip(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) =
+    PlaitChip(label, on, onClick, modifier, LocalHubLook.current.tone)
+
+/** A text field in the glass look: tinted body, crisp rim, an optional trailing action inside it. */
+@Composable
+internal fun HubField(
+    value: String, onValueChange: (String) -> Unit, placeholder: String, modifier: Modifier = Modifier, password: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default, keyboardActions: KeyboardActions = KeyboardActions.Default,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    val look = LocalHubLook.current
+    Row(
+        modifier.fillMaxWidth().toneSurface(RoundedCornerShape(26.dp), look.tone, look.rotation).padding(start = 16.dp, end = if (trailing != null) 5.dp else 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value = value, onValueChange = onValueChange, singleLine = true,
+            visualTransformation = if (password) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
+            keyboardOptions = keyboardOptions, keyboardActions = keyboardActions,
+            modifier = Modifier.weight(1f),
+            decorationBox = { inner ->
+                Box(Modifier.height(50.dp), contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) Text(placeholder, style = PlaitType.body, color = plait.muted, maxLines = 1)
+                    inner()
+                }
+            },
+        )
+        trailing?.invoke()
+    }
+}
+
+/** What the open section looks like: its tone, and its place in the list (Material rotates containers by it). */
+internal data class HubLook(val tone: GlassTone, val rotation: Int)
+internal val LocalHubLook = androidx.compose.runtime.compositionLocalOf { HubLook(GlassTone.Sky, 0) }
+
+internal val hubSectionIds = listOf("accounts", "add", "import", "send", "ai", "reminders", "week", "appearance", "you", "sync", "diag", "updates", "adv")
+
+/** Neighbouring sections never share a tone. */
+internal fun hubTone(id: String): GlassTone = when (id) {
+    "accounts", "appearance", "sync" -> GlassTone.Sky
+    "add", "send", "you" -> GlassTone.Mint
+    "import", "week", "diag" -> GlassTone.Peach
+    "ai", "updates" -> GlassTone.Lavender
+    else -> GlassTone.Rose
+}
+
+private fun hubIcon(id: String): ImageVector = when (id) {
+    "accounts" -> Icons.Filled.AccountCircle
+    "add" -> Icons.Filled.PersonAdd
+    "import" -> Icons.Filled.FileDownload
+    "send" -> Icons.Filled.Event
+    "ai" -> Icons.Filled.AutoAwesome
+    "reminders" -> Icons.Filled.Notifications
+    "week" -> Icons.Filled.DateRange
+    "appearance" -> Icons.Filled.Palette
+    "you" -> Icons.Filled.Person
+    "sync" -> Icons.Filled.Sync
+    "diag" -> Icons.Filled.CheckCircle
+    "updates" -> Icons.Filled.Info
+    else -> Icons.Filled.Tune
+}
+
+internal fun aiSummaryText(writing: String, voice: String?) = "Writing: $writing · Voice: ${voice ?: "none yet"}"
+
+internal fun remindersSummaryText(before: Boolean, leadMin: Int, nudge: Boolean) =
+    if (before) "$leadMin min before" + (if (nudge) " · evening reminder" else "") else "Off"
+
+/** The hub's AI row asks for the pair that works best, until either is on the phone. */
+internal fun aiRecommendedBadge(qwenInstalled: Boolean, turboInstalled: Boolean): String? =
+    if (!qwenInstalled && !turboInstalled) "Recommended: Qwen3 0.6B + Whisper Turbo" else null
 
 @Composable
 private fun SyncCard() {
@@ -788,26 +865,15 @@ private fun SyncCard() {
                 PlaitSwitch(media, { media = !media; engine.setIncludeMedia(context, media) }, "Sync recordings and photos")
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton(if (engine.running) "Syncing…" else "Sync now", { scope.launch { engine.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = !engine.running)
-                PlaitButton("Stop syncing", { engine.disconnect(context); connected = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                HubBtn(if (engine.running) "Syncing…" else "Sync now", { scope.launch { engine.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = !engine.running)
+                HubBtn("Stop syncing", { engine.disconnect(context); connected = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
             Text("Plait syncs when it opens and after you save a note. Deleting something on one phone removes it on the others.", style = PlaitType.caption, color = plait.muted)
         } else {
             Text("Set up on every phone with the same folder and the same passphrase. The passphrase encrypts the files; if you forget it they can't be opened.", style = PlaitType.caption, color = plait.muted)
-            PlaitButton(if (folder == null) "Choose the sync folder" else "Folder chosen ✓", { pick.launch(null) }, size = ButtonSize.Small)
-            androidx.compose.foundation.text.BasicTextField(
-                value = pass, onValueChange = { pass = it }, singleLine = true,
-                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = androidx.compose.ui.graphics.SolidColor(plait.accent),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { inner ->
-                    Box(Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
-                        if (pass.isEmpty()) Text("Sync passphrase", style = PlaitType.body, color = plait.muted)
-                        inner()
-                    }
-                },
-            )
-            PlaitButton("Start syncing", {
+            HubBtn(if (folder == null) "Choose the sync folder" else "Folder chosen ✓", { pick.launch(null) }, size = ButtonSize.Small)
+            HubField(pass, { pass = it }, "Sync passphrase", password = true)
+            HubBtn("Start syncing", {
                 folder?.let { engine.connect(context, it, pass); connected = true; scope.launch { engine.run(context) } }
             }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = folder != null && pass.length >= 6)
             if (pass.isNotEmpty() && pass.length < 6) Text("Use at least 6 characters.", style = PlaitType.caption, color = plait.signal)
@@ -820,16 +886,21 @@ private fun SyncCard() {
  * One settings section. In the list it is a single row; tapping it opens the section on its own page (and Back returns to
  * the list). Only the open section's items are built.
  */
-private fun androidx.compose.foundation.lazy.LazyListScope.fold(current: String?, id: String, title: String, summary: String, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
+private fun androidx.compose.foundation.lazy.LazyListScope.fold(
+    current: String?, id: String, title: String, summary: String, badge: String? = null,
+    content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
+) {
     if (current == null) {
         item(key = "fold-$id", contentType = "fold") {
-            FoldHeader(title, summary) { app.plait.ui.HomeState.hubSection = id }
+            FoldHeader(id, title, summary, badge) { app.plait.ui.HomeState.hubSection = id }
         }
     } else if (current == id) {
         item(key = "page-$id") {
             Column(Modifier.rise(0), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("SETTINGS", style = PlaitType.monoLabel, color = plait.muted)
-                Text(title, style = PlaitType.title.copy(fontSize = 36.sp, lineHeight = 38.sp), color = plait.text)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    ToneIcon(hubIcon(id), hubTone(id), size = 48.dp)
+                    Text(title, style = PlaitType.dateTitle.copy(fontSize = 32.sp, lineHeight = 36.sp), color = plait.text, modifier = Modifier.weight(1f))
+                }
                 Text(summary, style = PlaitType.body, color = plait.muted)
             }
         }
@@ -838,20 +909,21 @@ private fun androidx.compose.foundation.lazy.LazyListScope.fold(current: String?
 }
 
 @Composable
-private fun FoldHeader(title: String, summary: String, onOpen: () -> Unit) {
+private fun FoldHeader(id: String, title: String, summary: String, badge: String?, onOpen: () -> Unit) {
+    val tone = hubTone(id)
     Row(
-        Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(26.dp))
-            .pressable(onOpen, Role.Button, lift = 3.dp).padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth().heightIn(min = 72.dp)
+            .toneSurface(RoundedCornerShape(28.dp), tone, hubSectionIds.indexOf(id), strong = id == "ai")
+            .pressable(onOpen, Role.Button, lift = 3.dp).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        ToneIcon(hubIcon(id), tone, size = 40.dp)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = PlaitType.section.copy(fontSize = 19.sp, lineHeight = 23.sp), color = plait.text)
+            Text(title, style = PlaitType.bodyStrong, color = plait.text)
             Text(summary, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (badge != null) PlaitBadge(badge, BadgeKind.BestMatch, Modifier.padding(top = 4.dp))
         }
-        androidx.compose.material3.Icon(
-            Icons.Filled.ChevronRight, "Open $title", tint = plait.muted,
-            modifier = Modifier.size(26.dp),
-        )
+        androidx.compose.material3.Icon(Icons.Filled.ChevronRight, "Open $title", tint = plait.muted, modifier = Modifier.size(26.dp))
     }
 }
 

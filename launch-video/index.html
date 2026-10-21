@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plait launch</title>
+<link href="https://fonts.googleapis.com/css2?family=AR+One+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+  html, body { margin: 0; background: #06071A; }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #06071A;
+          font-family: "AR One Sans", system-ui, sans-serif; color: #fff; }
+  .clip { position: absolute; inset: 0; }
+
+  /* brand glows, one per mood, cross-faded */
+  .glow { position: absolute; left: 50%; top: 58%; width: 1900px; height: 1500px; margin: -750px 0 0 -950px;
+          border-radius: 50%; opacity: 0; filter: blur(40px); }
+  #g-indigo { background: radial-gradient(closest-side, rgba(124,139,255,.85), rgba(124,139,255,.25) 45%, transparent 75%); }
+  #g-gold   { background: radial-gradient(closest-side, rgba(255,209,102,.8), rgba(255,143,122,.25) 45%, transparent 75%); }
+  #g-sky    { background: radial-gradient(closest-side, rgba(142,197,255,.8), rgba(124,139,255,.25) 45%, transparent 75%); }
+  #g-coral  { background: radial-gradient(closest-side, rgba(255,143,122,.8), rgba(196,120,220,.3) 45%, transparent 75%); }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(3,4,14,.85) 100%); }
+
+  /* captions flanking the phone */
+  .cap { position: absolute; top: 50%; font-size: 64px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05;
+         transform: translateY(-50%); white-space: nowrap; z-index: 10; }
+  .cap.l { right: calc(50% + 330px); text-align: right; }
+  .cap.r { left: calc(50% + 330px); }
+  .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0 .02em .08em; }
+  .w > span { display: inline-block; }
+  .cap em { font-style: normal; color: #FFD166; }
+
+  /* 3D Pixel phone (built in JS) */
+  .world { position: absolute; inset: 0; perspective: 2600px; perspective-origin: 50% 45%; }
+  .rig { position: absolute; left: 50%; top: 50%; width: 420px; height: 882px; margin: -441px 0 0 -210px; transform-style: preserve-3d; }
+  .phone { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .layer { position: absolute; inset: 0; border-radius: 62px;
+           background: linear-gradient(90deg, #5d6168, #d9dce1 18%, #8b9097 50%, #e9ebee 82%, #5d6168); }
+  .front, .back { position: absolute; inset: 0; border-radius: 62px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .front { background: #050507; box-shadow: inset 0 0 0 2px #b9bdc3, inset 0 0 0 4px #1b1c20; }
+  .screen { position: absolute; left: 12px; top: 12px; width: 396px; height: 858px; border-radius: 50px; overflow: hidden; background: #000; }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+  .screen img.on { opacity: 1; }
+  .punch { position: absolute; left: 50%; top: 14px; width: 15px; height: 15px; margin-left: -7.5px; border-radius: 50%;
+           background: radial-gradient(circle at 40% 35%, #2a2f45, #000 60%); box-shadow: 0 0 0 2px #0b0b0e; z-index: 3; }
+  .glare { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,.16), transparent 32%, transparent 70%, rgba(255,255,255,.06)); z-index: 2; pointer-events: none; }
+  .back { background: linear-gradient(160deg, #2b2e36, #15171c 60%, #0d0e12); box-shadow: inset 0 0 0 2px #9ea2a9; }
+  .visor { position: absolute; left: 0; right: 0; top: 70px; height: 112px; border-radius: 40px; margin: 0;
+           background: linear-gradient(180deg, #c9ccd2, #7d828a 45%, #b5b9bf); box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+  .visor .pill { position: absolute; left: 14px; top: 12px; right: 120px; bottom: 12px; border-radius: 44px; background: #07080b; }
+  .lens { position: absolute; top: 9px; width: 70px; height: 70px; border-radius: 50%;
+          background: radial-gradient(circle at 45% 40%, #3a4166 0 12%, #0b0d16 30%, #000 60%, #22252c 62%, #0a0b0e 70%); }
+  .flash { position: absolute; right: 70px; top: 40px; width: 18px; height: 18px; border-radius: 50%; background: #e9e1c8; }
+  .glogo { position: absolute; left: 50%; bottom: 120px; width: 70px; margin-left: -35px; opacity: .85; }
+  .btn { position: absolute; right: -3px; width: 6px; border-radius: 3px; background: linear-gradient(90deg, #6d7279, #dfe2e6); }
+
+  .tap { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; z-index: 4;
+         background: rgba(255,255,255,.35); box-shadow: 0 0 0 3px rgba(255,255,255,.9); opacity: 0; }
+  .check { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; z-index: 5;
+           background: linear-gradient(135deg, #7C8BFF, #FF8F7A); display: grid; place-items: center; opacity: 0;
+           box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .shadow { position: absolute; left: 50%; top: 50%; width: 520px; height: 90px; margin: 430px 0 0 -260px; border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(0,0,0,.65), transparent); filter: blur(8px); }
+
+  /* source chips that fly into the phone */
+  .chip { position: absolute; left: 50%; top: 50%; padding: 16px 26px; border-radius: 999px; font-size: 30px; font-weight: 600;
+          background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); backdrop-filter: blur(8px);
+          white-space: nowrap; display: flex; gap: 12px; align-items: center; opacity: 0; }
+  .chip i { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+
+  .center-title { position: absolute; left: 0; right: 0; top: 96px; text-align: center; font-size: 72px; font-weight: 600; letter-spacing: -0.02em; }
+  .end { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
+  .brand { display: flex; align-items: center; gap: 30px; }
+  .brand img { width: 150px; height: 150px; }
+  .brand b { font-size: 140px; font-weight: 700; letter-spacing: -0.04em; }
+  .tagline { font-size: 40px; color: rgba(255,255,255,.75); font-weight: 500; }
+  .badges { display: flex; gap: 20px; margin-top: 16px; }
+  .badge { display: flex; align-items: center; gap: 16px; padding: 18px 34px; border-radius: 22px; background: #fff; color: #0E1030; }
+  .badge small { display: block; font-size: 18px; font-weight: 500; opacity: .7; }
+  .badge span { font-size: 32px; font-weight: 700; }
+  .url { font-size: 26px; color: rgba(255,255,255,.55); }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="root" data-width="1920" data-height="1080">
+
+  <div class="glow" id="g-indigo"></div>
+  <div class="glow" id="g-gold"></div>
+  <div class="glow" id="g-sky"></div>
+  <div class="glow" id="g-coral"></div>
+  <div class="vignette"></div>
+
+  <!-- calendar sources orbiting in, scene 1 -->
+  <div class="chip" id="c1"><i style="background:#4285F4"></i>Google</div>
+  <div class="chip" id="c2"><i style="background:#0A64D6"></i>Outlook</div>
+  <div class="chip" id="c3"><i style="background:#FFD166"></i>Exchange</div>
+  <div class="chip" id="c4"><i style="background:#c6c6cc"></i>iCloud</div>
+  <div class="chip" id="c5"><i style="background:#FF8F7A"></i>.ics links</div>
+  <div class="chip" id="c6"><i style="background:#34A853"></i>Samsung</div>
+
+  <!-- hero phone, scenes 1–6 -->
+  <div class="clip world" id="hero-world" data-start="0" data-duration="21.2" data-track-index="1">
+    <div class="shadow" id="hero-shadow"></div>
+    <div class="rig" id="hero"></div>
+  </div>
+
+  <!-- captions -->
+  <div class="cap l" id="t1l">Every calendar.</div><div class="cap r" id="t1r"><em>One day.</em></div>
+  <div class="cap l" id="t2l">A home that</div><div class="cap r" id="t2r"><em>follows the day</em></div>
+  <div class="cap l" id="t3l">Every meeting,</div><div class="cap r" id="t3r"><em>briefed</em></div>
+  <div class="cap l" id="t4l">Notes that</div><div class="cap r" id="t4r"><em>remember</em></div>
+  <div class="cap l" id="t5l">Your month</div><div class="cap r" id="t5r"><em>at a glance</em></div>
+  <div class="cap l" id="t6l">AI that stays</div><div class="cap r" id="t6r"><em>on your phone</em></div>
+
+  <!-- lineup, scene 7 -->
+  <div class="clip world" id="lineup" data-start="20.6" data-duration="3.8" data-track-index="2">
+    <div class="center-title" id="t7">Your whole day, <em style="font-style:normal;color:#FFD166">braided.</em></div>
+    <div class="rig" id="p-left"></div>
+    <div class="rig" id="p-mid"></div>
+    <div class="rig" id="p-right"></div>
+  </div>
+
+  <!-- end card, scene 8 -->
+  <div class="clip end" id="endcard" data-start="24.2" data-duration="3.8" data-track-index="3">
+    <div class="brand" id="brand"><img src="assets/logo.svg" alt=""><b>Plait</b></div>
+    <div class="tagline" id="tag">Every calendar, one day. AI that stays on your phone.</div>
+    <div class="badges" id="badges">
+      <div class="badge">
+        <svg width="40" height="40" viewBox="0 0 24 24"><path fill="#3DDC84" d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.66-.38l-1.86 3.22a11.4 11.4 0 0 0-9.84 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg>
+        <div><small>Free for</small><span>Android</span></div>
+      </div>
+    </div>
+    <div class="url" id="url">mo3shma.github.io/ProjectPlait</div>
+  </div>
+
+<script>
+  // Builds a Pixel-style 3D phone: stacked aluminium layers for depth, glass front, back with camera visor.
+  const DEPTH = 44, STEP = 2;
+  function buildPhone(rig, screens) {
+    const p = document.createElement("div"); p.className = "phone";
+    for (let z = -DEPTH / 2 + STEP; z < DEPTH / 2; z += STEP) {
+      const l = document.createElement("div"); l.className = "layer";
+      l.style.transform = `translateZ(${z}px)`; p.appendChild(l);
+    }
+    const back = document.createElement("div"); back.className = "back";
+    back.style.transform = `translateZ(${-DEPTH / 2}px) rotateY(180deg)`;
+    back.innerHTML = `<div class="visor"><div class="pill"><div class="lens" style="left:14px"></div><div class="lens" style="left:96px"></div><div class="lens" style="left:178px"></div></div><div class="flash"></div></div><img class="glogo" src="assets/logo-mark.svg" alt="">`;
+    const front = document.createElement("div"); front.className = "front";
+    front.style.transform = `translateZ(${DEPTH / 2}px)`;
+    front.innerHTML = `<div class="screen">${screens.map((s, i) => `<img src="assets/${s}.jpg" data-s="${s}" class="${i ? "" : "on"}" alt="">`).join("")}
+      <div class="glare"></div><div class="punch"></div><div class="tap"></div><div class="check"><svg width="80" height="80" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
+    [["170px", "80px"], ["290px", "130px"]].forEach(([top, h]) => {
+      const b = document.createElement("div"); b.className = "btn"; b.style.top = top; b.style.height = h;
+      b.style.transform = `translateZ(0) rotateY(90deg)`; front.appendChild(b);
+    });
+    p.append(back, front); rig.appendChild(p);
+    return p;
+  }
+
+  const SHOTS = ["01-home-morning", "02-home-midday", "03-home-evening-dark", "04-meeting", "05-meeting-notes-dark", "07-notes", "06-calendar", "08-ai"];
+  const hero = buildPhone(document.getElementById("hero"), SHOTS);
+  buildPhone(document.getElementById("p-left"), ["04-meeting"]);
+  buildPhone(document.getElementById("p-mid"), ["01-home-morning"]);
+  buildPhone(document.getElementById("p-right"), ["07-notes"]);
+
+  // wrap caption words so each can rise out of a mask
+  document.querySelectorAll(".cap").forEach(c => {
+    const target = c.querySelector("em") || c;
+    target.innerHTML = target.textContent.split(" ").map(w => `<span class="w"><span>${w}</span></span>`).join(" ");
+  });
+
+  const $ = s => document.querySelector(s);
+  const heroRig = "#hero";
+  const shot = s => `#hero img[data-s="${s}"]`;
+  const tap = "#hero .tap", check = "#hero .check";
+  const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+  // helpers ---------------------------------------------------------------
+  function glow(id, at, dur = 0.8) {
+    ["#g-indigo", "#g-gold", "#g-sky", "#g-coral"].forEach(g =>
+      tl.to(g, { opacity: g === id ? 1 : 0, duration: dur, ease: "sine.inOut" }, at));
+  }
+  function caption(n, inAt, outAt) {
+    const L = `#t${n}l .w > span`, R = `#t${n}r .w > span`;
+    tl.fromTo(L, { yPercent: 110 }, { yPercent: 0, duration: 0.6, stagger: 0.07 }, inAt);
+    tl.fromTo(R, { yPercent: 110 }, { yPercent: 0, duration: 0.6, stagger: 0.07 }, inAt + 0.25);
+    tl.to([L, R], { yPercent: -110, duration: 0.35, ease: "power2.in", stagger: 0.03 }, outAt);
+  }
+  function swap(from, to, at, dur = 0.35) {
+    tl.to(shot(from), { opacity: 0, duration: dur, ease: "none" }, at);
+    tl.to(shot(to), { opacity: 1, duration: dur, ease: "none" }, at);
+  }
+  function tapAt(x, y, at, withCheck) {
+    tl.set(tap, { left: x, top: y, scale: 0.4, opacity: 0 }, at);
+    tl.to(tap, { scale: 1, opacity: 1, duration: 0.18, ease: "power2.out" }, at);
+    tl.to(tap, { scale: 1.6, opacity: 0, duration: 0.4, ease: "power2.out" }, at + 0.2);
+    if (withCheck) {
+      tl.set(check, { left: 198, top: 400, scale: 0, opacity: 1 }, at + 0.35);
+      tl.to(check, { scale: 1, duration: 0.45, ease: "back.out(2.2)" }, at + 0.35);
+      tl.to(check, { scale: 0.6, opacity: 0, duration: 0.3, ease: "power2.in" }, at + 1.2);
+    }
+  }
+  // zoom the rig into a point on the screen (screen coords), with a gentle 3D turn
+  function zoom(x, y, scale, at, dur, extra = {}) {
+    const ox = 12 + x, oy = 12 + y;
+    tl.set(heroRig, { transformOrigin: `${ox}px ${oy}px` }, at);
+    tl.to(heroRig, { scale, x: -(210 - ox) * (scale - 1), y: (441 - oy) * (scale - 1) * 0.9, duration: dur, ease: "power3.inOut", ...extra }, at);
+  }
+  function unzoom(at, dur, extra = {}) {
+    tl.to(heroRig, { scale: 1, x: 0, y: 0, duration: dur, ease: "power3.inOut", ...extra }, at);
+  }
+
+  // scene 1: sources fly into a phone spinning in from its back (0 – 3.6) ---
+  glow("#g-indigo", 0, 1.2);
+  tl.set(heroRig, { y: 900, rotationY: -200, rotationX: 18, rotationZ: -8 }, 0);
+  tl.fromTo("#hero-shadow", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 1.4 }, 0.4);
+  tl.to(heroRig, { y: 0, rotationX: 6, rotationZ: 0, duration: 1.6, ease: "power3.out" }, 0.1);
+  tl.to(heroRig, { rotationY: -14, duration: 2.0, ease: "power2.inOut" }, 0.3);
+  const chips = [["#c1", -720, -300], ["#c2", 560, -340], ["#c3", -820, 120], ["#c4", 700, 60], ["#c5", -560, 380], ["#c6", 620, 360]];
+  chips.forEach(([id, x, y], i) => {
+    tl.fromTo(id, { x: x * 1.25, y: y * 1.25, xPercent: -50, yPercent: -50, opacity: 0, scale: 0.8 },
+      { x, y, opacity: 1, scale: 1, duration: 0.7 }, 0.15 + i * 0.07);
+    tl.to(id, { x: 0, y: -60, scale: 0.2, opacity: 0, duration: 0.55, ease: "power3.in" }, 1.6 + i * 0.05);
+  });
+  caption(1, 2.0, 3.45);
+
+  // scene 2: morning -> midday -> evening (3.6 – 7.4) ---------------------
+  glow("#g-gold", 3.4);
+  tl.to(heroRig, { rotationY: 14, rotationX: 4, duration: 3.6, ease: "sine.inOut" }, 3.6);
+  caption(2, 3.75, 7.1);
+  swap("01-home-morning", "02-home-midday", 4.9); glow("#g-sky", 4.8);
+  swap("02-home-midday", "03-home-evening-dark", 6.0); glow("#g-coral", 5.9);
+
+  // scene 3: meeting page, tap Join (7.4 – 11.2) --------------------------
+  glow("#g-indigo", 7.3);
+  tl.to(heroRig, { rotationY: 380, duration: 0.9, ease: "power3.inOut" }, 7.3); // full spin as a scene wipe
+  swap("03-home-evening-dark", "04-meeting", 7.65, 0.1);
+  caption(3, 7.9, 10.85);
+  zoom(150, 814, 1.4, 8.9, 0.9, { rotationY: 360 - 6, rotationX: 10 });
+  tapAt(150, 814, 9.9, true);
+  unzoom(10.75, 0.6, { rotationY: 360 - 16, rotationX: 4 });
+
+  // scene 4: notes, tap the mic (11.2 – 14.6) -----------------------------
+  glow("#g-coral", 11.0);
+  swap("04-meeting", "05-meeting-notes-dark", 11.2);
+  tl.to(heroRig, { rotationY: 360 + 16, duration: 1.2, ease: "power2.inOut" }, 11.0);
+  caption(4, 11.4, 14.3);
+  zoom(345, 814, 1.4, 12.0, 0.8, { rotationY: 360 + 8, rotationX: 10 });
+  tapAt(345, 814, 12.85, false);
+  unzoom(13.3, 0.6, { rotationY: 360 + 12, rotationX: 4 });
+  swap("05-meeting-notes-dark", "07-notes", 13.5);
+
+  // scene 5: calendar, today circled (14.6 – 17.8) ------------------------
+  glow("#g-sky", 14.4);
+  tl.to(heroRig, { rotationY: 360 - 14, duration: 1.1, ease: "power2.inOut" }, 14.4);
+  swap("07-notes", "06-calendar", 14.6);
+  caption(5, 14.8, 17.5);
+  zoom(142, 577, 1.45, 15.6, 0.9, { rotationY: 360 - 4, rotationX: 8 });
+  tapAt(142, 577, 16.5, false);
+  unzoom(16.95, 0.6, { rotationY: 360 - 10 });
+
+  // scene 6: AI on the phone (17.8 – 21.2), then flip to show the back ----
+  glow("#g-indigo", 17.6);
+  swap("06-calendar", "08-ai", 17.8);
+  tl.to(heroRig, { rotationY: 360 + 14, duration: 1.1, ease: "power2.inOut" }, 17.6);
+  caption(6, 18.0, 20.3);
+  zoom(333, 265, 1.4, 18.6, 0.8, { rotationY: 360 + 6, rotationX: 8 });
+  tapAt(333, 265, 19.45, true);
+  unzoom(20.3, 0.4);
+  tl.to(heroRig, { rotationY: 360 + 180, duration: 0.9, ease: "power3.inOut" }, 20.35);
+  tl.to(heroRig, { y: -1100, rotationX: 30, duration: 0.5, ease: "power3.in" }, 20.75);
+  tl.to("#hero-shadow", { opacity: 0, duration: 0.4 }, 20.75);
+
+  // scene 7: lineup of three phones in 3D (20.6 – 24.4) -------------------
+  glow("#g-gold", 20.8, 1.0);
+  [["#p-left", -520, 28], ["#p-mid", 0, 0], ["#p-right", 520, -28]].forEach(([id, x, ry], i) => {
+    tl.fromTo(id, { x, y: 1100, rotationY: ry * 3, rotationX: 25, scale: 0.78 },
+      { y: 90, rotationY: ry, rotationX: 8, duration: 1.1, ease: "power3.out" }, 20.8 + i * 0.1);
+    tl.to(id, { rotationY: ry - 10, y: 80, duration: 2.4, ease: "sine.inOut" }, 22.0);
+  });
+  tl.fromTo("#t7", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7 }, 21.4);
+  tl.to("#lineup", { opacity: 0, scale: 1.08, duration: 0.5, ease: "power2.in" }, 23.9);
+
+  // scene 8: end card (24.2 – 28) -----------------------------------------
+  glow("#g-indigo", 24.0, 1.0);
+  tl.fromTo("#brand img", { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.8, ease: "back.out(1.8)" }, 24.3);
+  tl.fromTo("#brand b", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6 }, 24.55);
+  tl.fromTo("#tag", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 24.85);
+  tl.fromTo("#badges", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 25.1);
+  tl.fromTo("#url", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 25.35);
+  tl.to({}, { duration: 0.01 }, 27.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines["root"] = tl;
+</script>
+</div>
+</body>
+</html>

@@ -26,6 +26,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.isSpecified
+import app.plait.ui.GlassTone
+import app.plait.ui.ToneStyles
+import app.plait.ui.fauxGlass
+import app.plait.ui.glassPanel
+import app.plait.ui.pressable
+import app.plait.ui.toneGlass
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -71,6 +79,13 @@ import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
 import kotlin.math.roundToInt
 
+/** Glass effects off: a solid strong colour stays solid, anything else is a tinted glass body with a quieter rim. */
+@Composable
+private fun Modifier.flatControl(shape: androidx.compose.ui.graphics.Shape, tint: Color): Modifier =
+    if (tint.isSpecified && tint.alpha >= 0.6f) fauxGlass(shape, tint)
+    else if (tint.isSpecified) toneGlass(shape, ToneStyles.fromTint(tint, LocalIsDark.current, app.plait.ui.ToneStyles.FLAT_RIM))
+    else toneGlass(shape, GlassTone.Lavender)
+
 /** A round, interactive glass control for toolbars. Always give it a [description]. */
 @Composable
 fun GlassIconButton(
@@ -79,7 +94,7 @@ fun GlassIconButton(
     onClick: () -> Unit,
     backdrop: Backdrop,
     modifier: Modifier = Modifier,
-    size: Dp = 48.dp,
+    size: Dp = app.plait.ui.ControlHeights.IconButton,
     iconSize: Dp = 22.dp,
     variant: GlassVariant = GlassVariant.Regular,
     tint: Color = Color.Unspecified,
@@ -92,11 +107,15 @@ fun GlassIconButton(
         app.plait.ui.material.MIconButton(icon, description, onClick, modifier, size, iconSize, tint, iconTint, deg)
         return
     }
+    val flat = LocalGlassEnv.current.solid
     Box(
         modifier
             .size(size)
-            .liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
-            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick),
+            .then(
+                if (flat) Modifier.flatControl(CircleShape, tint).pressable(onClick)
+                else Modifier.liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
+                    .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (spinning && !LocalGlassEnv.current.reduceMotion) {
@@ -119,17 +138,21 @@ fun GlassPillButton(
     icon: ImageVector? = null,
     tint: Color = Color.Unspecified,
     contentColor: Color = plait.text,
-    height: Dp = 48.dp,
+    height: Dp = app.plait.ui.ControlHeights.Medium,
     variant: GlassVariant = GlassVariant.Regular,
 ) {
     if (LocalGlassEnv.current.material) {
         app.plait.ui.material.MPill(label, onClick, modifier, icon, tint, contentColor, height)
         return
     }
+    val flat = LocalGlassEnv.current.solid
     Row(
         modifier
-            .liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
-            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
+            .then(
+                if (flat) Modifier.flatControl(androidx.compose.foundation.shape.RoundedCornerShape(height / 2), tint).pressable(onClick)
+                else Modifier.liquidGlass(backdrop, variant = variant, tint = tint, interactive = true)
+                    .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick),
+            )
             .height(height)
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -163,7 +186,7 @@ fun GlassTabBar(
     backdrop: Backdrop,
     modifier: Modifier = Modifier,
     container: TabContainer = TabContainer.Glass,
-    height: Dp = 64.dp,
+    height: Dp = app.plait.ui.ControlHeights.Bar,
     selectedColor: Color = plait.accent,
 ) {
     val env = LocalGlassEnv.current
@@ -290,9 +313,10 @@ fun GlassTabBar(
 data class GlassMenuAction(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
 /**
- * A glass button that morphs into a menu (Apple: "buttons fluidly morph into menus and
- * popovers"). One glass shape grows from the button's circle into a rounded panel on a
- * bouncy spring while its icon cross-fades into the actions; closing reverses it.
+ * The "+" button and its menu. The button is [collapsedSize] (the bar's height) and turns 45 degrees into an "x" while the menu
+ * is open. The menu is a glass panel in the screen's own layer, above the scrim the screen draws: it blurs [backdrop] (the
+ * content layer), grows out of the button's corner on a spring, and has one 56 dp row per action with a tinted icon.
+ * Material 3 Expressive uses its own floating-action-button menu; glass effects off give a flat tinted panel.
  */
 @Composable
 fun GlassMorphMenu(
@@ -303,8 +327,8 @@ fun GlassMorphMenu(
     actions: List<GlassMenuAction>,
     backdrop: Backdrop,
     modifier: Modifier = Modifier,
-    collapsedSize: Dp = 64.dp,
-    expandedWidth: Dp = 250.dp,
+    collapsedSize: Dp = app.plait.ui.ControlHeights.Fab,
+    expandedWidth: Dp = 280.dp,
     tint: Color = plait.signal,
     iconTint: Color = Color(0xFF0E1316),
 ) {
@@ -312,71 +336,39 @@ fun GlassMorphMenu(
         app.plait.ui.material.MFabMenu(expanded, onExpandedChange, actions, modifier)
         return
     }
-    val rowHeight = 56.dp
-    val expandedHeight = rowHeight * actions.size + 16.dp
     val t by animateFloatAsState(
         targetValue = if (expanded) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.72f, stiffness = 380f, visibilityThreshold = 0.001f),
-        label = "morph",
+        label = "menu",
     )
-    val width = lerp(collapsedSize, expandedWidth, t)
-    val heightDp = lerp(collapsedSize, expandedHeight, t)
-    val corner = lerp(collapsedSize / 2, 32.dp, t.coerceIn(0f, 1f))
-    val tintNow = tint.copy(alpha = (1f - t * 1.6f).coerceIn(0f, 1f))
-
-    Box(
-        modifier
-            .size(width, heightDp)
-            .liquidGlass(
-                backdrop,
-                shape = { RoundedRectangle(corner) },
-                tint = tintNow,
-                interactive = !expanded,
-            )
-            .clickable(
-                enabled = !expanded,
-                interactionSource = null,
-                indication = null,
-                role = Role.Button,
-                onClick = { onExpandedChange(true) },
-            ),
-    ) {
-        if (t < 0.6f) {
-            Icon(
-                collapsedIcon,
-                contentDescription = collapsedDescription,
-                tint = iconTint,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(28.dp)
-                    .graphicsLayer { alpha = (1f - t * 2.2f).coerceIn(0f, 1f); rotationZ = t * 45f },
-            )
-        }
-        if (t > 0.15f) {
+    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (t > 0.01f) {
             Column(
-                Modifier.fillMaxSize().padding(PaddingValues(vertical = 8.dp)).graphicsLayer {
-                    alpha = ((t - 0.15f) * 1.6f).coerceIn(0f, 1f)
-                    translationY = (1f - t.coerceIn(0f, 1f)) * 12.dp.toPx()
-                },
-            ) {
-                actions.forEach { action ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(rowHeight)
-                            .clickable(interactionSource = null, indication = null, role = Role.Button) {
-                                onExpandedChange(false)
-                                action.onClick()
-                            }
-                            .padding(horizontal = 22.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Icon(action.icon, null, tint = plait.text, modifier = Modifier.size(24.dp))
-                        Text(action.label, style = PlaitType.bodyStrong, color = plait.text)
+                Modifier
+                    .width(expandedWidth)
+                    .graphicsLayer {
+                        val s = 0.7f + 0.3f * t
+                        scaleX = s; scaleY = s
+                        alpha = t.coerceIn(0f, 1f)
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 1f)
                     }
+                    .glassPanel(app.plait.ui.PanelShape, backdrop)
+                    .padding(8.dp),
+            ) {
+                actions.forEachIndexed { i, action ->
+                    app.plait.ui.MenuRow(action.label, action.icon, app.plait.ui.toneAt(i), { onExpandedChange(false); action.onClick() }, Modifier.fillMaxWidth())
                 }
             }
+        }
+        Box(
+            Modifier
+                .size(collapsedSize)
+                .liquidGlass(backdrop, tint = tint, interactive = true)
+                .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = { onExpandedChange(!expanded) })
+                .semantics { contentDescription = if (expanded) "Close menu" else collapsedDescription },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(collapsedIcon, contentDescription = null, tint = iconTint, modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = t * 45f })
         }
     }
 }

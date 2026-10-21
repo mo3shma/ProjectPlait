@@ -2,7 +2,6 @@ package app.plait
 
 import app.plait.ai.NoteAiPrompt
 import app.plait.audio.Vad
-import app.plait.audio.LiveWhisper
 import app.plait.audio.SAMPLE_RATE
 import app.plait.audio.WhisperTranscriber
 import app.plait.data.CalEvent
@@ -227,32 +226,7 @@ class SpokenTextTest {
     }
 }
 
-class LivePhraseTest {
-    private fun ms(n: Int) = ShortArray(SAMPLE_RATE * n / 1000)
-
-    @Test fun aPausedPhraseIsHandedOverWhole() {
-        val b = LiveWhisper.PhraseBuffer()
-        assertNull(b.add(ms(500)))
-        assertNull(b.add(ms(700)))
-        assertEquals(ms(1200).size, b.take()!!.size)
-        assertNull(b.take()) // taken once, now empty
-    }
-
-    @Test fun clicksAndCoughsAreTooShortToRead() {
-        val b = LiveWhisper.PhraseBuffer()
-        b.add(ms(300))
-        assertNull(b.take())
-        assertNull(b.take())
-    }
-
-    @Test fun nonStopSpeechIsHandedOverInPieces() {
-        val b = LiveWhisper.PhraseBuffer()
-        var out: ShortArray? = null
-        repeat(13) { out = b.add(ms(1000)) ?: out }
-        assertEquals(ms(12_000).size, out!!.size)
-        assertEquals(ms(1000).size, b.take()!!.size)
-    }
-
+class WhisperKeepTest {
     @Test fun inventedPhrasesOverShortSpeechAreDropped() {
         assertFalse(WhisperTranscriber.worthKeeping("Thank you.", 1200))
         assertTrue(WhisperTranscriber.worthKeeping("Thank you.", 4000))

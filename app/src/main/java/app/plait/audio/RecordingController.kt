@@ -8,10 +8,9 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import app.plait.data.NoteLine
-import app.plait.data.SpokenText
 import app.plait.data.NoteStore
 import app.plait.data.SavedNote
+import app.plait.ui.screens.loudnessOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,14 +18,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 
 enum class RecPhase { Idle, Recording, Paused, Saving, Failed }
 
 /**
- * Drives one voice-note session: microphone → WAV file, same audio → offline transcriber,
- * with everything the UI needs exposed as Compose state.
+ * Drives one voice-note session: microphone → WAV file, with the level meter and a "hearing you" flag exposed as
+ * Compose state. Words come later: NoteProcessor transcribes the saved file.
  */
 class RecordingController(
     context: Context,
@@ -40,18 +38,15 @@ class RecordingController(
 
     var phase by mutableStateOf(RecPhase.Idle); private set
     var elapsedMs by mutableLongStateOf(0L); private set
-    var levels by mutableStateOf(List(LEVEL_BARS) { 0f }); private set
+    /** 0..1 loudness of the latest audio buffer. Written on the capture thread, read by the wave animation each frame. */
+    @Volatile var loudness = 0f; private set
     /** True while the voice detector hears someone talking. */
     var speaking by mutableStateOf(false); private set
     var failure by mutableStateOf<String?>(null); private set
-    /** Null while the speech model is loading, true once it is live, false if it failed. */
-    var speechReady by mutableStateOf<Boolean?>(null); private set
-    val lines = mutableStateListOf<NoteLine>()
     val bookmarksMs = mutableStateListOf<Long>()
 
     private val id = UUID.randomUUID().toString()
     private val file = store.newAudioFile(id)
-    private val transcriber: LiveTranscriber = LiveWhisper(appContext)
     private val pcm = Channel<ShortArray>(Channel.UNLIMITED)
     private var recorder: WavRecorder? = null
     private var consumer: Job? = null
@@ -59,21 +54,17 @@ class RecordingController(
 
     fun start(): Boolean {
         if (phase != RecPhase.Idle) return phase != RecPhase.Failed
-        transcriber.load()
-        consumer = scope.launch { consume() }
+        consumer = scope.launch { listen() }
 
         val rec = WavRecorder(file, onFail = {
             main.post { failure = "The recording stopped: the microphone or the storage failed. What was recorded is kept; tap stop to save it." }
         }) { buf, n ->
             pcm.trySend(buf.copyOf(n))
+            loudness = loudnessOf(buf, n)
             val now = System.currentTimeMillis()
             if (now - lastUiPost >= 60) {
                 lastUiPost = now
-                val level = levelOf(buf, n)
-                main.post {
-                    levels = levels.drop(1) + level
-                    recorder?.let { elapsedMs = it.elapsedMs }
-                }
+                main.post { recorder?.let { elapsedMs = it.elapsedMs } }
             }
         }
         recorder = rec
@@ -90,7 +81,8 @@ class RecordingController(
         if (phase != RecPhase.Recording) return
         recorder?.paused = true
         phase = RecPhase.Paused
-        levels = List(LEVEL_BARS) { 0f }
+        loudness = 0f
+        speaking = false
     }
 
     fun resume() {
@@ -106,8 +98,8 @@ class RecordingController(
     }
 
     /**
-     * Stops, waits for the transcriber to drain, saves the note and reports its id on the main
-     * thread. Recordings shorter than two seconds are discarded and report null.
+     * Stops, saves the note and reports its id on the main thread. Recordings shorter than two seconds are
+     * discarded and report null.
      */
     fun stop(onDone: (noteId: String?) -> Unit) {
         if (phase == RecPhase.Saving) return
@@ -116,26 +108,13 @@ class RecordingController(
         scope.launch {
             val duration = recorder?.also { it.stop() }?.elapsedMs ?: 0L
             pcm.close()
-            val keep = wasLive && duration >= 2000
-            if (keep) {
-                // Whisper writes a phrase at a time; don't hold the save for long if it has fallen behind (the final pass redoes it).
-                val drained = withTimeoutOrNull(8_000) { consumer?.join() } != null
-                if (!drained) consumer?.cancel()
-                val tail = if (drained) transcriber.finish().trim() else ""
-                val cleaned = SpokenText.tidy(tail)
-                if (cleaned.isNotEmpty()) main.post { lines.add(NoteLine(duration, cleaned)) }
-            } else {
-                // Too short to keep: don't wait for the speech model to finish loading.
-                consumer?.cancel()
-            }
-            transcriber.close()
-
-            if (keep) {
+            consumer?.cancel()
+            if (wasLive && duration >= 2000) {
                 main.post {
                     val note = SavedNote(
                         id = id, eventId = eventId, title = eventTitle,
                         createdAt = System.currentTimeMillis(), durationMs = duration,
-                        audioFile = file.name, lines = lines.toList(), bookmarksMs = bookmarksMs.toList(),
+                        audioFile = file.name, lines = emptyList(), bookmarksMs = bookmarksMs.toList(),
                     )
                     store.add(note)
                     NoteProcessor.afterSave(appContext, store, note)
@@ -154,47 +133,15 @@ class RecordingController(
         recorder = null
         pcm.close()
         scope.cancel()
-        transcriber.close()
     }
 
-    private suspend fun consume() {
-        val ok = transcriber.awaitReady()
-        main.post { speechReady = ok }
-        // Only speech reaches the recogniser: silence and room noise are dropped before they can become words.
+    /** Feeds the voice detector only to drive the "hearing you" flag; nothing is cut from the recording. */
+    private suspend fun listen() {
         val vad = Vad(SAMPLE_RATE)
-        var startMs = -1L
-
-        fun addLine(u: TranscriptUpdate?, at: Long) {
-            val text = SpokenText.tidy(u?.text.orEmpty())
-            if (text.isNotEmpty()) main.post { lines.add(NoteLine(at, text)) }
-        }
-
+        var heard = false
         for (chunk in pcm) {
-            val out = vad.feed(chunk)
-            if (!ok) continue
-            if (out.started) {
-                startMs = vad.speechStartMs
-                main.post { speaking = true }
-            }
-            for (seg in out.audio) {
-                val u = transcriber.accept(seg) ?: continue
-                addLine(u, if (startMs >= 0) startMs else vad.elapsedMs)
-                startMs = vad.elapsedMs // a long stretch of speech continues as the next phrase
-            }
-            if (out.ended) {
-                addLine(transcriber.flush(), if (startMs >= 0) startMs else vad.elapsedMs)
-                startMs = -1
-                main.post { speaking = false }
-            }
+            vad.feed(chunk)
+            if (vad.speaking != heard) { heard = vad.speaking; main.post { speaking = heard } }
         }
-        if (ok) {
-            val rest = vad.remainder()
-            if (rest.isNotEmpty()) addLine(transcriber.accept(rest), if (startMs >= 0) startMs else vad.elapsedMs)
-        }
-        main.post { speaking = false }
-    }
-
-    companion object {
-        const val LEVEL_BARS = 30
     }
 }

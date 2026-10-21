@@ -117,29 +117,19 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
     }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> if (uri != null) addPhoto(uri) }
 
+    // The shared tinted glass button; the tone tells the four kinds of note apart at a glance.
     @Composable
-    fun Pill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-        // Clear glass with a light colour of its own, so the four kinds of note are told apart at a glance.
-        val tint = color.copy(alpha = 0.28f)
-        if (backdrop != null) app.plait.ui.glass.GlassPillButton(label, onClick, backdrop, modifier = modifier, icon = icon, tint = tint, height = 48.dp)
-        else androidx.compose.foundation.layout.Row(
-            modifier.height(48.dp).fauxGlass(androidx.compose.foundation.shape.CircleShape, tint).pressable(onClick).padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        ) {
-            Icon(icon, null, tint = plait.text, modifier = Modifier.size(22.dp))
-            Text(label, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1)
-        }
-    }
+    fun Pill(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, tone: app.plait.ui.GlassTone, onClick: () -> Unit) =
+        PlaitButton(label, onClick, modifier, style = ButtonStyle.Tinted, icon = icon, tone = tone)
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Two equal pills to a row, so every one has room for its icon and its word.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
             val m = Modifier.weight(1f)
-            if (onRecord != null) Pill("Voice", Icons.Filled.Mic, m, NoteColors.voice, onRecord)
-            Pill("Write", Icons.Filled.Edit, m, NoteColors.write) { writing = true }
-            Pill("Photo", Icons.Filled.CameraAlt, m, NoteColors.photo) { photoMenu = true }
-            Pill("List", Icons.Filled.Checklist, m, NoteColors.list) { listing = true }
+            if (onRecord != null) Pill("Voice", Icons.Filled.Mic, m, app.plait.ui.GlassTone.Rose, onRecord)
+            Pill("Write", Icons.Filled.Edit, m, app.plait.ui.GlassTone.Lavender) { writing = true }
+            Pill("Photo", Icons.Filled.CameraAlt, m, app.plait.ui.GlassTone.Mint) { photoMenu = true }
+            Pill("List", Icons.Filled.Checklist, m, app.plait.ui.GlassTone.Peach) { listing = true }
         }
         if (busy) Text(if (lang == OcrLang.Latin) "Reading the picture…" else "Reading the picture. Arabic takes a few seconds.", style = PlaitType.caption, color = plait.muted)
     }
@@ -254,11 +244,14 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
                     if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, if (item.done) "Done" else "Not done",
                     tint = if (item.done) plait.accent else plait.muted, modifier = Modifier.size(24.dp),
                 )
-                Text(
-                    item.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content,
-                        textDecoration = if (item.done) androidx.compose.ui.text.style.TextDecoration.LineThrough else null),
-                    color = if (item.done) plait.muted else plait.text, modifier = Modifier.weight(1f),
-                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        item.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content,
+                            textDecoration = if (item.done) androidx.compose.ui.text.style.TextDecoration.LineThrough else null),
+                        color = if (item.done) plait.muted else plait.text,
+                    )
+                    if (!item.done) DueChip(item.dueMs, { save(app.plait.data.memo.Checklist.setDue(memo.text, i, it)) })
+                }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

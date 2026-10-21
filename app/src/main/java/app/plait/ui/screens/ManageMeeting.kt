@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.plait.ui.PlaitDialog
 import app.plait.data.CalEvent
 import app.plait.data.Calendars
 import app.plait.data.device.EventEdit
@@ -153,7 +153,7 @@ private fun EditEventDialog(ev: CalEvent, onSave: (String, String, String) -> Un
     var title by remember { mutableStateOf(ev.title) }
     var place by remember { mutableStateOf(ev.location ?: ev.place) }
     var notes by remember { mutableStateOf(ev.description.orEmpty()) }
-    Dialog(onDismissRequest = onDismiss) { PopIn {
+    PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Edit meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Field("Title", title, 1) { title = it }

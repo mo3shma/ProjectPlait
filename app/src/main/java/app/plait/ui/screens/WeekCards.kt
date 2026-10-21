@@ -134,7 +134,7 @@ internal fun WeekRecapBlock(nowMs: Long, zone: ZoneId) {
     val noteCount = noteStore.notes.size
     val memoCount = memoStore.items.size
     val start = WorkWeek.startDay
-    val stats = remember(nowMs / 60_000, noteCount, memoCount, start) {
+    val stats = remember(nowMs / 60_000, noteCount, memoCount, start, app.plait.data.Calendars.events.hashCode()) {
         val days = WorkWeek.thisWorkWeek(dayOf(nowMs, zone), start)
         val events = WeekEvents.between(days.first(), days.last(), zone)
         val notes = noteStore.notes.toList()
@@ -213,7 +213,7 @@ private fun NextWeekBrief(days: List<LocalDate>, nowMs: Long, zone: ZoneId) {
     val ink = LocalCardInk.current
     val noteStore = remember { NoteStore.get(context) }
     val noteCount = noteStore.notes.size
-    val preview = remember(nowMs / 60_000, noteCount, days) {
+    val preview = remember(nowMs / 60_000, noteCount, days, app.plait.data.Calendars.events.hashCode()) {
         val events = WeekEvents.between(days.first(), days.last(), zone)
         val notes = noteStore.notes.toList()
         WeekPreviews.compute(days, events, events.associate { it.id to BriefBuilder.build(it, notes, nowMs).kind }, zone)

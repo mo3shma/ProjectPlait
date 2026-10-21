@@ -127,7 +127,7 @@ object Reminders {
         val id = i.getStringExtra(EXTRA_EVENT) ?: return
         val min = i.getIntExtra("min", 10)
         val n = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_plait)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("In $min min: ${i.getStringExtra("title")}")
             .setContentText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString(" · "))
             .setStyle(NotificationCompat.BigTextStyle().bigText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString("\n")))
@@ -160,7 +160,7 @@ object Reminders {
         ensureChannel(context)
         val text = if (missing.size == 1) "${missing.first().title} has no notes yet." else "${missing.size} meetings have no notes yet, like ${missing.first().title}."
         val n = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_plait).setContentTitle("Add notes while it's fresh").setContentText(text)
+            .setSmallIcon(R.drawable.ic_notification).setContentTitle("Add notes while it's fresh").setContentText(text)
             .setAutoCancel(true).setContentIntent(open(context, missing.first().id, 2, NUDGE_CODE + 1)).build()
         runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NUDGE_CODE, n) }
     }

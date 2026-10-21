@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import app.plait.data.CalEvent
+import app.plait.data.tasks.AttentionTasks
 import app.plait.data.tasks.TaskIdea
 import app.plait.data.tasks.TaskIdeas
 import app.plait.data.tasks.TaskSuggester
@@ -68,11 +69,12 @@ internal fun SuggestedTasksCard(ev: CalEvent) {
         }
         Text("Found in your notes. Add one to the checklist with a reminder.", style = PlaitType.caption, color = plait.muted)
         ideas.forEach { idea ->
-            val at = remember(idea.id) { TaskSuggester.remindAt(idea.due, System.currentTimeMillis()) }
+            val now = remember(idea.id) { System.currentTimeMillis() }
+            val dueMs = remember(idea.id) { TaskSuggester.dueMs(idea.due, now) }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(idea.text, style = PlaitType.bodyStrong, color = plait.text)
-                    Text("Reminder ${TaskReminders.label(at)}", style = PlaitType.caption, color = plait.muted)
+                    Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: "No due date. Reminder ${TaskReminders.label(TaskSuggester.remindAt(idea.due, now))}", style = PlaitType.caption, color = plait.muted)
                 }
                 PlaitButton("Add", { add(listOf(idea)) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
                 IconButton(onClick = { TaskIdeas.decide(context, idea) }) {

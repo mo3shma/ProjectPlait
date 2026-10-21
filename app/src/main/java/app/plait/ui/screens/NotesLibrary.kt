@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.plait.ui.PlaitDialog
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import app.plait.data.Calendars
@@ -132,12 +132,13 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { ScreenHeader("Notes", "Notes") }
+                item { BetterVoiceCard() }
                 item { SearchPanel(onOpenAt) }
                 item { AddNoteCard("", memoStore, backdrop) }
                 item {
                     app.plait.ui.glass.GlassTabBar(
                         tabs = filterTabs, selected = filter, onSelect = { filter = it }, backdrop = backdrop,
-                        container = app.plait.ui.glass.TabContainer.Glass, height = 48.dp, selectedColor = plait.text,
+                        container = app.plait.ui.glass.TabContainer.Glass, height = app.plait.ui.ControlHeights.Medium, selectedColor = plait.text,
                     )
                 }
                 if (shown.isEmpty()) {
@@ -212,7 +213,7 @@ private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit) 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(e.icon, null, tint = plait.accent, modifier = Modifier.size(18.dp))
             Text(e.title, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            Text(if (e.voice != null) formatClock(e.voice.durationMs) else e.kindLabel, style = PlaitType.monoSmall.copy(fontSize = 13.sp), color = plait.signal, maxLines = 1)
+            app.plait.ui.PlaitBadge(if (e.voice != null) formatClock(e.voice.durationMs) else e.kindLabel, if (e.voice != null) app.plait.ui.BadgeKind.Size else app.plait.ui.BadgeKind.Info)
         }
         if (e.snippet.isNotBlank()) Text(e.snippet, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -281,7 +282,7 @@ private fun LinkPicker(e: Entry, onPick: (String) -> Unit, onDismiss: () -> Unit
         Calendars.events.filter { it.startMs in (now - 30L * 86_400_000)..(now + 14L * 86_400_000) }
             .sortedBy { kotlin.math.abs(it.startMs - e.createdAt) }.take(40)
     }
-    Dialog(onDismissRequest = onDismiss) { PopIn {
+    PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).popupSurface().padding(vertical = 16.dp)) {
             Text("Link to a meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
             if (events.isEmpty()) {

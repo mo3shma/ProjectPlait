@@ -142,3 +142,6 @@ object Summarizer {
         return "$cut…"
     }
 }
+
+/** Titles from invites carry stray spaces; collapse them before a title goes into a sentence. */
+fun tidyTitle(title: String): String = title.trim().replace(Regex("\\s+"), " ")

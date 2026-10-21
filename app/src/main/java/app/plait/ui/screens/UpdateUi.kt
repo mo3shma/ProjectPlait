@@ -54,7 +54,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.plait.ui.PlaitDialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import app.plait.ai.ModelCatalog
@@ -91,9 +91,9 @@ private fun NewsList(items: List<NewsItem>) {
 /** The card after an update: what this version brings. */
 @Composable
 fun WhatsNewDialog(news: News, onDone: () -> Unit) {
-    Dialog(onDismissRequest = onDone) { PopIn {
+    PlaitDialog(onDismissRequest = onDone) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("WHAT'S NEW IN ${news.version}", style = PlaitType.monoSmall, color = plait.muted)
+            Text("What's new in ${news.version}", style = PlaitType.bodyStrong, color = plait.muted)
             Text(news.title.replaceFirstChar { it.uppercase() }, style = PlaitType.section, color = plait.text)
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) { NewsList(news.items) }
             PlaitButton("Got it", onDone, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
@@ -130,7 +130,7 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
         onDispose { owner.lifecycle.removeObserver(obs) }
     }
 
-    Dialog(onDismissRequest = close) { PopIn {
+    PlaitDialog(onDismissRequest = close) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Filled.SystemUpdate, null, tint = plait.accent, modifier = Modifier.size(24.dp))

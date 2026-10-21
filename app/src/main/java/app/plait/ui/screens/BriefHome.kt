@@ -22,8 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.draw.drawWithCache
+import app.plait.data.quotes.Quotes
+import app.plait.data.brief.tidyTitle
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -105,20 +107,43 @@ import kotlin.math.abs
 
 internal val LocalCardBackdrop = androidx.compose.runtime.compositionLocalOf<com.kyant.backdrop.Backdrop?> { null }
 
-/** Material 3: each part of the day is one of the scheme's container colours, flat and rounded. */
+/** Each kind of card has its own colour; two tints make a diagonal gradient on glass. */
+private fun FeedCardKind.tints(phase: Phase): Pair<Color, Color> = when (this) {
+    FeedCardKind.Meetings -> phase.tone().bg.let { it to it }
+    FeedCardKind.Tasks -> if (phase == Phase.Morning) Color(0xFFFF9E8F) to Color(0xFFD9A5F0) else Color(0xFF8EE3B5) to Color(0xFF8CCBF0)
+    FeedCardKind.Day -> Color(0xFFD0C4FF).let { it to it }
+    FeedCardKind.Tomorrow -> Color(0xFFFFC59E) to Color(0xFFF4A6C0)
+    FeedCardKind.WeekRecap -> Color(0xFFFFD166) to Color(0xFFFF9E8F)
+}
+
+/** Material 3: a different scheme container per kind, so neighbouring cards never match. */
+private fun FeedCardKind.container(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color = when (this) {
+    FeedCardKind.Meetings -> if (phase == Phase.Morning) cs.tertiaryContainer else cs.primaryContainer
+    FeedCardKind.Tasks, FeedCardKind.Day -> cs.secondaryContainer
+    FeedCardKind.Tomorrow -> cs.tertiaryContainer
+    FeedCardKind.WeekRecap -> cs.primaryContainer
+}
+
+private fun FeedCardKind.onContainer(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color = when (this) {
+    FeedCardKind.Meetings -> if (phase == Phase.Morning) cs.onTertiaryContainer else cs.onPrimaryContainer
+    FeedCardKind.Tasks, FeedCardKind.Day -> cs.onSecondaryContainer
+    FeedCardKind.Tomorrow -> cs.onTertiaryContainer
+    FeedCardKind.WeekRecap -> cs.onPrimaryContainer
+}
+
 @Composable
-private fun cardShell(material: Boolean, cs: androidx.compose.material3.ColorScheme, phase: Phase, backdrop: com.kyant.backdrop.Backdrop, tone: KindTone): Modifier =
-    if (material) Modifier.clip(RoundedCornerShape(36.dp)).background(phaseContainer(cs, phase)) else Modifier.liquidGlass(
+private fun cardShell(material: Boolean, cs: androidx.compose.material3.ColorScheme, kind: FeedCardKind, phase: Phase, backdrop: com.kyant.backdrop.Backdrop, a: Color, b: Color): Modifier =
+    if (material) Modifier.clip(RoundedCornerShape(36.dp)).background(kind.container(cs, phase)) else Modifier.liquidGlass(
         backdrop, shape = { com.kyant.shapes.RoundedRectangle(44.dp) },
-        tint = tone.bg.copy(alpha = 0.40f), lens = false,
+        tint = androidx.compose.ui.graphics.lerp(a, b, 0.5f).copy(alpha = 0.40f), lens = false,
         surfaceColor = Color.White.copy(alpha = if (app.plait.ui.theme.LocalIsDark.current) 0.6f else 0.07f),
     )
 
-private fun phaseContainer(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color =
-    when (phase) { Phase.Morning -> cs.tertiaryContainer; Phase.Afternoon -> cs.primaryContainer; Phase.Evening -> cs.secondaryContainer }
-
-private fun onContainer(cs: androidx.compose.material3.ColorScheme, phase: Phase): Color =
-    when (phase) { Phase.Morning -> cs.onTertiaryContainer; Phase.Afternoon -> cs.onPrimaryContainer; Phase.Evening -> cs.onSecondaryContainer }
+/** The two tints of a glass card as a diagonal wash over the glass. */
+private fun Modifier.diagonalTint(a: Color, b: Color): Modifier = drawWithCache {
+    val brush = Brush.linearGradient(listOf(a.copy(alpha = 0.32f), b.copy(alpha = 0.32f)), Offset.Zero, Offset(size.width, size.height))
+    onDrawBehind { drawRect(brush) }
+}
 
 private fun Phase.tone() = when (this) {
     Phase.Morning -> KindTone(Color(0xFFFFD98A), Color(0xFF0E1316))
@@ -131,7 +156,19 @@ private fun Phase.icon(): ImageVector = when (this) {
     Phase.Evening -> Icons.Filled.NightsStay
 }
 
-/** Everything the three cards share, worked out once per refresh. */
+/** A quote under an otherwise bare empty state. Stable for the day and the slot. */
+@Composable
+internal fun QuoteBlock(phase: Phase, kind: FeedCardKind) {
+    val ink = LocalCardInk.current
+    val day = java.time.LocalDate.now().toEpochDay()
+    val q = remember(phase, kind, day) { Quotes.pick(day, quoteSlot(phase, kind)) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("“${q.text}”", style = PlaitType.body.copy(fontSize = 16.sp, lineHeight = 23.sp, fontStyle = FontStyle.Italic), color = ink.copy(alpha = 0.85f))
+        Text("- ${q.author}", style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
+    }
+}
+
+/** Everything the cards share, worked out once per refresh. */
 private class DayData(
     val events: List<CalEvent>,
     val briefs: Map<String, MeetingBrief>,
@@ -144,9 +181,8 @@ private class DayData(
 )
 
 /**
- * Home is one card at a time, and the cards follow the day: a morning card listing what is coming, a
- * midday card of what is done and what is left, an evening card with how the day went and a nudge to
- * write down notes. It opens on the part of the day you are in; swipe sideways for the others.
+ * Home is a vertical feed of equal-size cards for the part of the day chosen in the chips above: the active card takes
+ * three quarters of the height and its neighbour peeks, faded, in the rest.
  */
 @Composable
 internal fun BriefPage(
@@ -154,7 +190,7 @@ internal fun BriefPage(
     nowMs: Long,
     tomorrow: List<CalEvent>,
     cardBackdrop: com.kyant.backdrop.Backdrop,
-    pager: androidx.compose.foundation.pager.PagerState,
+    phase: Phase,
     onOpenEvent: (String) -> Unit,
     onOpenNotes: (String) -> Unit,
     onOpenHub: () -> Unit,
@@ -215,69 +251,67 @@ internal fun BriefPage(
         else if (!CallLinks.open(context, link)) Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
     }
 
+
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    var openPhase by remember { mutableStateOf<Phase?>(null) }
+    val calm = app.plait.ui.glass.LocalGlassEnv.current.reduceMotion
 
     Column(Modifier.fillMaxSize().padding(top = statusTop + 132.dp)) {
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 18.dp),
-            pageSpacing = 12.dp,
-            beyondViewportPageCount = 0,
-            key = { it },
-        ) { page ->
-            val phase = Phase.entries[page]
-            val tone = phase.tone()
-            val material = app.plait.ui.glass.LocalGlassEnv.current.material
-            val cs = androidx.compose.material3.MaterialTheme.colorScheme
-            Column(
-                Modifier.fillMaxSize().padding(bottom = 104.dp).navigationBarsPadding()
-                    .graphicsLayer {
-                        // Pages beside the open one sit slightly back, like cards in a stack.
-                        val off = abs((pager.currentPage - page) + pager.currentPageOffsetFraction).coerceIn(0f, 1f)
-                        val s = 1f - 0.07f * off
-                        scaleX = s; scaleY = s; alpha = 1f - 0.4f * off
-                    },
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-            Box(Modifier.weight(1f).fillMaxWidth().then(cardShell(material, cs, phase, cardBackdrop, tone))) {
-                val hour = remember(nowMs / 60_000) { Instant.ofEpochMilli(nowMs).atZone(zone).let { it.hour + it.minute / 60f } }
-                // The animated sky sits over the tinted glass at moderate strength, so the glass colour always shows through.
-                if (!app.plait.ui.glass.LocalGlassEnv.current.material) Box(Modifier.matchParentSize().clip(RoundedCornerShape(44.dp))) { PhaseSky(phase, hour, Modifier.matchParentSize(), active = pager.settledPage == page) }
-                CompositionLocalProvider(LocalCardInk provides (if (material) onContainer(cs, phase) else cardInk(app.plait.ui.theme.LocalIsDark.current)), LocalCardBackdrop provides cardBackdrop) {
-                // The whole day scrolls inside the card; tapping it opens the same in a bigger pop-up.
-                Column(
-                    Modifier.fillMaxSize().edgeFade().verticalScroll(rememberScrollState()).pressable({ openPhase = phase }, lift = 2.dp).padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 64.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CardHeader(phase, nowMs, zone)
-                    CardBody(phase, false, today, data, tomorrow, nowMs, zone, aiText, onOpenEvent, onOpenNotes, join, onOpenHub, onAllowCalendar)
-                }
-                }
-            }
-            if (phase != Phase.Evening) CompositionLocalProvider(LocalCardBackdrop provides cardBackdrop) { AttentionCard(phase, nowMs, onOpenEvent) }
+        // Switching phase cross-fades to the other feed, which starts on its first card.
+        androidx.compose.animation.Crossfade(
+            phase, Modifier.weight(1f).fillMaxWidth().padding(bottom = 104.dp).navigationBarsPadding(),
+            animationSpec = androidx.compose.animation.core.tween(if (calm) 90 else 260), label = "phase-feed",
+        ) { ph ->
+            val lastDay = weekRecapDue(nowMs, zone)
+            val cards = remember(ph, lastDay) { feedCards(ph, lastDay) }
+            val state = androidx.compose.foundation.pager.rememberPagerState { cards.size }
+            CardFeed(cards, state, Modifier.fillMaxSize()) { index, kind ->
+                FeedCard(kind, ph, state.settledPage == index, today, data, tomorrow, nowMs, zone, aiText, cardBackdrop, onOpenEvent, onOpenNotes, join, onOpenHub, onAllowCalendar)
             }
         }
     }
+}
 
-    openPhase?.let { ph ->
-        val tone = ph.tone()
-        val cs = androidx.compose.material3.MaterialTheme.colorScheme
-        val material = app.plait.ui.glass.LocalGlassEnv.current.material
-        val hour = remember(nowMs / 60_000) { Instant.ofEpochMilli(nowMs).atZone(zone).let { it.hour + it.minute / 60f } }
-        // The open card looks like the card it grew from: the same container colour, or the same tinted sky.
-        ExpandDialog({ openPhase = null }, fullScreen = true) { close ->
-            Box(
-                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 28.dp).clip(RoundedCornerShape(if (material) 36.dp else 44.dp))
-                    .background(if (material) phaseContainer(cs, ph) else androidx.compose.ui.graphics.lerp(Color.White, tone.bg, 0.5f)),
+/** One card of the feed: its own tint, the animated sky where it has one, and the content scrolling inside it. */
+@Composable
+private fun FeedCard(
+    kind: FeedCardKind, phase: Phase, active: Boolean, today: TodayData, data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zone: ZoneId, aiText: String?,
+    backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, join: (CalEvent) -> Unit, onOpenHub: () -> Unit, onAllowCalendar: () -> Unit,
+) {
+    val material = app.plait.ui.glass.LocalGlassEnv.current.material
+    val cs = androidx.compose.material3.MaterialTheme.colorScheme
+    val (a, b) = kind.tints(phase)
+    Box(Modifier.fillMaxSize().then(cardShell(material, cs, kind, phase, backdrop, a, b))) {
+        if (!material) Box(Modifier.matchParentSize().clip(RoundedCornerShape(44.dp))) {
+            if (a != b) Box(Modifier.matchParentSize().diagonalTint(a, b))
+            // The animated sky sits over the tinted glass at moderate strength, so the glass colour always shows through.
+            if (kind == FeedCardKind.Meetings || kind == FeedCardKind.Day) {
+                val hour = remember(nowMs / 60_000) { Instant.ofEpochMilli(nowMs).atZone(zone).let { it.hour + it.minute / 60f } }
+                PhaseSky(phase, hour, Modifier.matchParentSize(), active = active)
+            }
+        }
+        CompositionLocalProvider(LocalCardInk provides (if (material) kind.onContainer(cs, phase) else cardInk(app.plait.ui.theme.LocalIsDark.current)), LocalCardBackdrop provides backdrop) {
+            // A drag in here scrolls the content first and hands over to the feed once the content is at its end. A peeking card does not scroll: dragging it moves the feed.
+            Column(
+                Modifier.fillMaxSize().edgeFade().verticalScroll(rememberScrollState(), enabled = active).padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 36.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (!material) PhaseSky(ph, hour, Modifier.matchParentSize(), active = true)
-                CompositionLocalProvider(LocalCardInk provides if (material) onContainer(cs, ph) else cardInk(app.plait.ui.theme.LocalIsDark.current)) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CardHeader(ph, nowMs, zone)
-                        CardBody(ph, false, today, data, tomorrow, nowMs, zone, aiText, { openPhase = null; onOpenEvent(it) }, { openPhase = null; onOpenNotes(it) }, join, { openPhase = null; onOpenHub() }, onAllowCalendar)
-                        CloseButton(close, Modifier.fillMaxWidth())
+                when (kind) {
+                    FeedCardKind.Meetings -> {
+                        CardHeader(phase, nowMs, zone)
+                        if (phase == Phase.Morning) MorningCard(data, nowMs, zone, aiText, onOpenEvent, join) else AfternoonCard(data, nowMs, phase, onOpenEvent, join)
+                        NextWeekOffer(nowMs, zone, data.stats.meetings)
+                        CalendarSetupCard(data, onOpenHub, onAllowCalendar)
+                    }
+                    FeedCardKind.Tasks -> AttentionContent(phase, nowMs, onOpenEvent)
+                    FeedCardKind.WeekRecap -> WeekRecapBlock(nowMs, zone)
+                    FeedCardKind.Day -> {
+                        CardHeader(phase, nowMs, zone)
+                        DayCard(data, phase, onOpenNotes)
+                        CalendarSetupCard(data, onOpenHub, onAllowCalendar)
+                    }
+                    FeedCardKind.Tomorrow -> {
+                        TomorrowCard(phase, tomorrow, zone, onOpenEvent)
+                        NextWeekOffer(nowMs, zone, data.stats.meetings)
                     }
                 }
             }
@@ -292,7 +326,7 @@ private fun Modifier.edgeFade(): Modifier = this
         drawContent()
         val h = size.height
         val top = (14.dp.toPx() / h).coerceIn(0f, 0.2f)
-        val bottom = (72.dp.toPx() / h).coerceIn(0f, 0.4f)
+        val bottom = (40.dp.toPx() / h).coerceIn(0f, 0.4f)
         drawRect(
             Brush.verticalGradient(0f to Color.Transparent, top to Color.Black, (1f - bottom) to Color.Black, 1f to Color.Transparent),
             blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
@@ -320,20 +354,6 @@ private fun CalendarSetupCard(data: DayData, onOpenHub: () -> Unit, onAllowCalen
             PlaitButton("Add an account or link", onOpenHub, style = ButtonStyle.Ink, size = ButtonSize.Small)
         }
     }
-}
-
-@Composable
-private fun CardBody(
-    phase: Phase, compact: Boolean, today: TodayData, data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zone: ZoneId, aiText: String?,
-    onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, join: (CalEvent) -> Unit, onOpenHub: () -> Unit, onAllowCalendar: () -> Unit,
-) {
-    when (phase) {
-        Phase.Morning -> MorningCard(today, data, nowMs, zone, aiText, compact, onOpenEvent, join, onOpenHub, onAllowCalendar)
-        Phase.Afternoon -> AfternoonCard(data, nowMs, compact, onOpenEvent, join)
-        Phase.Evening -> EveningCard(data, tomorrow, nowMs, zone, compact, onOpenEvent, onOpenNotes)
-    }
-    if (!compact) NextWeekOffer(nowMs, zone, data.stats.meetings)
-    if (!compact) CalendarSetupCard(data, onOpenHub, onAllowCalendar)
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -459,24 +479,23 @@ private fun EventLine(
 
 @Composable
 private fun MorningCard(
-    today: TodayData, data: DayData, nowMs: Long, zone: ZoneId, aiText: String?, compact: Boolean,
-    onOpenEvent: (String) -> Unit, join: (CalEvent) -> Unit, onOpenHub: () -> Unit, onAllowCalendar: () -> Unit,
+    data: DayData, nowMs: Long, zone: ZoneId, aiText: String?,
+    onOpenEvent: (String) -> Unit, join: (CalEvent) -> Unit,
 ) {
     val ink = LocalCardInk.current
     val n = data.stats.meetings
     Headline(if (n == 0) "A clear day." else "${DayAnalytics.word(n)} meeting${if (n == 1) "" else "s"} today.")
-    Body(data.sense, if (compact) 2 else Int.MAX_VALUE)
-    if (!compact && data.day.summary.isNotBlank()) Body(aiText ?: data.day.summary)
-    if (!compact && data.day.load.isNotEmpty()) DayStripOnCard(data.day, data.kinds, nowMs, zone)
+    Body(data.sense)
+    if (n == 0) QuoteBlock(Phase.Morning, FeedCardKind.Meetings)
+    if (data.day.summary.isNotBlank()) Body(aiText ?: data.day.summary)
+    if (data.day.load.isNotEmpty()) DayStripOnCard(data.day, data.kinds, nowMs, zone)
 
     Calendars.message?.let { Text(it, style = PlaitType.caption, color = ink) }
 
     if (data.events.isNotEmpty()) {
-        if (!compact) SectionLabel("Today in order")
+        SectionLabel("Today in order")
         val next = data.events.firstOrNull { !it.allDay && it.endMs > nowMs }
-        val list = if (compact) data.events.filter { it.endMs > nowMs || it.allDay }.ifEmpty { data.events }.take(2) else data.events
-        list.forEach { ev -> EventLine(ev, data, nowMs, { onOpenEvent(ev.id) }, join = if (ev.id == next?.id) join else null, compact = compact) }
-        if (compact && data.events.size > list.size) Text("+${data.events.size - list.size} more · tap to open", style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
+        data.events.forEach { ev -> EventLine(ev, data, nowMs, { onOpenEvent(ev.id) }, join = if (ev.id == next?.id) join else null) }
     }
 }
 
@@ -485,7 +504,7 @@ private fun MorningCard(
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun AfternoonCard(data: DayData, nowMs: Long, compact: Boolean, onOpenEvent: (String) -> Unit, join: (CalEvent) -> Unit) {
+private fun AfternoonCard(data: DayData, nowMs: Long, phase: Phase, onOpenEvent: (String) -> Unit, join: (CalEvent) -> Unit) {
     val s = data.stats
     Headline(
         when {
@@ -495,15 +514,10 @@ private fun AfternoonCard(data: DayData, nowMs: Long, compact: Boolean, onOpenEv
             else -> "${s.done} done, ${s.left} to go."
         }
     )
-    Body(data.sense, if (compact) 2 else Int.MAX_VALUE)
+    Body(data.sense)
+    if (s.meetings == 0) QuoteBlock(phase, FeedCardKind.Meetings)
     val doneEvents = data.events.filter { !it.allDay && it.endMs in 1..nowMs }
     val ahead = data.events.filter { !it.allDay && it.endMs > nowMs }
-    if (compact) {
-        val shown = ahead.take(2)
-        shown.forEachIndexed { i, ev -> EventLine(ev, data, nowMs, { onOpenEvent(ev.id) }, join = null, compact = true) }
-        if (ahead.size > shown.size || doneEvents.isNotEmpty()) Text("tap to open", style = PlaitType.caption, color = LocalCardInk.current.copy(alpha = 0.7f))
-        return
-    }
     if (doneEvents.isNotEmpty()) {
         SectionLabel("Done")
         doneEvents.forEach { EventLine(it, data, nowMs, { onOpenEvent(it.id) }) }
@@ -516,22 +530,16 @@ private fun AfternoonCard(data: DayData, nowMs: Long, compact: Boolean, onOpenEv
 }
 
 // ---------------------------------------------------------------------------------------------
-// Evening: how the day went
+// Evening: how the day went, then tomorrow
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zone: ZoneId, compact: Boolean, onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit) {
-    val context = LocalContext.current
+private fun DayCard(data: DayData, phase: Phase, onOpenNotes: (String) -> Unit) {
     val ink = LocalCardInk.current
     val s = data.stats
-    if (!compact && weekRecapDue(nowMs, zone)) WeekRecapBlock(nowMs, zone)
     Headline(if (s.meetings == 0) "A quiet day." else "${DayAnalytics.span(s.minutesSoFar)} in meetings.")
-    Body(DayAnalytics.recap(s), if (compact) 2 else Int.MAX_VALUE)
-    if (compact) {
-        if (s.missingNotes.isNotEmpty()) Body("${s.missingNotes.size} meeting${if (s.missingNotes.size == 1) "" else "s"} without notes.", 1)
-        if (tomorrow.isNotEmpty()) Body("Tomorrow: ${tomorrow.size} meeting${if (tomorrow.size == 1) "" else "s"}, first at ${tomorrow.first().time}.", 2)
-        return
-    }
+    Body(DayAnalytics.recap(s))
+    if (s.meetings == 0) QuoteBlock(phase, FeedCardKind.Day)
 
     if (s.meetings > 0) {
         SectionLabel("The day in numbers")
@@ -575,13 +583,21 @@ private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zo
         }
         if (s.missingNotes.size > 6) Text("+${s.missingNotes.size - 6} more", style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
     }
+}
 
+@Composable
+private fun TomorrowCard(phase: Phase, tomorrow: List<CalEvent>, zone: ZoneId, onOpenEvent: (String) -> Unit) {
+    val context = LocalContext.current
     SectionLabel("Tomorrow")
-    if (tomorrow.isEmpty()) Body("Tomorrow is clear.")
-    else {
+    if (tomorrow.isEmpty()) {
+        Headline("Tomorrow is clear.")
+        QuoteBlock(phase, FeedCardKind.Tomorrow)
+    } else {
         val first = tomorrow.first()
-        Body("${DayAnalytics.word(tomorrow.size)} meeting${if (tomorrow.size == 1) "" else "s"}. First is ${first.title} at ${first.time}.")
-        PlaitButton("Open ${shortTitle(first.title)}", { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+        val title = tidyTitle(first.title)
+        Headline("${DayAnalytics.word(tomorrow.size)} meeting${if (tomorrow.size == 1) "" else "s"} tomorrow.")
+        Body("First is $title at ${first.time}.")
+        PlaitButton("Open ${shortTitle(title)}", { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
     }
     // A suggestion only: nothing is added to the calendar until you tap.
     val focus = remember(tomorrow) {

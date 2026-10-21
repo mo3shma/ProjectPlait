@@ -40,7 +40,7 @@
 
 **Manage meetings.** For meetings you organise: edit details, reschedule, cancel one occurrence, or delete the whole series. For meetings someone else organised: answer **Going**, **Maybe** or **Decline**. It works for phone calendars and for Google, and guests are notified.
 
-**Notes four ways.** **Voice** notes are transcribed live while you record, even with the screen off. **Write** a note. A **Photo** is read into copyable text, including Arabic. A **List** is a checklist for agendas and follow-ups.
+**Notes four ways.** **Voice** notes record even with the screen off; when you stop, Whisper writes the transcript and your chosen model writes the summary and tasks. **Write** a note. A **Photo** is read into copyable text, including Arabic. A **List** is a checklist for agendas and follow-ups.
 
 **Series remember.** Notes, photos and lists from one meeting carry forward to the next meeting with the same name. They come with the decisions from last time and the follow-ups that are still open.
 
@@ -91,7 +91,7 @@ Choose the engine in **Settings → AI on this phone**. Models show their size b
 | Qwen3 0.6B (347 MB) / Qwen3 1.7B (977 MB) (LiteRT-LM) | Writing and answers on 64-bit phones, after a one-time download |
 | Gemma 4 E2B (2.6 GB, LiteRT-LM) | The best writing, Arabic included, on phones with 8 GB of RAM |
 | Qwen 2.5 0.5B / 1.5B (MediaPipe LLM Inference) | Writing and answers on any phone, 32-bit ones included |
-| Whisper Tiny / Base / Small (sherpa-onnx) | Live words while you record, and the final transcript of a voice note, Arabic included |
+| Whisper Tiny / Base / Small (sherpa-onnx) | The transcript of a voice note, written after you stop, Arabic included |
 | Text embedder (6 MB) | Search by meaning |
 | Rules | Always available, no model needed |
 
@@ -178,7 +178,7 @@ Native Android in Kotlin and Jetpack Compose. The app ships as a release build w
 | Glass | [Kyant Backdrop](https://github.com/Kyant0/AndroidLiquidGlass): backdrop blur and lens refraction |
 | Calendars | Android `CalendarContract` (read and write), Google Calendar API, an iCalendar parser with `RRULE` expansion |
 | Language models | LiteRT-LM 0.18.1 (`.litertlm` models), MediaPipe `tasks-genai` 0.10.35 (`.task` models), ML Kit GenAI Prompt (Gemini Nano) |
-| Speech | Whisper through sherpa-onnx for the live words (a phrase at a time) and the final transcript |
+| Speech | Whisper through sherpa-onnx for voice-note transcripts, written after recording |
 | Text in photos | ML Kit Text Recognition (Latin), Tesseract 4 (Arabic) |
 | Backup and sync | AES-256-GCM with a PBKDF2-SHA256 key and sealed 1 MB chunks. A merge only adds notes and carries deletions, so a sync can't lose a note |
 | Widget and alerts | RemoteViews layouts mapped to widget size, exact alarms, a microphone foreground service |
@@ -188,7 +188,7 @@ Native Android in Kotlin and Jetpack Compose. The app ships as a release build w
 | `app/src/main/java/app/plait/ui/` | Screens, Liquid Glass and Material components, theme and motion |
 | `app/src/main/java/app/plait/data/` | Calendars (device, Google, `.ics`), notes, the brief, invite cleaning, search, sync |
 | `app/src/main/java/app/plait/ai/` | The AI facade, local models, the harness, the model catalogue |
-| `app/src/main/java/app/plait/audio/` | Recording, live and Whisper transcription, playback |
+| `app/src/main/java/app/plait/audio/` | Recording, Whisper transcription, playback |
 | `app/src/main/java/app/plait/widget/` | The day-brief widget |
 | `docs/` | The website, the trailer and the images used here |
 

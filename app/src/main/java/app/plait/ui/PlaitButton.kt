@@ -1,6 +1,5 @@
 package app.plait.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -31,8 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
-import app.plait.ui.theme.mContainerHigh
-import app.plait.ui.theme.mPrimaryContainer
 
 enum class ButtonStyle {
     Primary, Secondary, Quiet, Danger,
@@ -40,20 +37,23 @@ enum class ButtonStyle {
     Ink,
     /** Soft dark-tinted button for use on the pastel home cards. */
     InkSoft,
+    /** Tinted glass in the colour of the `tone` argument (Secondary is the same in lavender). */
+    Tinted,
 }
 
 private val CardInk = androidx.compose.ui.graphics.Color(0xFF0E1316)
 
-/** Two sizes only, so buttons look the same everywhere. */
+/** Three sizes, from [ControlHeights], so buttons, chips and icon buttons line up everywhere. */
 enum class ButtonSize(val minHeight: Dp, val hPad: Dp, val vPad: Dp, val text: TextUnit, val icon: Dp) {
-    Regular(48.dp, 22.dp, 12.dp, 15.sp, 20.dp),
-    Small(36.dp, 16.dp, 8.dp, 13.sp, 16.dp),
+    Regular(ControlHeights.Medium, 22.dp, 12.dp, 15.sp, 20.dp),
+    Small(ControlHeights.Small, 16.dp, 8.dp, 13.sp, 16.dp),
+    Large(ControlHeights.Large, 26.dp, 14.dp, 16.sp, 22.dp),
 }
 
 /**
- * The one button, in Liquid Glass. It is as wide as its label plus padding (never stretched to the container),
- * at least [ButtonSize.minHeight] tall, and a long label wraps in balanced lines instead of being cut off or
- * leaving a lone word. It dips, lights up and ticks when pressed.
+ * The one button. Primary, Ink and Danger are solid strong colour; Secondary, Tinted and InkSoft are tinted glass pills with
+ * a crisp rim; Quiet is text with a glass highlight when pressed. It is as wide as its label plus padding (never stretched to
+ * the container), at least [ButtonSize.minHeight] tall, and a long label wraps in balanced lines.
  */
 @Composable
 fun PlaitButton(
@@ -64,32 +64,52 @@ fun PlaitButton(
     size: ButtonSize = ButtonSize.Regular,
     icon: ImageVector? = null,
     enabled: Boolean = true,
+    tone: GlassTone = GlassTone.Lavender,
 ) {
-    if (app.plait.ui.glass.LocalGlassEnv.current.material) {
-        app.plait.ui.material.MButton(label, onClick, modifier, style, size, icon, enabled)
+    val env = app.plait.ui.glass.LocalGlassEnv.current
+    if (env.material) {
+        app.plait.ui.material.MButton(label, onClick, modifier, style, size, icon, enabled, tone)
         return
     }
     val shape = RoundedCornerShape(size.minHeight / 2)
     val cardInk = app.plait.ui.screens.LocalCardInk.current
-    val (tint, fg) = when (style) {
-        ButtonStyle.Primary -> plait.accent.copy(alpha = 0.92f) to plait.onAccent
-        ButtonStyle.Secondary, ButtonStyle.Quiet -> Color.Unspecified to plait.text
-        ButtonStyle.Danger -> plait.signal.copy(alpha = 0.92f) to Color.White
-        ButtonStyle.Ink -> cardInk.copy(alpha = 0.9f) to (if (cardInk.luminance() > 0.5f) CardInk else Color(0xFFF7F3EA))
-        ButtonStyle.InkSoft -> Color.White.copy(alpha = 0.42f) to cardInk
+    val dark = app.plait.ui.theme.LocalIsDark.current
+    val rimK = if (env.solid) ToneStyles.FLAT_RIM else 1f
+    val strong: Color? = when (style) {
+        ButtonStyle.Primary -> plait.accent.copy(alpha = 0.92f)
+        ButtonStyle.Danger -> plait.signal.copy(alpha = 0.92f)
+        ButtonStyle.Ink -> cardInk.copy(alpha = 0.9f)
+        else -> null
+    }
+    val soft: ToneStyle? = when (style) {
+        ButtonStyle.Secondary, ButtonStyle.Tinted -> ToneStyles.resolve(tone, dark, rimStrength = rimK)
+        ButtonStyle.InkSoft -> ToneStyle(cardInk.copy(alpha = 0.14f), cardInk.copy(alpha = 0.5f * rimK), cardInk)
+        else -> null
+    }
+    val fg = when (style) {
+        ButtonStyle.Primary -> plait.onAccent
+        ButtonStyle.Danger -> Color.White
+        ButtonStyle.Ink -> if (cardInk.luminance() > 0.5f) CardInk else Color(0xFFF7F3EA)
+        ButtonStyle.InkSoft -> cardInk
+        else -> plait.text
+    }
+    val body = when {
+        strong != null -> Modifier.fauxGlass(shape, strong)
+        soft != null -> Modifier.toneGlass(shape, soft)
+        else -> Modifier.clip(shape) // Quiet: text only, the press light comes from pressable
     }
     Row(
         modifier
             .alpha(if (enabled) 1f else 0.45f)
             .defaultMinSize(minHeight = size.minHeight, minWidth = size.minHeight * 1.6f)
-            .fauxGlass(shape, tint, strength = if (style == ButtonStyle.Quiet) 0.6f else 1f)
+            .then(body)
             .pressable({ if (enabled) onClick() })
             .padding(horizontal = size.hPad, vertical = size.vPad),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         if (icon != null) Icon(icon, null, tint = fg, modifier = Modifier.size(size.icon))
-        Text(
+        if (label.isNotEmpty()) Text(
             label,
             style = PlaitType.label.copy(
                 fontSize = size.text, lineHeight = size.text * 1.25f, fontWeight = FontWeight.Bold,
@@ -120,26 +140,26 @@ fun ConfirmDeleteButton(onConfirm: () -> Unit, modifier: Modifier = Modifier, la
     )
 }
 
-/** A selectable pill (filters, durations, days). Same height and type as a small button; the chosen one is solid. */
+/** A selectable pill (filters, durations, days): a small tinted glass pill; the chosen one has a stronger tint and rim. */
 @Composable
-fun PlaitChip(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    if (app.plait.ui.glass.LocalGlassEnv.current.material) {
+fun PlaitChip(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, tone: GlassTone = GlassTone.Lavender) {
+    val env = app.plait.ui.glass.LocalGlassEnv.current
+    if (env.material) {
         app.plait.ui.material.MChip(label, on, onClick, modifier)
         return
     }
-    val shape = RoundedCornerShape(ButtonSize.Small.minHeight / 2)
-    val material = app.plait.ui.glass.LocalGlassEnv.current.material
+    val style = ToneStyles.resolve(tone, app.plait.ui.theme.LocalIsDark.current, on, if (env.solid) ToneStyles.FLAT_RIM else 1f)
     Row(
         modifier
-            .defaultMinSize(minHeight = ButtonSize.Small.minHeight)
-            .then(if (material) Modifier.clip(shape).background(if (on) plait.mPrimaryContainer else plait.mContainerHigh) else if (on) Modifier.clip(shape).background(plait.text) else Modifier.fauxGlass(shape, strength = 0.8f))
+            .defaultMinSize(minHeight = ControlHeights.Small)
+            .toneGlass(RoundedCornerShape(ControlHeights.Small / 2), style)
             .pressable(onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            label, style = PlaitType.label.copy(fontSize = 13.sp, lineHeight = 16.sp, lineBreak = LineBreak.Heading), color = if (on && !material) plait.ground else plait.text,
-            maxLines = 2, overflow = TextOverflow.Ellipsis,
+            label, style = PlaitType.label.copy(fontSize = 13.sp, lineHeight = 16.sp, lineBreak = LineBreak.Heading, fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold),
+            color = style.ink, maxLines = 2, overflow = TextOverflow.Ellipsis,
         )
     }
 }

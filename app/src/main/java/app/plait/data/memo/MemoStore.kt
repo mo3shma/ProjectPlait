@@ -48,7 +48,7 @@ object MemoJson {
 }
 
 /** Written notes and photos live in app-private storage, like voice notes. Nothing leaves the phone. */
-class MemoStore private constructor(val dir: File) {
+class MemoStore private constructor(val dir: File, private val ctx: Context? = null) {
     private val index = File(dir, "memos.json")
     val items = mutableStateListOf<Memo>()
 
@@ -61,7 +61,7 @@ class MemoStore private constructor(val dir: File) {
     fun image(memo: Memo): File? = memo.imageFile?.let { File(dir, it) }
     fun newImageFile(id: String): File = File(dir, "$id.jpg")
 
-    @Synchronized fun add(memo: Memo) { items.add(0, memo); persist() }
+    @Synchronized fun add(memo: Memo) { items.add(0, memo); persist(); remind(null, memo) }
 
     @Synchronized fun addAll(list: List<Memo>) {
         if (list.isEmpty()) return
@@ -73,7 +73,7 @@ class MemoStore private constructor(val dir: File) {
 
     @Synchronized fun update(memo: Memo) {
         val i = items.indexOfFirst { it.id == memo.id }
-        if (i >= 0) { items[i] = memo; persist() }
+        if (i >= 0) { val old = items[i]; items[i] = memo; persist(); remind(old, memo) }
     }
 
     @Synchronized fun delete(memo: Memo) {
@@ -81,6 +81,13 @@ class MemoStore private constructor(val dir: File) {
         app.plait.data.sync.Tombstones.mark(memo.id)
         image(memo)?.delete()
         persist()
+        remind(memo, null)
+    }
+
+    /** Dated checklist lines keep their reminders in step; never lets an alarm problem break a save. */
+    private fun remind(old: Memo?, new: Memo?) {
+        val c = ctx ?: return
+        runCatching { app.plait.data.tasks.Tasks.syncReminders(c, old, new) }
     }
 
     private fun persist() {
@@ -93,7 +100,7 @@ class MemoStore private constructor(val dir: File) {
         @Volatile private var instance: MemoStore? = null
         fun get(context: Context): MemoStore =
             instance ?: synchronized(this) {
-                instance ?: MemoStore(File(context.applicationContext.filesDir, "memos")).also { instance = it }
+                instance ?: MemoStore(File(context.applicationContext.filesDir, "memos"), context.applicationContext).also { instance = it }
             }
     }
 }

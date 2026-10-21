@@ -94,7 +94,7 @@ object DayAnalytics {
         if (s.meetings == 0) return "No meetings today, so the whole day was yours."
         val parts = ArrayList<String>()
         parts.add("You spent ${span(s.minutesSoFar)} in ${s.done} meeting${if (s.done == 1) "" else "s"}.")
-        if (s.longest != null && s.meetings > 1) parts.add("The longest was ${s.longest.title} at ${span((s.longest.endMs - s.longest.startMs) / 60_000)}.")
+        if (s.longest != null && s.meetings > 1) parts.add("The longest was ${tidyTitle(s.longest.title)} at ${span((s.longest.endMs - s.longest.startMs) / 60_000)}.")
         if (s.externalMeetings > 0) parts.add("${s.externalMeetings} ${if (s.externalMeetings == 1) "was" else "were"} with people outside your organisation.")
         if (s.left > 0) parts.add("${s.left} still to come.")
         if (s.missingNotes.isNotEmpty()) parts.add("${s.missingNotes.size} ${if (s.missingNotes.size == 1) "has" else "have"} no notes yet.")
@@ -111,12 +111,12 @@ object DayAnalytics {
         if (timed.isEmpty()) return "Nothing is scheduled."
         val clock = app.plait.data.TimeFmt.clock
         fun hm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).format(clock)
-        timed.firstOrNull { it.startMs <= nowMs && it.endMs > nowMs }?.let { return "In ${it.title} until ${hm(it.endMs)}." }
+        timed.firstOrNull { it.startMs <= nowMs && it.endMs > nowMs }?.let { return "In ${tidyTitle(it.title)} until ${hm(it.endMs)}." }
         val next = timed.firstOrNull { it.startMs > nowMs }
             ?: return "Your last meeting ended at ${hm(timed.maxOf { it.endMs })}."
         val mins = (next.startMs - nowMs + 59_999) / 60_000
         val lead = if (timed.first() === next) "First up" else "Next"
-        return "$lead: ${next.title} at ${hm(next.startMs)}, in ${span(mins)}."
+        return "$lead: ${tidyTitle(next.title)} at ${hm(next.startMs)}, in ${span(mins)}."
     }
 
     /** Share of an eight-hour working day taken by meetings, 0..100. */

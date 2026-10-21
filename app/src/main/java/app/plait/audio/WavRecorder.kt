@@ -63,7 +63,7 @@ class WavRecorder(
         running = true
         record.startRecording()
         thread = Thread({
-            val shorts = ShortArray(bufferBytes / 4)
+            val shorts = ShortArray(SAMPLE_RATE / 50) // 20 ms per read: about 50 loudness updates a second
             val bytes = ByteArray(shorts.size * 2)
             try {
                 while (running) {

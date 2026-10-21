@@ -60,7 +60,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.plait.ui.PlaitDialog
 import app.plait.ui.ButtonSize
 import app.plait.ui.ButtonStyle
 import app.plait.ui.PlaitButton
@@ -201,7 +201,7 @@ internal fun ActionsMenu(title: String, actions: List<NoteAction>, onDismiss: ()
 @Composable
 fun EditTextDialog(title: String, initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(initial) }
-    Dialog(onDismissRequest = onDismiss) { PopIn {
+    PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             BasicTextField(
@@ -239,7 +239,7 @@ fun ExpandDialog(onDismiss: () -> Unit, fullScreen: Boolean = false, content: @C
     val close: () -> Unit = { state.targetState = false }
     if (!state.targetState && state.isIdle && !state.currentState) androidx.compose.runtime.SideEffect { onDismiss() }
     val calm = app.plait.ui.glass.LocalGlassEnv.current.reduceMotion
-    Dialog(onDismissRequest = close, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = !fullScreen)) {
+    PlaitDialog(onDismissRequest = close, fullScreen = fullScreen) {
         AnimatedVisibility(
             state,
             enter = androidx.compose.animation.scaleIn(spring(dampingRatio = 0.8f, stiffness = 420f), initialScale = if (calm) 0.97f else 0.86f) +
@@ -305,14 +305,15 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
     val items = remember { mutableStateListOf<app.plait.data.memo.Checklist.Item>().apply { addAll(initial) } }
     var draft by remember { mutableStateOf("") }
     val addDraft = { if (draft.isNotBlank()) { items.add(app.plait.data.memo.Checklist.Item(draft.trim(), false)); draft = "" } }
-    Dialog(onDismissRequest = onDismiss) { PopIn {
+    PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (items.isEmpty()) Text("No tasks yet. Add the first one below.", style = PlaitType.caption, color = plait.muted)
                 items.forEachIndexed { i, item ->
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(plait.surface).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)) {
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(plait.surface).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                        Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items[i] = item.copy(done = !item.done) }, lift = 2.dp), contentAlignment = Alignment.Center) {
@@ -329,6 +330,8 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                         Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items.removeAt(i) }, lift = 2.dp), contentAlignment = Alignment.Center) {
                             Icon(Icons.Filled.Close, "Remove task", tint = plait.muted, modifier = Modifier.size(20.dp))
                         }
+                    }
+                    if (!item.done) DueChip(item.dueMs, { items[i] = items[i].copy(dueMs = it) }, Modifier.padding(start = 46.dp, bottom = 6.dp))
                     }
                 }
             }

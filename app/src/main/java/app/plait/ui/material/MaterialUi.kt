@@ -82,6 +82,7 @@ fun ExpressiveTheme(scheme: ColorScheme, content: @Composable () -> Unit) {
 fun MButton(
     label: String, onClick: () -> Unit, modifier: Modifier = Modifier, style: ButtonStyle = ButtonStyle.Secondary,
     size: ButtonSize = ButtonSize.Regular, icon: ImageVector? = null, enabled: Boolean = true,
+    tone: app.plait.ui.GlassTone = app.plait.ui.GlassTone.Lavender,
 ) {
     val content: @Composable RowScope.() -> Unit = {
         if (icon != null) {
@@ -114,6 +115,18 @@ fun MButton(
             onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), content = content,
         )
+        // Tonal containers: the secondary one for lavender and sky, the tertiary one for mint, peach and rose.
+        ButtonStyle.Tinted -> {
+            val tertiary = tone != app.plait.ui.GlassTone.Lavender && tone != app.plait.ui.GlassTone.Sky
+            val cs = MaterialTheme.colorScheme
+            FilledTonalButton(
+                onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = if (tertiary) cs.tertiaryContainer else cs.secondaryContainer,
+                    contentColor = if (tertiary) cs.onTertiaryContainer else cs.onSecondaryContainer,
+                ), content = content,
+            )
+        }
         ButtonStyle.Secondary -> FilledTonalButton(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
         ButtonStyle.Quiet -> TextButton(onClick = onClick, modifier = m, enabled = enabled, shapes = ButtonDefaults.shapes(), contentPadding = pad, content = content)
     }
@@ -151,7 +164,7 @@ fun MIconButton(icon: ImageVector, description: String, onClick: () -> Unit, mod
 @Composable
 fun MTabs(tabs: List<GlassTab>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier, height: Dp) {
     if (tabs.any { it.icon != null }) {
-        ShortNavigationBar(modifier.clip(androidx.compose.foundation.shape.CircleShape), windowInsets = WindowInsets(0)) {
+        ShortNavigationBar(modifier.height(app.plait.ui.ControlHeights.Bar).clip(androidx.compose.foundation.shape.CircleShape), windowInsets = WindowInsets(0)) {
             tabs.forEachIndexed { i, tab ->
                 ShortNavigationBarItem(
                     selected = selected == i, onClick = { onSelect(i) },
@@ -179,7 +192,8 @@ fun MFabMenu(expanded: Boolean, onExpandedChange: (Boolean) -> Unit, actions: Li
     FloatingActionButtonMenu(
         expanded = expanded, modifier = modifier,
         button = {
-            ToggleFloatingActionButton(checked = expanded, onCheckedChange = onExpandedChange) {
+            // As tall as the bar next to it, open or closed, so their tops and bottoms line up.
+            ToggleFloatingActionButton(checked = expanded, onCheckedChange = onExpandedChange, containerSize = { app.plait.ui.ControlHeights.Fab }) {
                 Icon(if (expanded) Icons.Filled.Close else Icons.Filled.Add, if (expanded) "Close menu" else "Record or add")
             }
         },
@@ -197,7 +211,7 @@ fun MFabMenu(expanded: Boolean, onExpandedChange: (Boolean) -> Unit, actions: Li
 /** A tonal filter chip. */
 @Composable
 fun MChip(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    FilterChip(selected = on, onClick = onClick, label = { Text(label, maxLines = 1) }, modifier = modifier, shape = androidx.compose.foundation.shape.CircleShape)
+    FilterChip(selected = on, onClick = onClick, label = { Text(label, maxLines = 1) }, modifier = modifier.heightIn(min = app.plait.ui.ControlHeights.Small), shape = androidx.compose.foundation.shape.CircleShape)
 }
 
 @Composable

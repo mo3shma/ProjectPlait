@@ -1,7 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="plait_icon_bg">#000000</color>
-    <color name="widget_bg">#E6101214</color>
-    <color name="widget_text">#F2F4F5</color>
-    <color name="widget_muted">#9AA3A8</color>
 </resources>

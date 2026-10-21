@@ -22,7 +22,7 @@ object Followups {
             items.forEach { out.add(Followup(id("v:${n.id}", it), it.trim(), n.eventId, n.title, n.createdAt, ai.isNotEmpty())) }
         }
         for (m in memos) {
-            val lines = m.text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            val lines = m.text.lines().map { app.plait.data.memo.Checklist.stripDue(it) }.filter { it.isNotEmpty() }
             val ticked = lines.mapNotNull { checkbox.matchEntire(it)?.groupValues?.get(1)?.trim() }
             val found = ticked.ifEmpty { Summarizer.actionItems(lines) }
             found.forEach { out.add(Followup(id("m:${m.id}", it), it, m.eventId, "", m.createdAt, false)) }

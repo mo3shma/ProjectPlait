@@ -33,16 +33,23 @@ import app.plait.ui.fauxGlass
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 
-/** Whisper Small on phones with the memory for it, Base on smaller ones. */
-internal fun recommendedSpeech(context: Context): ModelSpec {
-    val info = ActivityManager.MemoryInfo().also { (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(it) }
-    val id = if (info.totalMem >= 5_500_000_000L) "speech-whisper-small" else "speech-whisper-base"
-    return ModelCatalog.byId(id)!!
+/** Turbo on phones with 8 GB (reported as about 7.4), Small from about 6 GB, Base below that. */
+internal fun speechPickFor(totalMem: Long): String = when {
+    totalMem >= TURBO_MEM -> "speech-whisper-turbo"
+    totalMem >= 5_500_000_000L -> "speech-whisper-small"
+    else -> "speech-whisper-base"
 }
 
+internal const val TURBO_MEM = 7_000_000_000L
+
+internal fun totalMemory(context: Context): Long =
+    ActivityManager.MemoryInfo().also { (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(it) }.totalMem
+
+internal fun recommendedSpeech(context: Context): ModelSpec = ModelCatalog.byId(speechPickFor(totalMemory(context)))!!
+
 /**
- * Shown on a voice note while only the rough live transcript exists: what is wrong, which language the user speaks,
- * and one tap to get Whisper, which then rewrites this note and the others on the phone.
+ * Shown on a voice note that has no transcript: what is missing, which language the user speaks, and one tap to get
+ * Whisper, which then transcribes this note and the others on the phone.
  */
 @Composable
 internal fun SpeechUpgradeCard() {
@@ -59,11 +66,11 @@ internal fun SpeechUpgradeCard() {
     ) {
         Text("This note has no transcript yet", style = PlaitType.bodyStrong, color = plait.text)
         Text(
-            "Plait writes voice notes with a speech model that runs on your phone. ${spec.title} understands accents and Arabic, " +
-                "and writes this note and your others.",
+            "Nothing has written this recording down yet. Get ${spec.title}: it runs on your phone, understands accents and Arabic, " +
+                "and writes the transcript of this note and your others, then the summary and tasks follow.",
             style = PlaitType.caption, color = plait.muted,
         )
-        Text("I mostly speak", style = PlaitType.monoSmall, color = plait.muted)
+        Text("I mostly speak", style = PlaitType.bodyStrong, color = plait.text)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("en" to "English", "ar" to "Arabic", "ar+en" to "Both, mixed").forEach { (code, label) ->
                 PlaitButton(label, { AiPrefs.setSpeechLang(context, code) }, style = if (AiPrefs.speechLang == code) ButtonStyle.Primary else ButtonStyle.Secondary, size = ButtonSize.Small)

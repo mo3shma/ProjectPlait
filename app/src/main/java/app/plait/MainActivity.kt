@@ -44,6 +44,7 @@ import app.plait.ui.screens.HubScreen
 import app.plait.ui.screens.RecordScreen
 import app.plait.ui.screens.TodayScreen
 import app.plait.ui.glass.ProvideGlassEnv
+import com.kyant.backdrop.backdrops.layerBackdrop
 import app.plait.ui.theme.PlaitTheme
 
 /** A meeting to open, asked for by a notification or the widget. */
@@ -101,7 +102,14 @@ class MainActivity : ComponentActivity() {
             PlaitTheme {
               ProvideGlassEnv {
                 val nav = rememberNavController()
+                val overlay = androidx.compose.runtime.remember { app.plait.ui.OverlayState() }
+                val rootBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
+                // Dialogs are drawn here, in the app's own composition, so glass can blur the screen behind them. The screen is only
+                // recorded into the blur layer while a dialog is open and glass effects are on.
+                val record = overlay.layers.isNotEmpty() && app.plait.ui.glassOverlayWanted()
+                androidx.compose.runtime.CompositionLocalProvider(app.plait.ui.LocalOverlay provides overlay) {
                 Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize().then(if (record) Modifier.layerBackdrop(rootBackdrop) else Modifier)) {
                 NavHost(
                     navController = nav,
                     startDestination = "today",
@@ -165,6 +173,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+                }
                 // A soft fade under the status bar: scrolling content no longer collides with the clock and icons.
                 val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 val ground = app.plait.ui.theme.plait.ground
@@ -196,6 +205,8 @@ class MainActivity : ComponentActivity() {
                         },
                         onDismiss = { ShareInbox.pending = null },
                     )
+                }
+                app.plait.ui.OverlayHost(overlay, rootBackdrop)
                 }
                 }
               }

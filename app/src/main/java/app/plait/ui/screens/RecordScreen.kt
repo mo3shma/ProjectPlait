@@ -10,12 +10,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -32,10 +26,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
@@ -54,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -120,35 +111,15 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
     val saving = controller.phase == RecPhase.Saving
     val seconds = (controller.elapsedMs / 1000).toInt()
 
-    val infinite = rememberInfiniteTransition(label = "rec")
-    val breathe by infinite.animateFloat(0f, 1f, infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breathe")
-    val blink by infinite.animateFloat(1f, 0.2f, infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "blink")
-    val live = if (paused || env.reduceMotion) 0f else 1f
-
     Box(Modifier.fillMaxSize().background(plait.ground)) {
-        // Content layer: orbs, timer, waveform and live transcript. This is the rich
-        // background the Clear glass controls sit over.
+        // Content layer: timer and voice waves, the backdrop the Clear glass controls sit over.
         Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 190.dp)) {
-                listOf(460, 320, 190).forEachIndexed { i, d ->
-                    val phase = (breathe + i * 0.33f) % 1f
-                    // The orbs also swell with how loud the room is.
-                    val loud = controller.levels.lastOrNull() ?: 0f
-                    val s = 1f + (0.12f * phase + 0.18f * loud) * live
-                    Box(
-                        Modifier.align(Alignment.Center).size(d.dp)
-                            .graphicsLayer { scaleX = s; scaleY = s; alpha = 0.22f - 0.12f * phase * live }
-                            .background(plait.signal, CircleShape)
-                    )
-                }
-            }
-
             Column(
-                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 104.dp),
+                Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(top = 104.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.size(8.dp).graphicsLayer { alpha = if (paused || saving) 1f else blink }.background(plait.signal, CircleShape))
+                    Box(Modifier.size(8.dp).background(plait.signal, CircleShape))
                     val marks = controller.bookmarksMs.size
                     val label = when {
                         saving -> "Saving"
@@ -165,46 +136,20 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                     style = PlaitType.heroNumber.copy(fontSize = 96.sp, lineHeight = 96.sp, letterSpacing = (-4).sp, fontFeatureSettings = "tnum"),
                     color = plait.text,
                 )
-                Spacer(Modifier.height(34.dp))
-                Waveform(controller.levels, paused || env.reduceMotion)
+                Spacer(Modifier.height(24.dp))
+                if (granted) VoiceWaves(controller, paused, env.reduceMotion, Modifier.fillMaxWidth())
             }
 
-            // Live transcript as one running paragraph. Whisper writes it a phrase at a time, after each pause.
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val whisper = app.plait.ai.ModelCatalog.speechModels.any { app.plait.ai.ModelCenter.isInstalled(context, it.id) }
+            // Recording only records: Whisper writes the words after you stop.
             Column(
-                Modifier.align(Alignment.BottomCenter).padding(bottom = 190.dp).fillMaxWidth().height(220.dp).padding(horizontal = 18.dp),
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 190.dp).fillMaxWidth().padding(horizontal = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
             ) {
                 LanguagePicker()
-                when {
-                    controller.speechReady == null && granted && controller.phase != RecPhase.Failed ->
-                        Text("Getting the speech model ready. Your recording has already started.", style = PlaitType.caption, color = plait.muted)
-                    controller.speechReady == false && whisper ->
-                        Text("Transcription isn't available on this device. The audio is still being saved.", style = PlaitType.caption, color = plait.muted)
-                    controller.speechReady == true && controller.phase == RecPhase.Recording ->
-                        Text(if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. Silence isn't transcribed.", style = PlaitType.monoSmall, color = if (controller.speaking) plait.signal else plait.muted)
-                }
-                if (!whisper) {
-                    val tiny = remember { app.plait.ai.ModelCatalog.byId("speech-whisper-tiny")!! }
-                    val st = app.plait.ai.ModelCenter.state(tiny.id)
+                if (granted && (controller.phase == RecPhase.Recording || paused)) {
                     Text(
-                        "To write your words, get a speech model. It runs on your phone. Your recording is saved either way.",
-                        style = PlaitType.body, color = plait.muted,
-                    )
-                    if (st is app.plait.ai.ModelState.Downloading) {
-                        Text("Downloading ${tiny.title}… ${(st.done * 100 / st.total.coerceAtLeast(1))}%. It carries on if you leave.", style = PlaitType.caption, color = plait.accent)
-                    } else {
-                        app.plait.ui.PlaitButton("Get ${tiny.title} · ${tiny.sizeLabel}", { app.plait.ai.ModelCenter.download(context, tiny) }, style = app.plait.ui.ButtonStyle.Primary, size = app.plait.ui.ButtonSize.Small)
-                    }
-                } else {
-                    val running = remember(controller.lines.size) {
-                        app.plait.data.Transcript.paragraphs(controller.lines.toList()).lastOrNull()?.text?.let { if (it.length > 220) "…" + it.takeLast(220).substringAfter(' ') else it }.orEmpty()
-                    }
-                    if (running.isNotEmpty()) Text(
-                        running,
-                        style = PlaitType.body.copy(fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.Medium),
-                        color = plait.text, maxLines = 4, overflow = TextOverflow.Ellipsis,
+                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. The words are written after you stop.",
+                        style = PlaitType.monoSmall, color = if (controller.speaking && !paused) plait.signal else plait.muted,
                     )
                 }
             }
@@ -287,24 +232,6 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                     size = 64.dp, iconSize = 26.dp, variant = GlassVariant.Clear,
                 )
             }
-        }
-    }
-}
-
-/** One bar per recent loudness sample, so the shape you see is the room you're in. */
-@Composable
-private fun Waveform(levels: List<Float>, still: Boolean) {
-    Row(
-        Modifier.width(300.dp).height(76.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-    ) {
-        levels.forEach { level ->
-            val h = 6f + (if (still) 0.05f else level) * 70f
-            Box(
-                Modifier.width(5.dp).height(h.dp)
-                    .background(plait.text, RoundedCornerShape(3.dp))
-            )
         }
     }
 }
