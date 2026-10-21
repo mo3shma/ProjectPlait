@@ -2,7 +2,9 @@ package app.plait
 
 import app.plait.ai.NoteAiPrompt
 import app.plait.audio.Vad
-import app.plait.audio.VoskTranscriber
+import app.plait.audio.LiveWhisper
+import app.plait.audio.SAMPLE_RATE
+import app.plait.audio.WhisperTranscriber
 import app.plait.data.CalEvent
 import app.plait.data.NoteDigest
 import app.plait.data.NoteLine
@@ -225,28 +227,36 @@ class SpokenTextTest {
     }
 }
 
-class VoskResultTest {
-    @Test fun lowConfidenceWordsAreDroppedFromSolidPhrases() {
-        val json = """{"result":[
-            {"conf":1.0,"word":"send"},{"conf":0.98,"word":"the"},{"conf":0.2,"word":"bat"},
-            {"conf":0.97,"word":"report"},{"conf":0.99,"word":"today"}],"text":"send the bat report today"}"""
-        val u = VoskTranscriber.parseResult(json)
-        assertEquals("send the report today", u.text)
-        assertTrue(u.isFinal)
-        assertTrue(u.conf in 0.5f..0.95f)
+class LivePhraseTest {
+    private fun ms(n: Int) = ShortArray(SAMPLE_RATE * n / 1000)
+
+    @Test fun aPausedPhraseIsHandedOverWhole() {
+        val b = LiveWhisper.PhraseBuffer()
+        assertNull(b.add(ms(500)))
+        assertNull(b.add(ms(700)))
+        assertEquals(ms(1200).size, b.take()!!.size)
+        assertNull(b.take()) // taken once, now empty
     }
 
-    @Test fun mostlyShakyPhrasesKeepTheEnginesOwnText() {
-        val json = """{"result":[{"conf":0.2,"word":"a"},{"conf":0.3,"word":"b"},{"conf":0.1,"word":"c"}],"text":"a b c"}"""
-        val u = VoskTranscriber.parseResult(json)
-        assertEquals("a b c", u.text)
-        assertTrue(u.conf < 0.3f)
+    @Test fun clicksAndCoughsAreTooShortToRead() {
+        val b = LiveWhisper.PhraseBuffer()
+        b.add(ms(300))
+        assertNull(b.take())
+        assertNull(b.take())
     }
 
-    @Test fun plainResultsStillWork() {
-        val u = VoskTranscriber.parseResult("""{"text":"hello there"}""")
-        assertEquals("hello there", u.text)
-        assertEquals(1f, u.conf, 0f)
+    @Test fun nonStopSpeechIsHandedOverInPieces() {
+        val b = LiveWhisper.PhraseBuffer()
+        var out: ShortArray? = null
+        repeat(13) { out = b.add(ms(1000)) ?: out }
+        assertEquals(ms(12_000).size, out!!.size)
+        assertEquals(ms(1000).size, b.take()!!.size)
+    }
+
+    @Test fun inventedPhrasesOverShortSpeechAreDropped() {
+        assertFalse(WhisperTranscriber.worthKeeping("Thank you.", 1200))
+        assertTrue(WhisperTranscriber.worthKeeping("Thank you.", 4000))
+        assertFalse(WhisperTranscriber.worthKeeping("", 4000))
     }
 }
 

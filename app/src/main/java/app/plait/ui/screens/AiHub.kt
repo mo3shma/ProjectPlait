@@ -78,7 +78,7 @@ private fun DefaultsCard() {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(plait.accent.copy(alpha = 0.14f)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Your defaults", style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = plait.text)
         DefaultRow("Writing", (status?.label ?: "…") + (status?.note?.let { " · $it" } ?: ""), "Summaries, prep, follow-ups, answers, the morning brief")
-        DefaultRow("Voice notes", speech?.title ?: "Built-in recogniser", "Transcripts of everything you record")
+        DefaultRow("Voice notes", speech?.title ?: "None yet", "Transcripts of everything you record")
         DefaultRow("Search", if (search != null) "Words and meaning" else "Words only", "Finding notes, emails and meetings")
         Text("Pick a model below, or download one, and it becomes the default for every one of these. Change it any time.", style = PlaitType.caption, color = plait.muted)
     }
@@ -211,13 +211,13 @@ private fun SpeechCards() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Voice notes", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 8.dp))
         Text(
-            "The built-in recogniser shows words live while you record. A Whisper model then re-reads the saved recording for a far better transcript, in many languages.",
+            "A Whisper model writes your words live while you record, one phrase after each pause, then re-reads the whole recording for a better transcript. It works in many languages. Without one, recordings are saved as audio only.",
             style = PlaitType.caption, color = plait.muted,
         )
         OptionCard(
-            selected = AiPrefs.speechModelId == null, title = "Built-in only", badge = if (AiPrefs.speechModelId == null) "Default · included" else "Included",
-            body = "Live English transcript while recording. Weak with names and accents.",
-            meta = "Already in the app",
+            selected = AiPrefs.speechModelId == null, title = "No transcription", badge = if (AiPrefs.speechModelId == null) "Default" else "Nothing to download",
+            body = "The recording is saved as audio. Pick a Whisper model to have it written down.",
+            meta = "Nothing to download",
             onSelect = { AiPrefs.setSpeechModel(context, null) },
         )
         ModelCatalog.speechModels.forEach { spec ->

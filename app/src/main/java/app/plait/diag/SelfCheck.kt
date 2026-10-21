@@ -34,7 +34,7 @@ object SelfCheck {
         if (Build.VERSION.SDK_INT >= 33) add("Notifications", granted(Manifest.permission.POST_NOTIFICATIONS), "Needed for alerts before meetings")
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         add("Exact alarms", Build.VERSION.SDK_INT < 31 || am.canScheduleExactAlarms(), "Alerts can be a few minutes late without it")
-        add("Speech model (live)", File(context.filesDir, "model").exists(), "The built-in recogniser unpacks on the first recording")
+        add("Speech model (live)", ModelCatalog.speechModels.any { ModelCenter.isInstalled(context, it.id) }, "A Whisper model writes the live words; get one in the AI hub")
         val nano = OnDeviceAi.state()
         add("Gemini Nano", nano == OnDeviceAi.State.Ready, nano.name)
         val status = Ai.status(context)

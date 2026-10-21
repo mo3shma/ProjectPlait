@@ -59,7 +59,7 @@ internal fun SpeechUpgradeCard() {
     ) {
         Text("This transcript is rough", style = PlaitType.bodyStrong, color = plait.text)
         Text(
-            "The built-in recogniser is small and English only, so it mishears accents. ${spec.title} understands accents and Arabic, " +
+            "The live words come from the smallest speech model, so they mishear names and accents. ${spec.title} understands accents and Arabic, " +
                 "runs on your phone, and rewrites this note and your others.",
             style = PlaitType.caption, color = plait.muted,
         )

@@ -170,9 +170,9 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                 Waveform(controller.levels, paused || env.reduceMotion)
             }
 
-            // Live transcript as one running paragraph, then the words being recognised right now. The live recogniser
-            // only knows English, so for another language the words are written by Whisper after the recording stops.
+            // Live transcript as one running paragraph. Whisper writes it a phrase at a time, after each pause.
             val context = androidx.compose.ui.platform.LocalContext.current
+            val whisper = app.plait.ai.ModelCatalog.speechModels.any { app.plait.ai.ModelCenter.isInstalled(context, it.id) }
             Column(
                 Modifier.align(Alignment.BottomCenter).padding(bottom = 190.dp).fillMaxWidth().height(220.dp).padding(horizontal = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
@@ -181,16 +181,14 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                 when {
                     controller.speechReady == null && granted && controller.phase != RecPhase.Failed ->
                         Text("Getting the speech model ready. Your recording has already started.", style = PlaitType.caption, color = plait.muted)
-                    controller.speechReady == false ->
+                    controller.speechReady == false && whisper ->
                         Text("Transcription isn't available on this device. The audio is still being saved.", style = PlaitType.caption, color = plait.muted)
                     controller.speechReady == true && controller.phase == RecPhase.Recording ->
                         Text(if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. Silence isn't transcribed.", style = PlaitType.monoSmall, color = if (controller.speaking) plait.signal else plait.muted)
                 }
-                if (!app.plait.ai.AiPrefs.liveWordsMakeSense) {
-                    val whisper = app.plait.ai.ModelCatalog.speechModels.any { app.plait.ai.ModelCenter.isInstalled(context, it.id) }
+                if (!whisper) {
                     Text(
-                        if (whisper) "Speaking ${app.plait.ai.AiPrefs.languageName(app.plait.ai.AiPrefs.speechLang)}: the words are written when you stop."
-                        else "To write ${app.plait.ai.AiPrefs.languageName(app.plait.ai.AiPrefs.speechLang)}, get Whisper in Settings → AI on this phone. Your recording is saved either way.",
+                        "To write your words, get Whisper in Settings → AI on this phone. Your recording is saved either way.",
                         style = PlaitType.body, color = plait.muted,
                     )
                 } else {

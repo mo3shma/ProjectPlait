@@ -22,16 +22,18 @@ import java.io.File
  */
 object WhisperTranscriber {
     private val lock = Mutex()
-    private var recognizer: OfflineRecognizer? = null
+    private var built: Built? = null
     private var key: String? = null
-    private var config: OfflineRecognizerConfig? = null
+
+    /** A recogniser with the configuration it was made from, so a language can be forced for one piece and put back. */
+    internal class Built(val rec: OfflineRecognizer, val config: OfflineRecognizerConfig) { fun release() = rec.release() }
 
     /** Phrases Whisper tends to invent over near-silence. Dropped when the stretch it came from is short. */
-    private val inventions = setOf("thank you.", "thanks for watching.", "you", "bye.", "thank you for watching.", ".", "شكرا لك.", "شكراً")
+    internal val inventions = setOf("thank you.", "thanks for watching.", "you", "bye.", "thank you for watching.", ".", "شكرا لك.", "شكراً")
 
     fun isUsable(context: Context, spec: ModelSpec?): Boolean = spec != null && ModelCenter.isInstalled(context, spec.id)
 
-    private fun build(context: Context, spec: ModelSpec, lang: String): OfflineRecognizer {
+    internal fun build(context: Context, spec: ModelSpec, lang: String): Built {
         val size = spec.id.removePrefix("speech-whisper-")
         fun path(name: String) = ModelCenter.file(context, spec.id, name).path
         val config = OfflineRecognizerConfig(
@@ -45,8 +47,24 @@ object WhisperTranscriber {
             ),
             decodingMethod = "greedy_search",
         )
-        this.config = config
-        return OfflineRecognizer(config = config)
+        return Built(OfflineRecognizer(config = config), config)
+    }
+
+    /** False for the phrases Whisper tends to invent over a short stretch of near-silence. */
+    internal fun worthKeeping(text: String, lengthMs: Long) = text.isNotEmpty() && !(lengthMs < 2500 && text.lowercase() in inventions)
+
+    /**
+     * One piece of speech as text. For a mixed note ("ar+en") Whisper detects the language; a guess outside the pair is
+     * redone in the main one, and a piece too short to tell takes the language of the one before ([previous]).
+     * Returns the text and, for a mixed note, the language it was written in.
+     */
+    internal fun piece(b: Built, samples: FloatArray, lengthMs: Long, mixed: List<String>?, previous: String?): Pair<String, String?> {
+        if (mixed == null) return decode(b.rec, samples).first.trim().let(::cleanRepeats) to null
+        val prev = previous ?: mixed.first()
+        val (heard, detected) = if (lengthMs < 1_500) decodeIn(b, samples, prev) to prev
+            else decode(b.rec, samples).let { it.first to langCode(it.second) }
+        val (text, lang) = if (detected in mixed) heard to detected else decodeIn(b, samples, mixed.first()) to mixed.first()
+        return text.trim().let(::cleanRepeats) to lang
     }
 
     /**
@@ -90,22 +108,17 @@ object WhisperTranscriber {
                 val mixed = pair(lang)
                 val buildLang = if (mixed != null) "auto" else lang
                 val k = spec.id + "|" + buildLang
-                if (key != k) { recognizer?.release(); recognizer = build(context.applicationContext, spec, buildLang); key = k }
-                val rec = recognizer!!
+                if (key != k) { built?.release(); built = build(context.applicationContext, spec, buildLang); key = k }
+                val b = built!!
                 val segments = if (mixed != null) WavSegments.find(wav, maxMs = 12_000, joinGapMs = 300) else WavSegments.find(wav)
                 val lines = ArrayList<NoteLine>()
                 var previous = mixed?.first()
                 segments.forEachIndexed { i, seg ->
                     val samples = WavSegments.read(wav, seg)
                     if (samples.isNotEmpty()) {
-                        val text = if (mixed == null) decode(rec, samples).first else {
-                            val (heard, detected) = if (seg.lengthMs < 1_500) decodeIn(rec, samples, previous!!) to previous!!
-                                else decode(rec, samples).let { it.first to langCode(it.second) }
-                            if (detected in mixed) { previous = detected; heard }
-                            else decodeIn(rec, samples, mixed.first()).also { previous = mixed.first() }
-                        }.trim().let(::cleanRepeats)
-                        val invented = seg.lengthMs < 2500 && text.lowercase() in inventions
-                        if (text.isNotEmpty() && !invented) lines.add(NoteLine(seg.startMs, text))
+                        val (text, lang) = piece(b, samples, seg.lengthMs, mixed, previous)
+                        if (lang != null) previous = lang
+                        if (worthKeeping(text, seg.lengthMs)) lines.add(NoteLine(seg.startMs, text))
                     }
                     onProgress((i + 1f) / segments.size)
                 }
@@ -115,7 +128,7 @@ object WhisperTranscriber {
     }
 
     /** Text and the language Whisper heard, with the recogniser's current language setting. */
-    private fun decode(rec: OfflineRecognizer, samples: FloatArray): Pair<String, String> {
+    internal fun decode(rec: OfflineRecognizer, samples: FloatArray): Pair<String, String> {
         val stream = rec.createStream()
         try {
             stream.acceptWaveform(samples, SAMPLE_RATE)
@@ -128,15 +141,15 @@ object WhisperTranscriber {
     }
 
     /** Decodes in one given language, then puts the recogniser back to detecting the language itself. */
-    private fun decodeIn(rec: OfflineRecognizer, samples: FloatArray, code: String): String {
-        val base = config ?: return decode(rec, samples).first
-        rec.setConfig(base.copy(modelConfig = base.modelConfig.copy(whisper = base.modelConfig.whisper.copy(language = code))))
+    private fun decodeIn(b: Built, samples: FloatArray, code: String): String {
+        val base = b.config
+        b.rec.setConfig(base.copy(modelConfig = base.modelConfig.copy(whisper = base.modelConfig.whisper.copy(language = code))))
         try {
-            return decode(rec, samples).first
+            return decode(b.rec, samples).first
         } finally {
-            rec.setConfig(base)
+            b.rec.setConfig(base)
         }
     }
 
-    fun release() { recognizer?.release(); recognizer = null; key = null; config = null }
+    fun release() { built?.release(); built = null; key = null }
 }

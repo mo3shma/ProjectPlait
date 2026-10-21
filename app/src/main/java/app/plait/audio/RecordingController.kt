@@ -19,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 
 enum class RecPhase { Idle, Recording, Paused, Saving, Failed }
@@ -51,7 +52,7 @@ class RecordingController(
 
     private val id = UUID.randomUUID().toString()
     private val file = store.newAudioFile(id)
-    private val transcriber = VoskTranscriber(appContext)
+    private val transcriber: LiveTranscriber = LiveWhisper(appContext)
     private val pcm = Channel<ShortArray>(Channel.UNLIMITED)
     private var recorder: WavRecorder? = null
     private var consumer: Job? = null
@@ -116,8 +117,10 @@ class RecordingController(
             pcm.close()
             val keep = wasLive && duration >= 2000
             if (keep) {
-                consumer?.join()
-                val tail = transcriber.finish().trim()
+                // Whisper writes a phrase at a time; don't hold the save for long if it has fallen behind (the final pass redoes it).
+                val drained = withTimeoutOrNull(8_000) { consumer?.join() } != null
+                if (!drained) consumer?.cancel()
+                val tail = if (drained) transcriber.finish().trim() else ""
                 val cleaned = SpokenText.tidy(tail)
                 if (cleaned.isNotEmpty()) main.post { lines.add(NoteLine(duration, cleaned)) }
             } else {
@@ -193,7 +196,7 @@ class RecordingController(
         }
         if (ok) {
             val rest = vad.remainder()
-            if (rest.isNotEmpty()) transcriber.accept(rest)
+            if (rest.isNotEmpty()) addLine(transcriber.accept(rest), if (startMs >= 0) startMs else vad.elapsedMs)
         }
         main.post { speaking = false }
     }

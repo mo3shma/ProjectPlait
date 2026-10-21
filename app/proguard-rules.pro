@@ -1,10 +1,7 @@
 # R8 removes code the app never uses (mostly Compose's large icon set) so the download is smaller.
 # Libraries that reach into Java from native code or by reflection are kept whole, so nothing they need goes missing.
 
-# Speech: Vosk (through JNA) and sherpa-onnx (Whisper), whose native code reads Java fields by name.
--keep class org.vosk.** { *; }
--keep class com.sun.jna.** { *; }
--keep class * implements com.sun.jna.** { *; }
+# Speech: sherpa-onnx (Whisper), whose native code reads Java fields by name.
 -keep class com.k2fsa.** { *; }
 
 # On-device language models, text embedding and protobuf messages.

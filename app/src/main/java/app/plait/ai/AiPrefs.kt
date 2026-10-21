@@ -36,9 +36,6 @@ object AiPrefs {
     fun languageName(code: String): String =
         (speechLanguages + mixedLanguages).firstOrNull { it.first == code }?.second?.let { if (code == "auto") "Any language" else it } ?: code
 
-    /** The live words while recording come from a small English-only recogniser, so they are only shown for English. */
-    val liveWordsMakeSense: Boolean get() = speechLang == "en" || speechLang == "auto"
-
     fun load(context: Context) {
         if (loaded) return
         loaded = true

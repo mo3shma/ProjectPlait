@@ -18,8 +18,8 @@ android {
         applicationId = "app.plait"
         minSdk = 26
         targetSdk = 36
-        versionCode = 46
-        versionName = "0.23.1"
+        versionCode = 47
+        versionName = "0.24.0"
     }
 
     // Releases built by GitHub Actions are signed with the key from the repository's secrets (see
@@ -92,7 +92,6 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("io.github.kyant0:backdrop:1.0.6")
     implementation("io.github.kyant0:shapes:1.2.0")
-    implementation("com.alphacephei:vosk-android:0.3.75")
     implementation("com.google.android.gms:play-services-auth:22.0.0")
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
     implementation("com.google.mlkit:text-recognition:16.0.1")

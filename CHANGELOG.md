@@ -2,6 +2,12 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.24.0: live words from Whisper
+
+- **Live words are written by Whisper.** While you record, each phrase is written a moment after you pause, in the language you picked (mixed pairs too), instead of by the small English-only recogniser. Arabic, English and mixed speech now show words live. The saved note is still one recording, and when you stop, Whisper reads the whole thing again for the final transcript.
+- **The small English recogniser is gone**. Live words and transcripts now need a Whisper model from Settings → AI (Tiny is about 100 MB). Without one, the recording is saved as audio only.
+- Not yet checked on a phone: how fast and how heavy on the battery this is on mid-range phones.
+
 ## 0.23.1: rebuild
 
 - No changes to how the app works. This is a clean rebuild of 0.23.0, signed with the same key, so it installs over your current app.
