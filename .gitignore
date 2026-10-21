@@ -13,3 +13,7 @@ local.properties
 captures/
 # Downloaded models never go in the repo
 models/
+
+# Notes for the next working session; kept off GitHub.
+handoff.md
+HANDOFF.md
