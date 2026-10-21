@@ -2,6 +2,16 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.25.0: two cards, a work-week recap, next-week briefs
+
+- **Two cards on Morning and Midday.** Under the meetings brief there is now a second card in a contrasting colour (coral in the morning, mint at midday) called "Needs your attention". It lists the tasks you have not cleared: suggestions waiting for you to add or dismiss them, and unchecked lines of your checklists on meetings that have already started, stalest first. Tick, add or dismiss them right there, or tap one to open its meeting.
+- **Set your work week.** Settings has a new "Work week" section: pick the day your week starts. A work week is five days from that day, so starting Sunday means Sunday to Thursday.
+- **A recap on the last day of your work week.** On that day's Evening card, Plait looks back over the week in an assistant voice: meetings, time in meetings, your busiest day, notes taken, open tasks, with a bar for each day. With an AI on the phone it is written by the AI and checked against your numbers; without one, plain wording does the same job.
+- **A look at next week on your days off.** On a day off with no meetings, the card offers "Brief me on next week". Tap it for a short assistant-style summary and a line for each day. Nothing is written until you tap.
+- **About this meeting stays put.** The AI's paragraph is kept for each meeting until you tap "Write this again", so it is not rewritten when an invite changes or every time Home refreshes. When the AI had nothing useful to say, Plait remembers that too and does not ask again.
+- Written week briefs are kept the same way and have the same "Write this again" button. Your Home refresh button still rewrites everything.
+- Not yet checked on a phone: how the new cards look in Material style and in dark mode.
+
 ## 0.24.1: safer notes, clearer first run
 
 - **Your notes can't be wiped by one bad record.** If a single note in the saved file is damaged, the others still load, and the unreadable file is kept as a copy instead of being overwritten by the next save.

@@ -163,6 +163,7 @@ internal fun BriefPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val zone = remember { ZoneId.systemDefault() }
+    remember(context) { app.plait.data.week.WorkWeek.load(context) }
     val noteStore = remember { NoteStore.get(context) }
     val memoStore = remember { MemoStore.get(context) }
     val voiceCount = noteStore.notes.size
@@ -230,16 +231,17 @@ internal fun BriefPage(
             val tone = phase.tone()
             val material = app.plait.ui.glass.LocalGlassEnv.current.material
             val cs = androidx.compose.material3.MaterialTheme.colorScheme
-            Box(
+            Column(
                 Modifier.fillMaxSize().padding(bottom = 104.dp).navigationBarsPadding()
                     .graphicsLayer {
                         // Pages beside the open one sit slightly back, like cards in a stack.
                         val off = abs((pager.currentPage - page) + pager.currentPageOffsetFraction).coerceIn(0f, 1f)
                         val s = 1f - 0.07f * off
                         scaleX = s; scaleY = s; alpha = 1f - 0.4f * off
-                    }
-                    .then(cardShell(material, cs, phase, cardBackdrop, tone)),
+                    },
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+            Box(Modifier.weight(1f).fillMaxWidth().then(cardShell(material, cs, phase, cardBackdrop, tone))) {
                 val hour = remember(nowMs / 60_000) { Instant.ofEpochMilli(nowMs).atZone(zone).let { it.hour + it.minute / 60f } }
                 // The animated sky sits over the tinted glass at moderate strength, so the glass colour always shows through.
                 if (!app.plait.ui.glass.LocalGlassEnv.current.material) Box(Modifier.matchParentSize().clip(RoundedCornerShape(44.dp))) { PhaseSky(phase, hour, Modifier.matchParentSize(), active = pager.settledPage == page) }
@@ -253,6 +255,8 @@ internal fun BriefPage(
                     CardBody(phase, false, today, data, tomorrow, nowMs, zone, aiText, onOpenEvent, onOpenNotes, join, onOpenHub, onAllowCalendar)
                 }
                 }
+            }
+            if (phase != Phase.Evening) CompositionLocalProvider(LocalCardBackdrop provides cardBackdrop) { AttentionCard(phase, nowMs, onOpenEvent) }
             }
         }
     }
@@ -326,8 +330,9 @@ private fun CardBody(
     when (phase) {
         Phase.Morning -> MorningCard(today, data, nowMs, zone, aiText, compact, onOpenEvent, join, onOpenHub, onAllowCalendar)
         Phase.Afternoon -> AfternoonCard(data, nowMs, compact, onOpenEvent, join)
-        Phase.Evening -> EveningCard(data, tomorrow, zone, compact, onOpenEvent, onOpenNotes)
+        Phase.Evening -> EveningCard(data, tomorrow, nowMs, zone, compact, onOpenEvent, onOpenNotes)
     }
+    if (!compact) NextWeekOffer(nowMs, zone, data.stats.meetings)
     if (!compact) CalendarSetupCard(data, onOpenHub, onAllowCalendar)
 }
 
@@ -358,19 +363,19 @@ private fun CardHeader(phase: Phase, nowMs: Long, zone: ZoneId) {
 }
 
 @Composable
-private fun Headline(text: String) {
+internal fun Headline(text: String) {
     val ink = LocalCardInk.current
     Text(text, style = PlaitType.headline.copy(fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold), color = ink)
 }
 
 @Composable
-private fun Body(text: String, maxLines: Int = Int.MAX_VALUE) {
+internal fun Body(text: String, maxLines: Int = Int.MAX_VALUE) {
     val ink = LocalCardInk.current
     Text(text, style = PlaitType.body.copy(fontSize = 16.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium), color = ink.copy(alpha = 0.85f), maxLines = maxLines, overflow = TextOverflow.Ellipsis)
 }
 
 @Composable
-private fun SectionLabel(text: String) {
+internal fun SectionLabel(text: String) {
     val ink = LocalCardInk.current
     Text(text.uppercase(), style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink.copy(alpha = 0.6f), modifier = Modifier.padding(top = 4.dp))
 }
@@ -515,10 +520,11 @@ private fun AfternoonCard(data: DayData, nowMs: Long, compact: Boolean, onOpenEv
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, zone: ZoneId, compact: Boolean, onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit) {
+private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zone: ZoneId, compact: Boolean, onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit) {
     val context = LocalContext.current
     val ink = LocalCardInk.current
     val s = data.stats
+    if (!compact && weekRecapDue(nowMs, zone)) WeekRecapBlock(nowMs, zone)
     Headline(if (s.meetings == 0) "A quiet day." else "${DayAnalytics.span(s.minutesSoFar)} in meetings.")
     Body(DayAnalytics.recap(s), if (compact) 2 else Int.MAX_VALUE)
     if (compact) {
@@ -593,7 +599,7 @@ private fun EveningCard(data: DayData, tomorrow: List<CalEvent>, zone: ZoneId, c
 }
 
 @Composable
-private fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
+internal fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     val ink = LocalCardInk.current
     Column(modifier.fauxGlass(RoundedCornerShape(24.dp), cardGlass()).padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(value, style = PlaitType.cardHeadline.copy(fontSize = 30.sp, lineHeight = 32.sp), color = ink, maxLines = 1)

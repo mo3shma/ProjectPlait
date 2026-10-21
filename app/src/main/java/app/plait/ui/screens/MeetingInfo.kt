@@ -20,8 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,12 +47,15 @@ import app.plait.ui.theme.plait
 import app.plait.ui.pressable
 import java.util.UUID
 
-/** What the AI made of an invite, remembered so it is written once per invite text and not every time the page opens. */
+/** What the AI made of a meeting, remembered per event so it is written once and kept until the user asks again. */
 internal object MeetingInfoCache {
     private fun prefs(c: Context) = c.applicationContext.getSharedPreferences("plait_meetinfo", Context.MODE_PRIVATE)
     fun get(c: Context, key: String): Pair<String, String>? = prefs(c).getString(key, null)?.split("\u0000", limit = 2)?.takeIf { it.size == 2 }?.let { it[0] to it[1] }
     fun put(c: Context, key: String, text: String, by: String) { prefs(c).edit().putString(key, "$by\u0000$text").apply() }
     fun clear(c: Context) { prefs(c).edit().clear().apply() }
+    fun entry(c: Context, eventId: String): AboutEntry? = AboutEntry.decode(prefs(c).getString(AboutEntry.key(eventId), null))
+    fun putEntry(c: Context, eventId: String, e: AboutEntry) { prefs(c).edit().putString(AboutEntry.key(eventId), e.encode()).apply() }
+    fun remove(c: Context, eventId: String) { prefs(c).edit().remove(AboutEntry.key(eventId)).apply() }
 }
 
 /** Removes the machinery of an invite (join links, meeting ids, rulers, slashes) so only the human part is left. */
@@ -126,8 +132,6 @@ internal fun grounded(answer: String, source: String): String {
     }.joinToString("\n").trim()
 }
 
-private enum class AboutSource { Invite, Title }
-
 /** A sentence-case "Likely about …" from the title alone, for when no AI is on. */
 internal fun ruleGuess(title: String): String =
     "Likely about " + title.trim().trimEnd('.', '!', '?').replaceFirstChar { it.lowercase() } + "."
@@ -143,27 +147,36 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
     var writing by remember { mutableStateOf(false) }
     val invite = remember(desc) { cleanInvite(desc) }
     val from = if (inviteHasContent(invite)) AboutSource.Invite else AboutSource.Title
-    val key = remember(ev.id, invite, from) { "v11:${from.name}:${ev.id}:${invite.hashCode()}" }
+    val inputHash = (if (from == AboutSource.Invite) invite else ev.title).hashCode()
     val tick = app.plait.ui.HomeState.refreshTick
-    var text by remember(key, tick) { mutableStateOf(MeetingInfoCache.get(context, key)?.second) }
-    var busy by remember(key, tick) { mutableStateOf(false) }
-    LaunchedEffect(key, tick) {
-        if (text != null) return@LaunchedEffect
+    var again by remember(ev.id) { mutableIntStateOf(0) }
+    var entry by remember(ev.id, tick, again) { mutableStateOf(MeetingInfoCache.entry(context, ev.id)) }
+    var busy by remember(ev.id, tick, again) { mutableStateOf(false) }
+    var aiReady by remember { mutableStateOf(false) }
+    LaunchedEffect(ev.id, from, inputHash, tick, again) {
+        aiReady = Ai.status(context).ready
+        if (!shouldWrite(entry, from, inputHash, aiReady, System.currentTimeMillis())) return@LaunchedEffect
         busy = true
-        val written = when (from) {
-            AboutSource.Invite -> aboutFromInvite(context, ev, invite)
-            AboutSource.Title -> guessFromTitle(context, ev)
-        }
-        if (!written.isNullOrBlank()) { MeetingInfoCache.put(context, key, written, "ai"); text = written }
-        busy = false
+        try {
+            val written = when (from) {
+                AboutSource.Invite -> aboutFromInvite(context, ev, invite)
+                AboutSource.Title -> guessFromTitle(context, ev)
+            }
+            // Stored even when empty, so a useless answer is not asked for again on every open.
+            val e = AboutEntry(written?.takeIf { it.isNotBlank() }, "ai", from, inputHash, System.currentTimeMillis())
+            MeetingInfoCache.putEntry(context, ev.id, e)
+            entry = e
+        } finally { busy = false }
     }
+    val writeAgain: () -> Unit = { MeetingInfoCache.remove(context, ev.id); again++ }
+    val text = cachedAbout(entry, from)
     // Without an AI answer: the invite's own opening sentences, or the plain guess from the title.
     val shown = text ?: when (from) {
         AboutSource.Invite -> brief.about.takeIf { !brief.aboutIsGuess && it.isNotBlank() && !looksLikeCode(it) && !app.plait.data.brief.DescriptionCleaner.isCode(it) }
             ?.let { app.plait.ai.AiHarness.paragraph(it, it, 35) } ?: ruleGuess(ev.title)
         AboutSource.Title -> ruleGuess(ev.title)
     }
-    val guess = from == AboutSource.Title || shown.startsWith("Likely", ignoreCase = true)
+    val guess = (entry?.takeIf { text != null }?.kind ?: from) == AboutSource.Title || shown.startsWith("Likely", ignoreCase = true)
     val look = LocalMeetingLook.current
     var open by remember { mutableStateOf(false) }
     Column(
@@ -173,6 +186,10 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("About this meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.weight(1f))
+            // Its own clickable, so a tap here does not also open the card.
+            if (aiReady && !busy) IconButton(writeAgain, Modifier.size(32.dp)) {
+                Icon(Icons.Filled.Refresh, "Write this again", tint = plait.muted, modifier = Modifier.size(18.dp))
+            }
             Icon(Icons.Filled.OpenInFull, "Open", tint = plait.muted, modifier = Modifier.size(18.dp))
         }
         if (guess) Text("No details in the invite. A guess from the title:", style = PlaitType.caption, color = plait.muted)
@@ -185,7 +202,9 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
     }
     if (open) DetailDialog("About this meeting", { open = false }) {
         if (guess) Text("A guess from the title, since the invite has no details.", style = PlaitType.caption, color = plait.muted)
-        Text(shown, style = PlaitType.body, color = plait.text)
+        if (busy && text == null) Text(if (from == AboutSource.Title) "Thinking about the title…" else "Reading…", style = PlaitType.body, color = plait.muted)
+        else Text(shown, style = PlaitType.body, color = plait.text)
+        if (aiReady && !busy) PillButton("Write this again", writeAgain, Icons.Filled.Refresh)
     }
     if (writing) EditTextDialog("Write about this meeting", "", onSave = { t ->
         MemoStore.get(context).add(Memo(UUID.randomUUID().toString(), ev.id, MemoKind.Text, System.currentTimeMillis(), t.trim()))

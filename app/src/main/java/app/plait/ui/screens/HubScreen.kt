@@ -151,7 +151,7 @@ fun HubScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val backdrop = rememberLayerBackdrop()
-    remember(context) { Calendars.load(context); app.plait.data.Profile.load(context) }
+    remember(context) { Calendars.load(context); app.plait.data.Profile.load(context); app.plait.data.week.WorkWeek.load(context) }
     val calendarAccess = rememberCalendarAccess()
     val googleSync = rememberGoogleSync()
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -487,6 +487,21 @@ fun HubScreen(onBack: () -> Unit) {
                             PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, "Evening note reminder")
                         }
                         Text("Widget: press and hold the home screen, choose Widgets, then Plait. It shows the next meeting with a live countdown and a Join button.", style = PlaitType.caption, color = plait.muted)
+                    }
+                }
+
+                }
+
+                fold(section, "week", "Work week", app.plait.data.week.WorkWeek.label()) {
+                item { FoldNote("Your Evening brief on the last day of the work week sums up the week, and on days off with no meetings Plait offers a look at next week.") }
+                item {
+                    HubCard {
+                        Text("First work day", style = PlaitType.bodyStrong, color = plait.text)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            java.time.DayOfWeek.entries.forEach { d ->
+                                PlaitChip(d.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH), app.plait.data.week.WorkWeek.startDay == d, { app.plait.data.week.WorkWeek.set(context, d) })
+                            }
+                        }
                     }
                 }
 
