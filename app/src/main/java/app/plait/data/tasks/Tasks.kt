@@ -47,9 +47,8 @@ Example: {"tasks": [{"task": "Send the prototype link to the team", "due": "toda
 
     private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
 
-    /** [suggest] in the background, so leaving the screen does not stop it. Notes not linked to a meeting are skipped. */
+    /** [suggest] in the background, so leaving the screen does not stop it. A free note (blank [eventId]) belongs to no meeting. */
     fun suggestAsync(context: Context, sourceId: String, eventId: String, text: String) {
-        if (eventId.isBlank()) return
         val app = context.applicationContext
         val title = Calendars.find(eventId)?.title.orEmpty()
         scope.launch { runCatching { suggest(app, sourceId, eventId, title, text) } }

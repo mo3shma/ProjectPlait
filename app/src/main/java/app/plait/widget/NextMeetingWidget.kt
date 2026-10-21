@@ -25,7 +25,7 @@ import java.time.ZoneId
  * Both sizes share one alarm and one update path: [updateAll] refreshes every widget of either class.
  * Refresh triggers, and nothing else wakes it:
  *  - the app saves a snapshot or reschedules reminders (calendar change, app left, boot via BootReceiver -> Reminders.scheduleAll)
- *  - one alarm at the next change (meeting start or end, or midnight), re-armed on every update, cancelled with the last widget
+ *  - one alarm at the next change (meeting start or end, 12:00 or 17:00 for the tint, or midnight), re-armed on every update, cancelled with the last widget
  *  - the system's updatePeriodMillis, 30 minutes, as a safety net
  */
 class NextMeetingWidget : AppWidgetProvider() {
@@ -95,20 +95,48 @@ class NextMeetingWidget : AppWidgetProvider() {
             return (device + cached + snapshot).distinctBy { it.id }.sortedBy { it.startMs }
         }
 
+        private fun bg(p: Phase) = when (p) {
+            Phase.Morning -> R.drawable.widget_bg_morning
+            Phase.Midday -> R.drawable.widget_bg_midday
+            Phase.Evening -> R.drawable.widget_bg_evening
+        }
+
+        private fun show(v: RemoteViews, id: Int, on: Boolean) = v.setViewVisibility(id, if (on) View.VISIBLE else View.GONE)
+
         private fun build(context: Context, m: WidgetModel): RemoteViews {
+            val l = WidgetModel.wideLines(m)
             val v = RemoteViews(context.packageName, R.layout.widget_day_wide)
+            v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             v.setTextViewText(R.id.widget_date, m.date)
-            v.setTextViewText(R.id.widget_title, m.title)
-            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, if (m.clearDay) 24f else 18f)
-            v.setInt(R.id.widget_title, "setMaxLines", m.titleLines)
-            v.setTextViewText(R.id.widget_when, m.whenLine)
-            v.setViewVisibility(R.id.widget_place, if (m.place == null) View.GONE else View.VISIBLE)
-            m.place?.let { v.setTextViewText(R.id.widget_place, it) }
-            v.setViewVisibility(R.id.widget_footer, if (m.footer == null) View.GONE else View.VISIBLE)
-            m.footer?.let { v.setTextViewText(R.id.widget_footer, it) }
+            show(v, R.id.widget_count, l.countLabel != null)
+            l.countLabel?.let { v.setTextViewText(R.id.widget_count, it) }
+            show(v, R.id.widget_time_block, l.timeBig != null)
+            show(v, R.id.widget_now, l.nowChip)
+            l.timeBig?.let {
+                v.setTextViewText(R.id.widget_time, it)
+                v.setTextViewTextSize(R.id.widget_time, TypedValue.COMPLEX_UNIT_SP, l.timeSp.toFloat())
+            }
+            show(v, R.id.widget_time_under, l.timeUnder != null)
+            l.timeUnder?.let { v.setTextViewText(R.id.widget_time_under, it) }
+            v.setTextViewText(R.id.widget_title, l.title)
+            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, l.titleSp.toFloat())
+            v.setInt(R.id.widget_title, "setMaxLines", l.titleLines)
+            show(v, R.id.widget_place, l.sub != null)
+            l.sub?.let { v.setTextViewText(R.id.widget_place, it) }
+            // Icon only on a real place line: video when the meeting has a call, a pin otherwise.
+            v.setTextViewCompoundDrawablesRelative(
+                R.id.widget_place, if (m.clearDay) 0 else if (m.joinUrl != null) R.drawable.ic_widget_video_small else R.drawable.ic_widget_place, 0, 0, 0,
+            )
+            show(v, R.id.widget_strip, !m.clearDay)
+            show(v, R.id.widget_then, l.then != null)
+            l.then?.let { v.setTextViewText(R.id.widget_then, it) }
+            show(v, R.id.widget_more, l.more != null)
+            l.more?.let { v.setTextViewText(R.id.widget_more, it) }
+            show(v, R.id.widget_last, l.lastText != null)
+            l.lastText?.let { v.setTextViewText(R.id.widget_last, it) }
             m.eventId?.let { v.setOnClickPendingIntent(R.id.widget_next, Reminders.open(context, it, 0, 9102)) }
-            bindJoin(context, v, m.joinUrl)
+            bindJoin(context, v, if (l.showJoin) m.joinUrl else null)
             return v
         }
 
@@ -127,17 +155,21 @@ class NextMeetingWidget : AppWidgetProvider() {
         private fun buildSmall(context: Context, m: WidgetModel): RemoteViews {
             val l = WidgetModel.smallLines(m)
             val v = RemoteViews(context.packageName, R.layout.widget_day_small)
+            v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             v.setTextViewText(R.id.widget_date, m.dateShort)
-            v.setViewVisibility(R.id.widget_top_end, if (l.topEnd == null) View.GONE else View.VISIBLE)
+            show(v, R.id.widget_top_end, l.topEnd != null)
+            show(v, R.id.widget_mark, l.topEnd == null)
             l.topEnd?.let { v.setTextViewText(R.id.widget_top_end, it) }
+            show(v, R.id.widget_time, !m.clearDay)
+            v.setTextViewText(R.id.widget_time, l.timeLine)
+            v.setTextViewTextSize(R.id.widget_time, TypedValue.COMPLEX_UNIT_SP, l.timeSp.toFloat())
             v.setTextViewText(R.id.widget_title, l.title)
-            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, if (m.clearDay) 18f else 16f)
+            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, if (m.clearDay) 20f else 15f)
             v.setInt(R.id.widget_title, "setMaxLines", l.titleLines)
-            v.setTextViewText(R.id.widget_when, l.timeLine)
-            v.setTextViewTextSize(R.id.widget_when, TypedValue.COMPLEX_UNIT_SP, if (m.clearDay) 11f else 14f)
-            v.setInt(R.id.widget_when, "setMaxLines", if (m.clearDay) 2 else 1)
-            v.setViewVisibility(R.id.widget_footer, if (l.bottomText == null) View.GONE else View.VISIBLE)
+            show(v, R.id.widget_sub, m.clearDay)
+            if (m.clearDay) v.setTextViewText(R.id.widget_sub, l.timeLine)
+            show(v, R.id.widget_footer, l.bottomText != null)
             l.bottomText?.let { v.setTextViewText(R.id.widget_footer, it) }
             m.eventId?.let { v.setOnClickPendingIntent(R.id.widget_next, Reminders.open(context, it, 0, 9102)) }
             bindJoin(context, v, if (l.showJoin) m.joinUrl else null)

@@ -65,16 +65,19 @@ internal fun attentionView(items: List<AttentionItem>, max: Int = MaxRows): Atte
     return AttentionView(if (urgent.isNotEmpty()) urgent.size else items.size, ordered.take(max), (items.size - max).coerceAtLeast(0))
 }
 
-/** The inside of the Tasks card; the shell, its colour and [LocalCardInk] come from the feed. */
+/** Rows the Tasks card shows in the feed; open, it lists every one. */
+internal const val CollapsedRows = 4
+
+/** The inside of the Tasks card; the shell, its colour and [LocalCardInk] come from the feed. [full] is the open card. */
 @Composable
-internal fun AttentionContent(phase: Phase, nowMs: Long, onOpenEvent: (String) -> Unit) {
+internal fun AttentionContent(phase: Phase, nowMs: Long, onOpenEvent: (String) -> Unit, full: Boolean = false) {
     val context = LocalContext.current
     val ink = LocalCardInk.current
     // Both stores are Compose state lists: reading them here re-runs the collect when a note, memo or idea changes.
     val memos = MemoStore.get(context).items.toList()
     val ideas = TaskIdeas.items.toList()
     val items = remember(HomeState.refreshTick, memos, ideas, nowMs / 60_000) { AttentionTasks.now(context, nowMs) }
-    val view = remember(items) { attentionView(items) }
+    val view = remember(items, full) { attentionView(items, if (full) items.size else CollapsedRows) }
 
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Box(Modifier.size(28.dp).clip(CircleShape).background(ink.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {

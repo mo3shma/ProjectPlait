@@ -42,7 +42,7 @@ import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 
 /**
- * Tasks Plait found in this meeting's voice and photo notes. Adding one puts it on the meeting's checklist and sets a
+ * Tasks Plait found in this meeting's voice, written and photo notes. Adding one puts it on the meeting's checklist and sets a
  * reminder; dismissing it means it is never suggested again. Shows nothing when there is nothing to suggest.
  */
 @Composable

@@ -78,6 +78,7 @@ private class Entry(val key: String, val createdAt: Long, val eventId: String, v
     val snippet: String get() = when {
         list -> app.plait.data.memo.Checklist.parse(memo!!.text).filter { !it.done }.joinToString(" · ") { it.text }.ifBlank { "All done" }
         voice != null -> voice.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary } ?: voice.lines.firstOrNull()?.text ?: "No speech detected"
+        memo?.ai != null -> memo.ai
         else -> memo!!.text.lines().filter { it.isNotBlank() }.drop(1).joinToString(" ").trim()
             .ifBlank { if (photo && memo!!.text.isBlank()) "No text was found in this picture." else "" }
     }
@@ -216,6 +217,7 @@ private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit) 
             app.plait.ui.PlaitBadge(if (e.voice != null) formatClock(e.voice.durationMs) else e.kindLabel, if (e.voice != null) app.plait.ui.BadgeKind.Size else app.plait.ui.BadgeKind.Info)
         }
         if (e.snippet.isNotBlank()) Text(e.snippet, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        e.memo?.let { m -> app.plait.audio.NoteProcessor.working[m.id]?.let { Text(it, style = PlaitType.caption, color = plait.muted) } }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 ((e.voice?.author ?: e.memo?.author)?.let { "From $it · " } ?: "") + app.plait.data.TimeFmt.stamp(e.createdAt),

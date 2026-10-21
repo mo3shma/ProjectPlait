@@ -8,10 +8,14 @@ import app.plait.ai.ModelCatalog
 import app.plait.ai.ModelCenter
 import app.plait.ai.ModelSpec
 import app.plait.ai.NoteAiPrompt
+import app.plait.ai.NoteSummary
 import app.plait.data.Calendars
 import app.plait.data.NoteDigest
 import app.plait.data.NoteStore
 import app.plait.data.SavedNote
+import app.plait.data.memo.Memo
+import app.plait.data.memo.MemoAi
+import app.plait.data.memo.MemoStore
 import app.plait.data.tasks.TaskSuggester
 import app.plait.data.device.DeviceWrite
 import app.plait.data.sync.SyncEngine
@@ -58,6 +62,46 @@ object NoteProcessor {
             } finally {
                 working.remove(note.id)
             }
+        }
+    }
+
+    /** After a text note is saved or edited, or a photo note's text is ready. Not for a note still being typed. */
+    fun afterMemoSaved(context: Context, memo: Memo) {
+        if (!MemoAi.worthAnalysing(memo) || !MemoAi.Guard.allow(memo.id)) return
+        val app = context.applicationContext
+        scope.launch { analyseMemo(app, memo.id, manual = false) }
+    }
+
+    /** The button on a note card. False when the summary is already up to date for the text and engine. */
+    suspend fun summariseMemoNow(context: Context, memo: Memo): Boolean = analyseMemo(context.applicationContext, memo.id, manual = true)
+
+    private suspend fun analyseMemo(app: Context, id: String, manual: Boolean): Boolean {
+        val store = MemoStore.get(app)
+        val memo = store.items.firstOrNull { it.id == id } ?: return false
+        if (!MemoAi.worthAnalysing(memo) || id in working) return false
+        working[id] = "Reading the note…"
+        try {
+            AiPrefs.load(app)
+            val status = Ai.status(app)
+            val engine = MemoAi.engineId(status)
+            if (!MemoAi.needsSummary(memo, if (manual) engine else null)) return false
+            val text = memo.text.trim()
+            val hash = MemoAi.hash(text)
+            working[id] = "Writing the summary…"
+            val title = Calendars.find(memo.eventId)?.title.orEmpty()
+            val ai = if (status.ready) runCatching { NoteSummary.writeText(app, title, text) }.getOrNull() else null
+            val summary = ai ?: MemoAi.rulesSummary(text)
+            // Stored on the latest copy, and only if the text is still the one analysed: a newer edit wins.
+            val latest = store.items.firstOrNull { it.id == id } ?: return false
+            if (summary != null && MemoAi.hash(latest.text) == hash) {
+                store.update(latest.copy(ai = summary, aiBy = if (ai != null) status.label else "Plait rules", aiHash = hash, aiEngine = engine))
+                SyncEngine.requestAsync(app, force = true)
+            }
+            working[id] = "Looking for tasks…"
+            TaskSuggester.suggestAsync(app, id, memo.eventId, text)
+            return true
+        } finally {
+            working.remove(id)
         }
     }
 

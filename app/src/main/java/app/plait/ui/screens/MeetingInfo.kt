@@ -226,7 +226,9 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
         else if (aiReady && !busy) PillButton("Write this again", writeAgain, Icons.Filled.Refresh)
     }
     if (writing) EditTextDialog("Write about this meeting", "", onSave = { t ->
-        MemoStore.get(context).add(Memo(UUID.randomUUID().toString(), ev.id, MemoKind.Text, System.currentTimeMillis(), t.trim()))
+        val note = Memo(UUID.randomUUID().toString(), ev.id, MemoKind.Text, System.currentTimeMillis(), t.trim())
+        MemoStore.get(context).add(note)
+        app.plait.audio.NoteProcessor.afterMemoSaved(context, note)
         app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
     }, onDismiss = { writing = false })
 }

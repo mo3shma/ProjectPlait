@@ -20,6 +20,11 @@ data class Memo(
     val text: String,
     val imageFile: String? = null,
     val author: String? = null,
+    /** AI (or rules) summary of [text], who wrote it, which engine, and the hash of the text it was made from. */
+    val ai: String? = null,
+    val aiBy: String? = null,
+    val aiHash: Int = 0,
+    val aiEngine: String? = null,
 )
 
 object MemoJson {
@@ -28,7 +33,8 @@ object MemoJson {
         for (m in items) {
             arr.put(
                 JSONObject().put("id", m.id).put("eventId", m.eventId).put("kind", m.kind.name)
-                    .put("createdAt", m.createdAt).put("text", m.text).also { o -> m.imageFile?.let { o.put("imageFile", it) }; m.author?.let { o.put("author", it) } }
+                    .put("createdAt", m.createdAt).put("text", m.text).also { o -> m.imageFile?.let { o.put("imageFile", it) }; m.author?.let { o.put("author", it) }
+                        m.ai?.let { o.put("ai", it).put("aiHash", m.aiHash) }; m.aiBy?.let { o.put("aiBy", it) }; m.aiEngine?.let { o.put("aiEngine", it) } }
             )
         }
         return JSONObject().put("version", 1).put("memos", arr).toString()
@@ -42,6 +48,7 @@ object MemoJson {
                 o.getString("id"), o.getString("eventId"),
                 runCatching { MemoKind.valueOf(o.optString("kind")) }.getOrDefault(MemoKind.Text),
                 o.optLong("createdAt"), o.optString("text"), o.optString("imageFile").takeIf { it.isNotBlank() }, o.optString("author").takeIf { it.isNotBlank() },
+                o.optString("ai").takeIf { it.isNotBlank() }, o.optString("aiBy").takeIf { it.isNotBlank() }, o.optInt("aiHash"), o.optString("aiEngine").takeIf { it.isNotBlank() },
             )
         }
     }

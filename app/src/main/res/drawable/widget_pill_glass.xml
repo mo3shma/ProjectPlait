@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Join button: clear glass, faint lavender tint, crisp rim; pressed gets a stronger fill. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item><shape android:shape="rectangle"><solid android:color="#4DFFFFFF" /><corners android:radius="18dp" /></shape></item>
+            <item><shape android:shape="rectangle"><solid android:color="#33D8DCFF" /><corners android:radius="18dp" /></shape></item>
+            <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#80FFFFFF" /><corners android:radius="18dp" /></shape></item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item><shape android:shape="rectangle"><solid android:color="#38FFFFFF" /><corners android:radius="18dp" /></shape></item>
+            <item><shape android:shape="rectangle"><solid android:color="#26D8DCFF" /><corners android:radius="18dp" /></shape></item>
+            <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#80FFFFFF" /><corners android:radius="18dp" /></shape></item>
+        </layer-list>
+    </item>
+</selector>

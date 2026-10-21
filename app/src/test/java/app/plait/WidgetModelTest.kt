@@ -63,7 +63,7 @@ class WidgetModelTest {
         assertEquals("A clear day", m.title)
         assertEquals("Next: Mon 9:00 AM Team stand-up", m.whenLine)
         assertNull(m.footer)
-        assertEquals(ms(22, 0), m.nextChangeMs)
+        assertEquals(ms(21, 12), m.nextChangeMs)
     }
 
     @Test fun nothingAtAll() {

@@ -44,7 +44,7 @@ class WidgetSmallTest {
 
     @Test fun runningShowsNowUntilEnd() {
         val l = small(ev("a", "Workshop", ms(21, 8, 30), ms(21, 11, 30)))
-        assertEquals("Now · until 11:30 AM", l.timeLine)
+        assertEquals("until 11:30 AM", l.timeLine); assertEquals("Now", l.topEnd); assertEquals(12, l.timeSp)
     }
 
     @Test fun clearDayNextShortOrTimeOnly() {

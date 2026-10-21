@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Frosted-glass look without blur: translucent dark fill, light rim, faint highlight on the top edge. -->
+<!-- Glass without blur: dark translucent base, a diagonal time-of-day tint, top highlight, crisp rim. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
             <solid android:color="#59141820" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient android:angle="315" android:startColor="#38D0C4FF" android:endColor="#00D0C4FF" />
             <corners android:radius="28dp" />
         </shape>
     </item>

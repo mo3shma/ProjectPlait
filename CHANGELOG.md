@@ -2,6 +2,16 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.27.0: easier cards, nicer widgets, AI for every note
+
+- **Swipe between the day times again.** Morning, Midday and Evening scroll sideways, with the tab chips following. Each one keeps its own vertical stack of cards.
+- **Cards that move easily.** A short flick moves one card, it settles with a springy bounce, and dragging past the first or last card rubber-bands back. A card dips slightly when you press it.
+- **Cards no longer scroll. Tap one to open it.** The card grows to fill the screen area, where you can scroll through everything. Close it with the button, Back, or by pulling down. Where a card has more than fits, its bottom edge blurs progressively into a dark tint in dark mode and a light tint in light mode.
+- **Bigger quotes.** On a clear day or an empty card, the quote now fills the space in large italic type.
+- **Better widgets.** The 4x2 and 2x2 widgets use the app's font and a time-of-day tint (gold in the morning, blue at midday, lavender in the evening). The Join button is glass. The 4x2 has a big start time, the title and place, a "3 meetings" capsule and a bottom strip such as "Then Product demo 3:00 PM"; the 2x2 uses the same pieces in less room. The tint changes at 12:00 and 17:00 without extra updates.
+- **AI for typed and photo notes.** Text notes and the text read from photos now get a short summary and suggested tasks, the same as voice notes. They are never analysed twice for the same text, there is a "Summarise again" button, and older notes get a "Summarise" button. With no AI chosen, Plait's own rules write the summary and the badge says so. Notes that belong to no meeting get task suggestions too.
+- Not yet checked on a phone: Material style on the new card effects, and the 2x2 widget on a home screen.
+
 ## 0.26.0: a card feed, glass everywhere, a new logo
 
 - **A new Home.** The brief is now a vertical feed of cards that are all the same size. The active card takes three quarters of the screen and its neighbour fades into the other quarter. Swipe and the next card settles in with a spring. The tasks card has its own colours, and a clear day shows a short productivity quote from a well-known business leader, athlete or scientist.

@@ -27,7 +27,7 @@ object HomeState {
     /** Which alphabet photos are read as. */
     var ocrLang by mutableStateOf(app.plait.data.memo.OcrLang.Auto)
 
-    /** The card last open on the home screen, and the part of the day it was chosen in. */
+    /** The Morning / Midday / Evening page last open on Home, and the part of the day it was chosen in. */
     var page by mutableIntStateOf(-1)
     var pagePhase by mutableIntStateOf(-1)
 

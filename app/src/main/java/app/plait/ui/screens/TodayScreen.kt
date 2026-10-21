@@ -179,17 +179,10 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
     }
 
     val tab = HomeState.tab
-    val phaseNow = remember(nowMs / 600_000) { app.plait.data.brief.Phase.at(nowMs, zone) }
-    // Which part of the day the feed shows: the one you are in, or the one last chosen in this part of the day.
-    var phaseIdx by androidx.compose.runtime.saveable.rememberSaveable {
-        androidx.compose.runtime.mutableIntStateOf(if (HomeState.page >= 0 && HomeState.pagePhase == phaseNow.ordinal) HomeState.page else phaseNow.ordinal)
-    }
-    LaunchedEffect(phaseIdx) { HomeState.page = phaseIdx; HomeState.pagePhase = phaseNow.ordinal }
     var menuOpen by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
     val scrim by animateFloatAsState(if (menuOpen) 0.45f else 0f, tween(220), label = "scrim")
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val phaseTabs = remember { app.plait.data.brief.Phase.entries.map { GlassTab(it.label) } }
     // On the Notes tab a voice note stands alone; elsewhere it goes to the meeting that is next.
     val recordTarget = if (tab == 2) "" else today.upNext?.id ?: ""
 
@@ -212,7 +205,8 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 label = "home-tab",
             ) { t ->
                 when (t) {
-                    0 -> BriefPage(today, nowMs, tomorrow, ambient, app.plait.data.brief.Phase.entries[phaseIdx], onOpenEvent, onOpenNotes, onOpenHub, calendarAccess)
+                    // The Morning / Midday / Evening chips live in BriefPage, under the card that opens over them.
+                    0 -> BriefPage(today, nowMs, tomorrow, ambient, onOpenEvent, onOpenNotes, onOpenHub, calendarAccess)
                     1 -> CalendarContent(calendarState, calendarEvents, nowMs, zone, ambient, onOpenEvent)
                     else -> NotesLibrary(ambient, onOpenEvent, onOpenAt) { onRecord(it, false) }
                 }
@@ -253,19 +247,6 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 )
             }
             GlassIconButton(Icons.Filled.Settings, "Settings", onOpenHub, backdrop)
-        }
-
-        if (tab == 0) {
-            // Morning / Midday / Evening under the icons, as wide as the card; the feed below shows the chosen one.
-            Box(Modifier.align(Alignment.TopCenter).widthIn(max = 720.dp).fillMaxWidth().statusBarsPadding().padding(top = 72.dp, start = 18.dp, end = 18.dp)) {
-                GlassTabBar(
-                    tabs = phaseTabs,
-                    selected = phaseIdx,
-                    onSelect = { phaseIdx = it },
-                    backdrop = backdrop,
-                    height = app.plait.ui.ControlHeights.Medium,
-                )
-            }
         }
 
         val tabs = remember {

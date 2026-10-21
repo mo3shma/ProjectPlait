@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,8 +103,9 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
                 Toast.makeText(context, "Couldn't open that picture.", Toast.LENGTH_SHORT).show()
             } else {
                 val text = Ocr.read(context, target, lang)
-                memos.add(Memo(id, eventId, MemoKind.Photo, System.currentTimeMillis(), text.orEmpty(), target.name))
-                if (!text.isNullOrBlank()) app.plait.data.tasks.TaskSuggester.suggestAsync(context, id, eventId, text)
+                val photo = Memo(id, eventId, MemoKind.Photo, System.currentTimeMillis(), text.orEmpty(), target.name)
+                memos.add(photo)
+                if (!text.isNullOrBlank()) app.plait.audio.NoteProcessor.afterMemoSaved(context, photo)
                 app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
                 if (text.isNullOrBlank()) Toast.makeText(context, "Saved. No text was found in the picture.", Toast.LENGTH_LONG).show()
             }
@@ -135,7 +137,9 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
     }
 
     if (writing) EditTextDialog("New note", "", onSave = { t ->
-        memos.add(Memo(UUID.randomUUID().toString(), eventId, MemoKind.Text, System.currentTimeMillis(), t.trim()))
+        val note = Memo(UUID.randomUUID().toString(), eventId, MemoKind.Text, System.currentTimeMillis(), t.trim())
+        memos.add(note)
+        app.plait.audio.NoteProcessor.afterMemoSaved(context, note)
         app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
     }, onDismiss = { writing = false })
 
@@ -192,10 +196,37 @@ internal fun MemoCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit) {
         } else if (memo.kind == MemoKind.Photo) {
             Text("No text was found in this picture.", style = PlaitType.body, color = plait.muted)
         }
+        MemoSummary(memo)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (memo.text.isNotBlank()) PlaitButton("Copy text", { copy(context, memo.text) }, size = ButtonSize.Small)
         }
     }
+}
+
+/** The AI (or rules) summary of a text or photo note, with what wrote it and a button to write it again. */
+@Composable
+internal fun MemoSummary(memo: Memo) {
+    if (memo.kind == MemoKind.Checklist) return
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var upToDate by remember(memo.id) { mutableStateOf(false) }
+    val busy = app.plait.audio.NoteProcessor.working[memo.id]
+    val run: () -> Unit = {
+        scope.launch { if (!app.plait.audio.NoteProcessor.summariseMemoNow(context, memo)) { upToDate = true; kotlinx.coroutines.delay(2000); upToDate = false } }
+    }
+    if (memo.ai != null) Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Summary", style = PlaitType.monoSmall, color = plait.muted)
+            memo.aiBy?.let { app.plait.ui.PlaitBadge(it) }
+            androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+            if (upToDate) Text("Already up to date", style = PlaitType.caption, color = plait.muted)
+            else if (busy == null) CircleIconButton(Icons.Filled.Refresh, "Summarise again", run, app.plait.ui.GlassTone.Lavender.deep, plait.text, size = 32.dp, iconSize = 18.dp)
+        }
+        Text(memo.ai, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.text, modifier = Modifier.fillMaxWidth())
+    } else if (busy == null && app.plait.data.memo.MemoAi.worthAnalysing(memo)) {
+        PlaitButton("Summarise", run, size = ButtonSize.Small, style = ButtonStyle.Tinted)
+    }
+    busy?.let { Text(it, style = PlaitType.caption, color = plait.muted) }
 }
 
 private fun copy(context: Context, text: String) {
@@ -279,7 +310,14 @@ internal fun EditMemoDialog(memo: Memo, memos: MemoStore, onDismiss: () -> Unit)
     if (memo.kind == MemoKind.Checklist) ChecklistDialog("Edit checklist", app.plait.data.memo.Checklist.parse(memo.text), onSave = { items ->
         memos.update(memo.copy(text = app.plait.data.memo.Checklist.format(items)))
     }, onDismiss = onDismiss)
-    else EditTextDialog("Edit note", memo.text, onSave = { t -> memos.update(memo.copy(text = t.trim())) }, onDismiss = onDismiss)
+    else {
+        val context = LocalContext.current
+        EditTextDialog("Edit note", memo.text, onSave = { t ->
+            val edited = memo.copy(text = t.trim())
+            memos.update(edited)
+            app.plait.audio.NoteProcessor.afterMemoSaved(context, edited)
+        }, onDismiss = onDismiss)
+    }
 }
 
 /** One colour per kind of note, used lightly on the add-note pills. */
