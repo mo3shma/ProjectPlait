@@ -14,7 +14,7 @@ object AiPrefs {
     var textChoice by mutableStateOf(TextChoice.Auto); private set
     /** Which downloaded text model to use when [textChoice] is Local. */
     var textModelId by mutableStateOf<String?>(null); private set
-    /** Which downloaded speech model transcribes voice notes afterwards, or null for the built-in live one only. */
+    /** Which downloaded speech model transcribes voice notes afterwards, or null for none (the recording is then saved as audio only). */
     var speechModelId by mutableStateOf<String?>(null); private set
     /** "auto" lets Whisper work out the language, otherwise a code like "en" or "ar". */
     var speechLang by mutableStateOf("auto"); private set

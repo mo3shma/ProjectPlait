@@ -56,7 +56,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -187,23 +186,23 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                         Text(if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. Silence isn't transcribed.", style = PlaitType.monoSmall, color = if (controller.speaking) plait.signal else plait.muted)
                 }
                 if (!whisper) {
+                    val tiny = remember { app.plait.ai.ModelCatalog.byId("speech-whisper-tiny")!! }
+                    val st = app.plait.ai.ModelCenter.state(tiny.id)
                     Text(
-                        "To write your words, get Whisper in Settings → AI on this phone. Your recording is saved either way.",
+                        "To write your words, get a speech model. It runs on your phone. Your recording is saved either way.",
                         style = PlaitType.body, color = plait.muted,
                     )
+                    if (st is app.plait.ai.ModelState.Downloading) {
+                        Text("Downloading ${tiny.title}… ${(st.done * 100 / st.total.coerceAtLeast(1))}%. It carries on if you leave.", style = PlaitType.caption, color = plait.accent)
+                    } else {
+                        app.plait.ui.PlaitButton("Get ${tiny.title} · ${tiny.sizeLabel}", { app.plait.ai.ModelCenter.download(context, tiny) }, style = app.plait.ui.ButtonStyle.Primary, size = app.plait.ui.ButtonSize.Small)
+                    }
                 } else {
                     val running = remember(controller.lines.size) {
                         app.plait.data.Transcript.paragraphs(controller.lines.toList()).lastOrNull()?.text?.let { if (it.length > 220) "…" + it.takeLast(220).substringAfter(' ') else it }.orEmpty()
                     }
-                    if (running.isNotEmpty() || controller.partial.isNotEmpty()) Text(
-                        androidx.compose.ui.text.buildAnnotatedString {
-                            append(running)
-                            if (controller.partial.isNotEmpty()) {
-                                if (running.isNotEmpty()) append(" ")
-                                pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = FontStyle.Italic, color = plait.muted))
-                                append(controller.partial); pop()
-                            }
-                        },
+                    if (running.isNotEmpty()) Text(
+                        running,
                         style = PlaitType.body.copy(fontSize = 18.sp, lineHeight = 25.sp, fontWeight = FontWeight.Medium),
                         color = plait.text, maxLines = 4, overflow = TextOverflow.Ellipsis,
                     )

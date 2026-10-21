@@ -133,7 +133,7 @@ class CryptTest {
         val data = ByteArray(300_000) { (it * 31).toByte() }
         val sealed = java.io.ByteArrayOutputStream().also { bo -> Crypt.encrypt(bo, pass, chunk = 64_000, rounds = 2_000).use { it.write(data) } }.toByteArray()
         assertTrue(Crypt.isEncrypted(sealed))
-        assertFalse(String(sealed, Charsets.ISO_8859_1).contains("\u0000\u0001\u0002"))
+        assertFalse(String(sealed, Charsets.ISO_8859_1).contains(String(data.copyOfRange(1000, 1016), Charsets.ISO_8859_1))) // the plaintext must not show through
         val ins = sealed.inputStream(); ins.skip(Crypt.MAGIC.size.toLong())
         assertArrayEquals(data, Crypt.decrypt(ins, pass).readBytes())
     }

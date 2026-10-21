@@ -430,7 +430,7 @@ private fun DayWheel(selected: LocalDate, today: LocalDate, counts: Map<Long, In
             ) {
                 Text(
                     day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(),
-                    style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = if (day == today) plait.accent else plait.muted,
+                    style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = if (day == today) plait.accent else plait.text.copy(alpha = 0.7f),
                 )
                 Text(day.dayOfMonth.toString(), style = PlaitType.cardHeadline.copy(fontSize = 28.sp, lineHeight = 30.sp), color = plait.text)
                 Box(Modifier.padding(top = 3.dp).size(5.dp).background(if (count > 0) plait.accent else Color.Transparent, CircleShape))

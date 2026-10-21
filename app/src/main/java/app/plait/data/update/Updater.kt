@@ -158,7 +158,7 @@ object Updater {
     /** The update download, for the background-download notification. */
     fun downloading(): UpdateState.Downloading? = state as? UpdateState.Downloading
 
-    private suspend fun fetch(info: UpdateInfo, file: File) {
+    internal suspend fun fetch(info: UpdateInfo, file: File) {
         val part = File(file.path + ".part")
         var attempt = 0
         while (true) {

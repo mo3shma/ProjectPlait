@@ -117,7 +117,7 @@ object ModelCatalog {
     )
 
     val speechModels = listOf(
-        whisper("tiny", "Fast, light, a clear step up from the built-in speech model.", "Quick on any phone. Handles many languages including Arabic.", "Mishears names and accents.", 12_937_772, 89_855_401, 3),
+        whisper("tiny", "Fast and light. The one that keeps up with live words while you record.", "Quick on any phone. Handles many languages including Arabic.", "Mishears names and accents.", 12_937_772, 89_855_401, 3),
         whisper("base", "A good balance of speed and accuracy.", "Better with accents and Arabic than Tiny.", "Takes a while on long notes on older phones.", 29_120_534, 130_672_026, 4),
         whisper("small", "Understands accents and Arabic well. The best choice for most phones.", "Clearly better with names, accents and Arabic than Base.", "Needs 6 GB of RAM to be comfortable. Long notes take a minute or two.", 112_442_483, 262_226_114, 6),
         whisper("turbo", "The most accurate transcripts, close to cloud services. For phones with 8 GB of RAM.", "Best with strong accents, mixed English and Arabic, names and jargon.", "A 1 GB download, and slow: a long note can take several minutes.", 674_716_297, 361_080_764, 8),

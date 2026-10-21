@@ -295,6 +295,29 @@ private fun Modifier.edgeFade(): Modifier = this
         )
     }
 
+/** Shown on every phase's card when there is nothing to read yet: no calendar connected, or none on the phone. */
+@Composable
+private fun CalendarSetupCard(data: DayData, onOpenHub: () -> Unit, onAllowCalendar: () -> Unit) {
+    val ink = LocalCardInk.current
+    if (!Calendars.connected) {
+        Column(Modifier.fillMaxWidth().fauxGlass(RoundedCornerShape(26.dp), cardGlass()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("No calendar connected yet", style = PlaitType.bodyStrong, color = ink)
+            Text("Connect your calendars and your real day shows up here.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PlaitButton("Use my phone's calendars", onAllowCalendar, style = ButtonStyle.Ink, size = ButtonSize.Small)
+                PlaitButton("More options", onOpenHub, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+            }
+        }
+    } else if (data.events.isEmpty() && Calendars.deviceCals.isEmpty() && Calendars.feeds.isEmpty() && !Calendars.googleOn) {
+        // Allowed to read calendars, but the phone has none: say so, instead of a card that claims a free day.
+        Column(Modifier.fillMaxWidth().fauxGlass(RoundedCornerShape(26.dp), cardGlass()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("No calendars found on this phone", style = PlaitType.bodyStrong, color = ink)
+            Text("Add an account, or paste a calendar link, and your real day shows up here.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
+            PlaitButton("Add an account or link", onOpenHub, style = ButtonStyle.Ink, size = ButtonSize.Small)
+        }
+    }
+}
+
 @Composable
 private fun CardBody(
     phase: Phase, compact: Boolean, today: TodayData, data: DayData, tomorrow: List<CalEvent>, nowMs: Long, zone: ZoneId, aiText: String?,
@@ -305,6 +328,7 @@ private fun CardBody(
         Phase.Afternoon -> AfternoonCard(data, nowMs, compact, onOpenEvent, join)
         Phase.Evening -> EveningCard(data, tomorrow, zone, compact, onOpenEvent, onOpenNotes)
     }
+    if (!compact) CalendarSetupCard(data, onOpenHub, onAllowCalendar)
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -440,16 +464,6 @@ private fun MorningCard(
     if (!compact && data.day.summary.isNotBlank()) Body(aiText ?: data.day.summary)
     if (!compact && data.day.load.isNotEmpty()) DayStripOnCard(data.day, data.kinds, nowMs, zone)
 
-    if (!Calendars.connected) {
-        Column(Modifier.fillMaxWidth().fauxGlass(RoundedCornerShape(26.dp), cardGlass()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("No calendar connected yet", style = PlaitType.bodyStrong, color = ink)
-            Text("Connect your calendars and your real day shows up here.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton("Use my phone's calendars", onAllowCalendar, style = ButtonStyle.Ink, size = ButtonSize.Small)
-                PlaitButton("More options", onOpenHub, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
-            }
-        }
-    }
     Calendars.message?.let { Text(it, style = PlaitType.caption, color = ink) }
 
     if (data.events.isNotEmpty()) {

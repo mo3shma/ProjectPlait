@@ -240,7 +240,7 @@ fun HubScreen(onBack: () -> Unit) {
             AiPrefs.TextChoice.Local -> app.plait.ai.ModelCatalog.byId(p.textModelId)?.title ?: "Downloaded model"
             AiPrefs.TextChoice.Rules -> "Rules only"
         }
-        "Writing: $text · Voice: " + (app.plait.ai.ModelCatalog.byId(p.speechModelId)?.title ?: "built-in")
+        "Writing: $text · Voice: " + (app.plait.ai.ModelCatalog.byId(p.speechModelId)?.title ?: "none yet")
     }
     val remindersSummary = if (app.plait.reminder.ReminderPrefs.before(context)) "${app.plait.reminder.ReminderPrefs.leadMin(context)} min before" + (if (app.plait.reminder.ReminderPrefs.nudge(context)) " · evening reminder" else "") else "Off"
     val appearanceSummary = (if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass) "Liquid Glass" else "Material 3 Expressive") + (if (!app.plait.ui.theme.Appearance.glass) " · no glass effects" else "") + (if (app.plait.ui.theme.Appearance.calm) " · calm" else "")
@@ -704,6 +704,7 @@ fun HubScreen(onBack: () -> Unit) {
 
             }
         }
+        app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         Box(Modifier.statusBarsPaddingCompat().padding(start = 18.dp, top = 12.dp)) {
             GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", goBack, backdrop)
         }

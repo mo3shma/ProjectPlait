@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class WavRecorder(
     private val file: File,
+    /** Called once, on the capture thread, if the microphone or the storage fails. What was recorded so far is kept. */
+    private val onFail: () -> Unit = {},
     private val onChunk: (buffer: ShortArray, count: Int) -> Unit,
 ) {
     @Volatile var paused = false
@@ -66,13 +68,16 @@ class WavRecorder(
             try {
                 while (running) {
                     val n = record.read(shorts, 0, shorts.size)
-                    if (n <= 0) continue
+                    if (n < 0) { onFail(); break } // the audio service died; looping would spin forever
+                    if (n == 0) continue
                     if (paused) continue
                     Wav.toLittleEndian(shorts, n, bytes)
                     out.write(bytes, 0, n * 2)
                     written.addAndGet(n.toLong())
                     onChunk(shorts, n)
                 }
+            } catch (e: java.io.IOException) {
+                onFail() // for example a full disk
             } finally {
                 runCatching { record.stop() }
                 effects.forEach { runCatching { it.release() } }

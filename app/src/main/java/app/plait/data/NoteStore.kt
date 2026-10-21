@@ -52,26 +52,28 @@ object NoteJson {
     fun decode(json: String): List<SavedNote> {
         val root = JSONObject(json)
         val arr = root.optJSONArray("notes") ?: return emptyList()
-        return List(arr.length()) { i ->
-            val o = arr.getJSONObject(i)
-            val lines = o.optJSONArray("lines")
-            val marks = o.optJSONArray("bookmarksMs")
-            SavedNote(
-                id = o.getString("id"),
-                eventId = o.getString("eventId"),
-                title = o.optString("title"),
-                createdAt = o.getLong("createdAt"),
-                durationMs = o.getLong("durationMs"),
-                audioFile = o.getString("audioFile"),
-                lines = List(lines?.length() ?: 0) { k ->
-                    lines!!.getJSONObject(k).let { NoteLine(it.getLong("atMs"), it.getString("text"), it.optDouble("conf", 1.0).toFloat()) }
-                },
-                bookmarksMs = List(marks?.length() ?: 0) { k -> marks!!.getLong(k) },
-                ai = o.optString("ai").takeIf { it.isNotBlank() },
-                aiBy = o.optString("aiBy").takeIf { it.isNotBlank() },
-                author = o.optString("author").takeIf { it.isNotBlank() },
-            )
-        }
+        // One damaged record must not hide the rest.
+        return (0 until arr.length()).mapNotNull { i -> runCatching { decodeNote(arr.getJSONObject(i)) }.getOrNull() }
+    }
+
+    private fun decodeNote(o: JSONObject): SavedNote {
+        val lines = o.optJSONArray("lines")
+        val marks = o.optJSONArray("bookmarksMs")
+        return SavedNote(
+            id = o.getString("id"),
+            eventId = o.getString("eventId"),
+            title = o.optString("title"),
+            createdAt = o.getLong("createdAt"),
+            durationMs = o.getLong("durationMs"),
+            audioFile = o.getString("audioFile"),
+            lines = List(lines?.length() ?: 0) { k ->
+                lines!!.getJSONObject(k).let { NoteLine(it.getLong("atMs"), it.getString("text"), it.optDouble("conf", 1.0).toFloat()) }
+            },
+            bookmarksMs = List(marks?.length() ?: 0) { k -> marks!!.getLong(k) },
+            ai = o.optString("ai").takeIf { it.isNotBlank() },
+            aiBy = o.optString("aiBy").takeIf { it.isNotBlank() },
+            author = o.optString("author").takeIf { it.isNotBlank() },
+        )
     }
 }
 
@@ -85,7 +87,12 @@ class NoteStore private constructor(private val dir: File) {
     init {
         dir.mkdirs()
         if (index.exists()) {
-            runCatching { notes.addAll(NoteJson.decode(index.readText()).sortedByDescending { it.createdAt }) }
+            val text = index.readText()
+            val loaded = runCatching { NoteJson.decode(text) }.getOrNull()
+            val expected = runCatching { JSONObject(text).optJSONArray("notes")?.length() }.getOrNull()
+            // Keep the unreadable file: the next save would otherwise overwrite it.
+            if (loaded == null || loaded.size != expected) index.copyTo(File(dir, "notes.json.bad"), overwrite = true)
+            loaded?.let { notes.addAll(it.sortedByDescending { n -> n.createdAt }) }
         }
     }
 

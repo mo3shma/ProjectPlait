@@ -2,6 +2,16 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.24.1: safer notes, clearer first run
+
+- **Your notes can't be wiped by one bad record.** If a single note in the saved file is damaged, the others still load, and the unreadable file is kept as a copy instead of being overwritten by the next save.
+- **Private notes stay out of cloud backup.** Android's automatic backup is switched off for Plait, so recordings and transcripts never leave the phone that way. Plait's own backup file is unchanged.
+- **Recording stops cleanly if the microphone or storage fails.** It no longer spins forever; a message tells you, and what was recorded is kept.
+- **No more leaked speech model.** Stopping a very short recording while the model was still loading no longer leaves about 100 MB in memory.
+- **A clearer first run.** With no calendars on the phone, Home says so and offers "Add an account or link" instead of "Nothing on today". The recorder has a "Get Whisper Tiny" button when no speech model is installed.
+- **Back button and status bar.** Scrolling cards fade out behind the back button and the clock instead of running under them.
+- Calendar weekday labels are a little larger, and leftover "built-in recogniser" wording is gone.
+
 ## 0.24.0: live words from Whisper
 
 - **Live words are written by Whisper.** While you record, each phrase is written a moment after you pause, in the language you picked (mixed pairs too), instead of by the small English-only recogniser. Arabic, English and mixed speech now show words live. The saved note is still one recording, and when you stop, Whisper reads the whole thing again for the final transcript.

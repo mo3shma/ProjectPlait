@@ -1,7 +1,7 @@
 package app.plait.audio
 
-/** One step of live transcription: either a partial guess or a finished utterance. */
-data class TranscriptUpdate(val text: String, val isFinal: Boolean, val conf: Float = 1f)
+/** A finished piece of live transcription. */
+data class TranscriptUpdate(val text: String)
 
 /** Words shown while a note is being recorded. The recording itself is never touched. */
 interface LiveTranscriber {

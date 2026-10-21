@@ -18,8 +18,8 @@ android {
         applicationId = "app.plait"
         minSdk = 26
         targetSdk = 36
-        versionCode = 47
-        versionName = "0.24.0"
+        versionCode = 48
+        versionName = "0.24.1"
     }
 
     // Releases built by GitHub Actions are signed with the key from the repository's secrets (see

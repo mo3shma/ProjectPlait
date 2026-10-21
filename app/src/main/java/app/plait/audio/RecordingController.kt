@@ -41,7 +41,6 @@ class RecordingController(
     var phase by mutableStateOf(RecPhase.Idle); private set
     var elapsedMs by mutableLongStateOf(0L); private set
     var levels by mutableStateOf(List(LEVEL_BARS) { 0f }); private set
-    var partial by mutableStateOf(""); private set
     /** True while the voice detector hears someone talking. */
     var speaking by mutableStateOf(false); private set
     var failure by mutableStateOf<String?>(null); private set
@@ -63,7 +62,9 @@ class RecordingController(
         transcriber.load()
         consumer = scope.launch { consume() }
 
-        val rec = WavRecorder(file) { buf, n ->
+        val rec = WavRecorder(file, onFail = {
+            main.post { failure = "The recording stopped: the microphone or the storage failed. What was recorded is kept; tap stop to save it." }
+        }) { buf, n ->
             pcm.trySend(buf.copyOf(n))
             val now = System.currentTimeMillis()
             if (now - lastUiPost >= 60) {
@@ -165,10 +166,7 @@ class RecordingController(
 
         fun addLine(u: TranscriptUpdate?, at: Long) {
             val text = SpokenText.tidy(u?.text.orEmpty())
-            main.post {
-                partial = ""
-                if (text.isNotEmpty()) lines.add(NoteLine(at, text, u?.conf ?: 1f))
-            }
+            if (text.isNotEmpty()) main.post { lines.add(NoteLine(at, text)) }
         }
 
         for (chunk in pcm) {
@@ -180,13 +178,8 @@ class RecordingController(
             }
             for (seg in out.audio) {
                 val u = transcriber.accept(seg) ?: continue
-                if (u.isFinal) {
-                    addLine(u, if (startMs >= 0) startMs else vad.elapsedMs)
-                    startMs = vad.elapsedMs // a long stretch of speech continues as the next phrase
-                } else {
-                    val text = u.text
-                    main.post { partial = text }
-                }
+                addLine(u, if (startMs >= 0) startMs else vad.elapsedMs)
+                startMs = vad.elapsedMs // a long stretch of speech continues as the next phrase
             }
             if (out.ended) {
                 addLine(transcriber.flush(), if (startMs >= 0) startMs else vad.elapsedMs)

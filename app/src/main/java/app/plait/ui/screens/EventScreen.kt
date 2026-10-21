@@ -192,6 +192,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
 
         // Functional layer: toolbar. Back, then the account pill at its own width; the manage button sits at the far right.
         val canManageHere = ev.id.startsWith("d:") || ev.id.startsWith("g:")
+        app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         Box(Modifier.align(Alignment.TopCenter).widthIn(max = 720.dp).fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp).rise(0)) {
             Row(
                 Modifier.align(Alignment.CenterStart).padding(end = if (canManageHere) 60.dp else 0.dp),

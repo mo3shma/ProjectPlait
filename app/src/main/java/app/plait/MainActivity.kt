@@ -13,6 +13,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.fillMaxSize
@@ -160,6 +165,13 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+                // A soft fade under the status bar: scrolling content no longer collides with the clock and icons.
+                val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                val ground = app.plait.ui.theme.plait.ground
+                Box(
+                    Modifier.align(androidx.compose.ui.Alignment.TopCenter).fillMaxWidth().height(statusTop + 12.dp)
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(ground.copy(alpha = 0.92f), ground.copy(alpha = 0f)))),
+                )
                 if (app.plait.diag.FrameMonitor.enabled) {
                     androidx.compose.material3.Text(
                         app.plait.diag.FrameMonitor.summary, color = androidx.compose.ui.graphics.Color.White, fontSize = 11.sp,

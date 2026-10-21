@@ -17,3 +17,6 @@ models/
 # Notes for the next working session; kept off GitHub.
 handoff.md
 HANDOFF.md
+
+# Working files of the design review tooling.
+.taste-skill/

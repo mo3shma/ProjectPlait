@@ -17,6 +17,7 @@ class LiveWhisper(private val context: Context) : LiveTranscriber {
     private var mixed: List<String>? = null
     private var previous: String? = null
     private val buffer = PhraseBuffer()
+    private var closed = false
 
     @Volatile var error: String? = null
         private set
@@ -33,8 +34,11 @@ class LiveWhisper(private val context: Context) : LiveTranscriber {
                 } else {
                     val lang = AiPrefs.speechLang
                     mixed = WhisperTranscriber.pair(lang)
-                    whisper = WhisperTranscriber.build(context, spec, if (mixed != null) "auto" else lang)
-                    ready.complete(true)
+                    val built = WhisperTranscriber.build(context, spec, if (mixed != null) "auto" else lang)
+                    // Stopped while the model was loading: nobody will close it later, so do it here.
+                    val keep = synchronized(this) { if (closed) false else { whisper = built; true } }
+                    if (!keep) built.release()
+                    ready.complete(keep)
                 }
             } catch (e: Throwable) {
                 error = e.message ?: "Speech engine failed to start"
@@ -56,10 +60,11 @@ class LiveWhisper(private val context: Context) : LiveTranscriber {
         val ms = pcm.size * 1000L / SAMPLE_RATE
         val (text, lang) = WhisperTranscriber.piece(b, FloatArray(pcm.size) { pcm[it] / 32768f }, ms, mixed, previous)
         if (lang != null) previous = lang
-        return if (WhisperTranscriber.worthKeeping(text, ms)) TranscriptUpdate(text, isFinal = true) else null
+        return if (WhisperTranscriber.worthKeeping(text, ms)) TranscriptUpdate(text) else null
     }
 
     @Synchronized override fun close() {
+        closed = true
         runCatching { whisper?.release() }
         whisper = null
     }
