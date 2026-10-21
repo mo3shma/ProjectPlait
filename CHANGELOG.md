@@ -2,6 +2,10 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.23.1: rebuild
+
+- No changes to how the app works. This is a clean rebuild of 0.23.0, signed with the same key, so it installs over your current app.
+
 ## 0.23.0: mixed languages
 
 - **Two languages in one note.** The language button now offers mixed pairs: Arabic + English, English + Arabic, French + English, French + Arabic, Spanish, German, Turkish, Hindi and Urdu with English. A mixed note is cut into short pieces at pauses, about a sentence each, and every piece is written in its own language: Whisper hears which one it is, and a guess outside the pair (Egyptian Arabic heard as another language) is redone in the main language. Pieces too short to tell take the language of the one before. Arabic sentences come out in Arabic and English ones in English, instead of one being translated or spelled in the other's letters.
