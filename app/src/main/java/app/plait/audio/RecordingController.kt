@@ -92,12 +92,14 @@ class RecordingController(
         phase = RecPhase.Paused
         loudness = 0f
         speaking = false
+        RecordingService.refresh(appContext)
     }
 
     fun resume() {
         if (phase != RecPhase.Paused) return
         recorder?.paused = false
         phase = RecPhase.Recording
+        RecordingService.refresh(appContext)
     }
 
     fun bookmark() {

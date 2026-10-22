@@ -56,6 +56,8 @@ data class CalEvent(
     val calId: Long = 0L,
     /** The account that owns the calendar ("me@work.com"), when the phone says. */
     val account: String = "",
+    /** IANA id of the zone the event was scheduled in, when the source says. Null for floating, all-day and unknown. */
+    val zone: String? = null,
 ) {
     /** Detected from the event's own fields, never typed in by hand. */
     val callLink: CallLink? get() = CallLinks.find(conferenceUri, location, description)

@@ -4,10 +4,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
-import android.content.pm.PackageManager
-import android.net.ConnectivityManager
 import android.os.Build
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,10 +23,9 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.security.MessageDigest
 
-/** A newer Plait on GitHub, with the APK that suits this phone. [sha256] is GitHub's asset digest, when it gives one. */
-data class UpdateInfo(val version: String, val notes: String, val url: String, val bytes: Long, val sha256: String? = null)
+/** A newer Plait on GitHub, with the APK that suits this phone. */
+data class UpdateInfo(val version: String, val notes: String, val url: String, val bytes: Long)
 
 sealed interface UpdateState {
     data object Idle : UpdateState
@@ -37,8 +33,6 @@ sealed interface UpdateState {
     data object UpToDate : UpdateState
     data class Available(val info: UpdateInfo) : UpdateState
     data class Downloading(val info: UpdateInfo, val done: Long) : UpdateState
-    /** Downloaded and verified; waiting for the user's tap on Restart. */
-    data class Ready(val info: UpdateInfo, val file: File) : UpdateState
     /** Android needs the user to let Plait install apps (once). */
     data class NeedsPermission(val info: UpdateInfo, val file: File) : UpdateState
     data class Installing(val info: UpdateInfo) : UpdateState
@@ -46,11 +40,10 @@ sealed interface UpdateState {
 }
 
 /**
- * Keeps Plait up to date without a trip to GitHub. Every time Plait opens it asks GitHub's public API for the latest
- * release (no account, no data about you; it can be switched off). If there is a newer one it downloads the APK for
- * this phone's processor in the background (resumable) and checks size, SHA-256 (when GitHub gives one), signing key and
- * version. Then it waits for the user to tap Restart; only then is the APK handed to PackageInstaller, which on
- * Android 12+ installs without a confirmation screen when Plait is the installer of record.
+ * Keeps Plait up to date without a trip to GitHub. It asks GitHub's public API for the latest release (no account, no
+ * data about you: one request each time Plait opens, and it can be switched off), downloads the APK for this phone's
+ * processor with a resumable download that carries on in the background, and hands it to Android's installer. Android
+ * checks the update is signed with the same key, so only a genuine Plait can replace this one.
  */
 object Updater {
     const val REPO = "mo3shma/ProjectPlait"
@@ -63,40 +56,29 @@ object Updater {
     private fun prefs(c: Context) = c.applicationContext.getSharedPreferences("plait", Context.MODE_PRIVATE)
     fun autoCheck(c: Context) = prefs(c).getBoolean("update_auto", true)
     fun setAutoCheck(c: Context, on: Boolean) { prefs(c).edit().putBoolean("update_auto", on).apply() }
-    fun dismissed(c: Context): String? = prefs(c).getString("update_dismissed", null)
-    fun dismiss(c: Context, version: String) { prefs(c).edit().putString("update_dismissed", version).apply() }
 
     fun currentVersion(c: Context): String =
         runCatching { c.packageManager.getPackageInfo(c.packageName, 0).versionName }.getOrNull() ?: "0"
 
-    /** Checks on every launch, if the user has not switched it off. Failures are silent. */
+    /** Checks on every launch if the user has not switched it off. It only looks: the download starts when the user taps Update. */
     fun checkInBackground(context: Context) {
-        val app = context.applicationContext
-        if (autoCheck(app)) check(app, manual = false)
+        if (autoCheck(context)) check(context)
     }
 
-    /** One network check at a time; none while an update is downloading, ready or installing. */
-    fun check(context: Context, manual: Boolean = true) {
-        if (job?.isActive == true || state is UpdateState.Ready || state is UpdateState.Installing || state is UpdateState.NeedsPermission) return
+    fun check(context: Context) {
+        if (job?.isActive == true) return
         val app = context.applicationContext
-        if (manual) state = UpdateState.Checking
+        state = UpdateState.Checking
         job = scope.launch {
-            val info = try { fetchLatest(app) } catch (e: Exception) {
+            state = try {
+                val info = fetchLatest(app)
+                if (info != null && isNewer(info.version, currentVersion(app))) UpdateState.Available(info) else UpdateState.UpToDate
+            } catch (e: Exception) {
                 Diag.log("UPDATE", "check: ${e.message}")
-                state = if (manual) UpdateState.Failed("Couldn't reach GitHub. Check your connection and try again.") else UpdateState.Idle
-                return@launch
-            }
-            if (info != null && isNewer(info.version, currentVersion(app))) {
-                state = UpdateState.Available(info)
-                if (!metered(app)) prepare(app, info) // a big download waits for a tap on mobile data
-            } else {
-                File(app.cacheDir, "updates").deleteRecursively() // stale, or already installed
-                state = UpdateState.UpToDate
+                UpdateState.Failed("Couldn't reach GitHub. Check your connection and try again.")
             }
         }
     }
-
-    private fun metered(c: Context) = runCatching { c.getSystemService(ConnectivityManager::class.java).isActiveNetworkMetered }.getOrDefault(false)
 
     private fun fetchLatest(context: Context): UpdateInfo? {
         val conn = (URL(API).openConnection() as HttpURLConnection).apply {
@@ -117,9 +99,9 @@ object Updater {
         val version = o.optString("tag_name").trim().removePrefix("v").ifBlank { return null }
         val assets = o.optJSONArray("assets") ?: return null
         val list = List(assets.length()) { assets.getJSONObject(it) }
-        val want = if ("arm64-v8a" in abis) "plait.apk" else "plait-armv7.apk"
+        val want = if (abis.firstOrNull() == "arm64-v8a" || "arm64-v8a" in abis) "plait.apk" else "plait-armv7.apk"
         val asset = list.firstOrNull { it.optString("name") == want } ?: list.firstOrNull { it.optString("name") == "plait.apk" } ?: return null
-        return UpdateInfo(version, o.optString("body").trim(), asset.getString("browser_download_url"), asset.optLong("size"), parseDigest(asset.optString("digest")))
+        return UpdateInfo(version, o.optString("body").trim(), asset.getString("browser_download_url"), asset.optLong("size"))
     }
 
     /** "0.20.0" is newer than "0.19.3"; "0.19.10" is newer than "0.19.9". */
@@ -133,72 +115,26 @@ object Updater {
         return false
     }
 
-    /** GitHub's asset digest "sha256:<64 hex>" as lowercase hex, or null for anything else. */
-    internal fun parseDigest(d: String?): String? =
-        d?.trim()?.lowercase()?.removePrefix("sha256:")?.takeIf { Regex("[0-9a-f]{64}").matches(it) }
-
-    internal fun sha256Hex(file: File): String {
-        val md = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { i -> val b = ByteArray(64 * 1024); while (true) { val n = i.read(b); if (n < 0) break; md.update(b, 0, n) } }
-        return md.digest().joinToString("") { "%02x".format(it) }
-    }
-
-    /** Downloads (resuming a part already on the phone) and verifies the update: the manual start, e.g. on mobile data. */
+    /** Downloads the update (resuming a part already on the phone) and installs it. */
     fun download(context: Context, info: UpdateInfo) {
         if (job?.isActive == true && state is UpdateState.Downloading) return
         val app = context.applicationContext
-        job = scope.launch { prepare(app, info) }
-    }
-
-    private suspend fun prepare(app: Context, info: UpdateInfo) {
         val dir = File(app.cacheDir, "updates").apply { mkdirs() }
         dir.listFiles()?.filter { !it.name.startsWith("plait-${info.version}.") }?.forEach { it.delete() } // older updates
         val file = File(dir, "plait-${info.version}.apk")
-        try {
-            if (!(file.exists() && (info.bytes <= 0 || file.length() == info.bytes))) {
-                state = UpdateState.Downloading(info, 0)
-                ModelDownloadService.start(app)
-                fetch(info, file)
+        state = UpdateState.Downloading(info, 0)
+        ModelDownloadService.start(app)
+        job = scope.launch {
+            try {
+                if (!(file.exists() && (info.bytes <= 0 || file.length() == info.bytes))) fetch(info, file)
+                install(app, info, file)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                state = UpdateState.Available(info); throw e
+            } catch (e: Exception) {
+                Diag.log("UPDATE", "download: ${e.message}")
+                state = UpdateState.Failed("The download stopped. Tap Update to carry on.", info)
             }
-            val problem = verify(app, info, file)
-            if (problem != null) {
-                Diag.log("UPDATE", "rejected: $problem")
-                file.delete()
-                state = UpdateState.Failed("The downloaded update didn't pass its safety checks, so it was not installed.", info)
-            } else state = UpdateState.Ready(info, file)
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            state = UpdateState.Available(info); throw e
-        } catch (e: Exception) {
-            Diag.log("UPDATE", "download: ${e.message}")
-            state = UpdateState.Failed("The download stopped.", info)
         }
-    }
-
-    private fun code(p: PackageInfo): Long = if (Build.VERSION.SDK_INT >= 28) p.longVersionCode else @Suppress("DEPRECATION") p.versionCode.toLong()
-
-    /** Null if the file is Plait, newer than this install, the size and digest GitHub gave, and signed with this install's key. */
-    private fun verify(app: Context, info: UpdateInfo, file: File): String? {
-        if (info.bytes > 0 && file.length() != info.bytes) return "wrong size"
-        info.sha256?.let { if (sha256Hex(file) != it) return "checksum mismatch" }
-        val pm = app.packageManager
-        val modern = Build.VERSION.SDK_INT >= 28
-        @Suppress("DEPRECATION") val flags = if (modern) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
-        val apk = pm.getPackageArchiveInfo(file.path, flags) ?: return "not a readable APK"
-        if (apk.packageName != app.packageName) return "different app"
-        val mine = pm.getPackageInfo(app.packageName, flags)
-        if (code(apk) <= code(mine)) return "not newer"
-        @Suppress("DEPRECATION")
-        fun keys(p: PackageInfo) = (if (modern) p.signingInfo?.apkContentsSigners else p.signatures)?.toSet().orEmpty()
-        val a = keys(apk)
-        if (a.isEmpty() || a != keys(mine)) return "signed by a different key"
-        return null
-    }
-
-    /** The user tapped Restart: commit the verified APK to PackageInstaller. */
-    fun applyUpdate(context: Context) {
-        val s = state as? UpdateState.Ready ?: return
-        val app = context.applicationContext
-        scope.launch { runCatching { install(app, s.info, s.file) }.onFailure { state = UpdateState.Failed("Couldn't start the install.", s.info) } }
     }
 
     fun cancel() { job?.cancel() }
@@ -246,10 +182,7 @@ object Updater {
         }
     }
 
-    /**
-     * Commits the APK to PackageInstaller. With USER_ACTION_NOT_REQUIRED, Android 12+ skips its confirmation screen when
-     * Plait is the installer of record; otherwise (first time, or installed from a browser) onStatus launches the prompt.
-     */
+    /** Hands the APK to Android's installer. The first time, Android asks the user to let Plait install apps. */
     suspend fun install(context: Context, info: UpdateInfo, file: File) {
         val app = context.applicationContext
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !app.packageManager.canRequestPackageInstalls()) {
@@ -262,7 +195,6 @@ object Updater {
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setAppPackageName(app.packageName)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-                if (Build.VERSION.SDK_INT >= 34) setRequestUpdateOwnership(true)
             }
             val id = installer.createSession(params)
             installer.openSession(id).use { session ->
@@ -280,10 +212,7 @@ object Updater {
     /** After the user allowed Plait to install apps. */
     fun resumeInstall(context: Context) {
         val s = state as? UpdateState.NeedsPermission ?: return
-        val app = context.applicationContext
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !app.packageManager.canRequestPackageInstalls()) return
-        state = UpdateState.Installing(s.info) // claims it, so two callers can't both commit
-        scope.launch { runCatching { install(app, s.info, s.file) }.onFailure { state = UpdateState.Failed("Couldn't start the install.", s.info) } }
+        scope.launch { runCatching { install(context, s.info, s.file) }.onFailure { state = UpdateState.Failed("Couldn't start the install.", s.info) } }
     }
 
     internal fun onStatus(context: Context, intent: Intent) {
@@ -296,9 +225,7 @@ object Updater {
                 confirm?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
             }
             PackageInstaller.STATUS_SUCCESS -> state = UpdateState.Idle // the app restarts as the new version
-            // The user said no in Android's prompt: the verified file is still there to try again.
-            PackageInstaller.STATUS_FAILURE_ABORTED ->
-                state = info?.let { UpdateState.Ready(it, File(context.cacheDir, "updates/plait-${it.version}.apk")) } ?: UpdateState.Idle
+            PackageInstaller.STATUS_FAILURE_ABORTED -> state = info?.let { UpdateState.Available(it) } ?: UpdateState.Idle
             else -> {
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                 Diag.log("UPDATE", "install: $status $msg")

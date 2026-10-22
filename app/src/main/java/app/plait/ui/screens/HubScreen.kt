@@ -504,6 +504,14 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                             PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, "Evening note reminder")
                         }
+                        if (android.os.Build.VERSION.SDK_INT >= 36) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Live alerts", style = PlaitType.bodyStrong, color = plait.text)
+                                Text("Recording, meeting and task timers as live chips.", style = PlaitType.caption, color = plait.muted)
+                            }
+                            if (app.plait.reminder.LiveAlert.canPromote(context)) Text("On", style = PlaitType.caption, color = plait.muted)
+                            else HubBtn("Allow", { app.plait.reminder.LiveAlert.openSettings(context) }, size = ButtonSize.Small)
+                        }
                         Text("Widget: press and hold the home screen, choose Widgets, then Plait. It comes in two sizes, 4×2 and 2×2, and shows the next meeting with a Join button.", style = PlaitType.caption, color = plait.muted)
                     }
                 }
@@ -653,7 +661,7 @@ fun HubScreen(onBack: () -> Unit) {
                 }
 
                 fold(section, "updates", "Updates and help", "Plait ${app.plait.data.update.Updater.currentVersion(context)}") {
-                item { FoldNote("Plait checks GitHub for a new version each time it opens, downloads it quietly, and restarts into it only when you tap Restart. The check sends nothing about you.") }
+                item { FoldNote("Plait checks GitHub for a new version each time it opens and installs it when you say so. The check sends nothing about you.") }
                 item {
                     HubCard {
                         val st = app.plait.data.update.Updater.state
@@ -666,7 +674,6 @@ fun HubScreen(onBack: () -> Unit) {
                                 is app.plait.data.update.UpdateState.UpToDate -> "You have the latest version."
                                 is app.plait.data.update.UpdateState.Available -> "Plait ${st.info.version} is ready to install."
                                 is app.plait.data.update.UpdateState.Downloading -> "Downloading Plait ${st.info.version}…"
-                                is app.plait.data.update.UpdateState.Ready -> "Plait ${st.info.version} is ready. Restart to apply."
                                 is app.plait.data.update.UpdateState.NeedsPermission -> "Waiting for permission to install."
                                 is app.plait.data.update.UpdateState.Installing -> "Installing…"
                                 is app.plait.data.update.UpdateState.Failed -> st.reason
@@ -675,7 +682,7 @@ fun HubScreen(onBack: () -> Unit) {
                             style = PlaitType.caption, color = plait.muted,
                         )
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading || st is app.plait.data.update.UpdateState.Ready ||
+                            val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading ||
                                 st is app.plait.data.update.UpdateState.NeedsPermission || (st is app.plait.data.update.UpdateState.Failed && st.info != null)
                             if (waiting) HubBtn("Update", { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
                             else HubBtn("Check for updates", { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
@@ -686,7 +693,7 @@ fun HubScreen(onBack: () -> Unit) {
                             var auto by remember { mutableStateOf(app.plait.data.update.Updater.autoCheck(context)) }
                             Column(Modifier.weight(1f)) {
                                 Text("Check for updates by itself", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Every time Plait opens. Off means you check by hand.", style = PlaitType.caption, color = plait.muted)
+                                Text("When Plait opens. Off means you check by hand.", style = PlaitType.caption, color = plait.muted)
                             }
                             PlaitSwitch(auto, { auto = !auto; app.plait.data.update.Updater.setAutoCheck(context, auto) }, "Check for updates by itself")
                         }

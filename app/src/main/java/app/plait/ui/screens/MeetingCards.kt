@@ -177,6 +177,9 @@ fun MeetingCard(
                 style = PlaitType.caption.copy(fontWeight = FontWeight.Medium), color = ink.copy(alpha = 0.72f),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
+            app.plait.data.ZoneHint.line(ev)?.let {
+                Text(it, style = PlaitType.caption, color = ink.copy(alpha = 0.72f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
 
             Spacer(Modifier.height(if (hero) 16.dp else 10.dp))
             if (hero) Text("Why you're meeting", style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink.copy(alpha = 0.6f))
@@ -326,6 +329,9 @@ fun BriefCard(
                         )
                     }
                 }
+            }
+            app.plait.data.ZoneHint.line(ev)?.let {
+                Text(it, style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = ink.copy(alpha = 0.72f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
             }
             Spacer(Modifier.height(if (hero) 20.dp else 14.dp))
             Text(

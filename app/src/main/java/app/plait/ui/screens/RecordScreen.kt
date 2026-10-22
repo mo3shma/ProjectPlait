@@ -105,6 +105,14 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
             if (id != null) onSaved(id) else onClose()
         }
     }
+    // Stop pressed in the notification already saved the note; leave the same way the Stop button does.
+    val external = RecordingHub.externalStopped
+    LaunchedEffect(external) {
+        if (external != null && external.first === controller) {
+            RecordingHub.externalStopped = null
+            external.second?.let(onSaved) ?: onClose()
+        }
+    }
     BackHandler { if (controller.phase == RecPhase.Idle || controller.phase == RecPhase.Failed) { RecordingHub.finish(context, controller); onClose() } else finish() }
 
     val paused = controller.phase == RecPhase.Paused

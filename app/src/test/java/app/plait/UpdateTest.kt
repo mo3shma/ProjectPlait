@@ -38,32 +38,9 @@ class UpdateTest {
         assertNull(Updater.parseRelease("""{"tag_name": "v1", "assets": []}""", listOf("arm64-v8a")))
     }
 
-    @Test fun parsesGithubDigests() {
-        val hex = "ab".repeat(32)
-        assertEquals(hex, Updater.parseDigest("sha256:$hex"))
-        assertEquals(hex, Updater.parseDigest("SHA256:${hex.uppercase()}"))
-        assertNull(Updater.parseDigest(null))
-        assertNull(Updater.parseDigest("null"))
-        assertNull(Updater.parseDigest("sha256:abc"))
-        assertNull(Updater.parseDigest("sha512:" + "ab".repeat(64)))
-        val withDigest = """{"tag_name": "v1.0", "assets": [{"name": "plait.apk", "browser_download_url": "u", "size": 1, "digest": "sha256:$hex"}]}"""
-        assertEquals(hex, Updater.parseRelease(withDigest, listOf("arm64-v8a"))!!.sha256)
-        assertNull(Updater.parseRelease(release, listOf("arm64-v8a"))!!.sha256)
-    }
-
-    @Test fun hashesAFile() {
-        val f = java.io.File.createTempFile("sha", ".bin").apply { writeText("abc"); deleteOnExit() }
-        assertEquals("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", Updater.sha256Hex(f))
-    }
-
     @Test fun abiSelectionPrefersArm64AnywhereInTheList() {
         assertEquals("https://example.org/plait.apk", Updater.parseRelease(release, listOf("x86_64", "arm64-v8a"))!!.url)
         assertEquals("https://example.org/plait-armv7.apk", Updater.parseRelease(release, listOf("armeabi-v7a"))!!.url)
-    }
-
-    @Test fun pillMessageShortensOnNarrowScreens() {
-        assertEquals("Update 0.28.2 ready", app.plait.ui.screens.pillText("ready", "0.28.2", false))
-        assertEquals("0.28.2 ready", app.plait.ui.screens.pillText("ready", "0.28.2", true))
     }
 
     @Test fun suffixesAndShortVersionsCompare() {

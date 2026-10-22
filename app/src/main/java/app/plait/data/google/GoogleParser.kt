@@ -74,6 +74,8 @@ object GoogleParser {
                     recurring = o.has("recurringEventId"),
                     // The Google calendar it lives in, needed to change it.
                     account = calendarId,
+                    // start.timeZone is only sent for some events (recurring, or when set in the editor).
+                    zone = if (allDay) null else start.optString("timeZone").ifBlank { null },
                 )
             )
         }
@@ -158,7 +160,7 @@ object CalEventJson {
                     .put("description", e.description ?: JSONObject.NULL)
                     .put("conferenceUri", e.conferenceUri ?: JSONObject.NULL)
                     .put("endLabel", e.endLabel).put("startMs", e.startMs).put("endMs", e.endMs).put("allDay", e.allDay)
-                    .put("recurring", e.recurring).put("account", e.account)
+                    .put("recurring", e.recurring).put("account", e.account).put("zone", e.zone ?: JSONObject.NULL)
                     .put("guests", JSONArray().also { g ->
                         e.guests.forEach {
                             g.put(
@@ -186,6 +188,7 @@ object CalEventJson {
                 allDay = o.optBoolean("allDay"),
                 recurring = o.optBoolean("recurring"),
                 account = o.optString("account"),
+                zone = o.str("zone"),
                 guests = o.optJSONArray("guests")?.let { g ->
                     List(g.length()) { k ->
                         val x = g.getJSONObject(k)

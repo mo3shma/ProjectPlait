@@ -21,6 +21,7 @@ object TaskReminders {
     const val ACTION_FIRE = "app.plait.TASK_REMINDER"
     const val ACTION_DONE = "app.plait.TASK_DONE"
     const val ACTION_LATER = "app.plait.TASK_LATER"
+    const val ACTION_LIVE = "app.plait.TASK_LIVE"
 
     private data class Entry(val id: String, val eventId: String, val text: String, val title: String, val at: Long)
 
@@ -40,7 +41,9 @@ object TaskReminders {
     private fun code(id: String) = (id.hashCode() and 0x3FFFFFFF) or 0x40000000
 
     private fun intent(c: Context, action: String, e: Entry) = Intent(c, ReminderReceiver::class.java).setAction(action)
-        .putExtra("id", e.id).putExtra("event", e.eventId).putExtra("text", e.text).putExtra("title", e.title)
+        .putExtra("id", e.id).putExtra("event", e.eventId).putExtra("text", e.text).putExtra("title", e.title).putExtra("at", e.at)
+
+    private fun entryOf(i: Intent) = Entry(i.getStringExtra("id") ?: "", i.getStringExtra("event").orEmpty(), i.getStringExtra("text").orEmpty(), i.getStringExtra("title").orEmpty(), i.getLongExtra("at", 0L))
 
     private fun pending(c: Context, action: String, e: Entry, offset: Int = 0) =
         PendingIntent.getBroadcast(c, code(e.id) + offset, intent(c, action, e), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -54,14 +57,17 @@ object TaskReminders {
     private fun set(c: Context, e: Entry) {
         val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = pending(c, ACTION_FIRE, e)
-        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
-        if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, e.at, pi) else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, e.at, pi)
+        Reminders.setAlarm(am, e.at, pi)
+        // The live alert starts 15 minutes before; if that is already past, it starts now.
+        val now = System.currentTimeMillis()
+        val pre = e.at - LiveLogic.TASK_LEAD_MS
+        if (pre > now) Reminders.setAlarm(am, pre, pending(c, ACTION_LIVE, e, 4)) else if (e.at > now) postLive(c, e)
     }
 
     /** Drops the reminder for [id] (task ticked off, deleted, or its due date cleared or moved past). */
     fun cancel(context: Context, id: String) {
         val all = entries(context)
-        all.firstOrNull { it.id == id }?.let { (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(pending(context, ACTION_FIRE, it)) }
+        all.firstOrNull { it.id == id }?.let { (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).also { am -> am.cancel(pending(context, ACTION_FIRE, it)); am.cancel(pending(context, ACTION_LIVE, it, 4)) } }
         save(context, all.filter { it.id != id })
         (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(code(id))
     }
@@ -73,19 +79,26 @@ object TaskReminders {
     }
 
     internal fun fire(context: Context, i: Intent) {
-        val e = Entry(i.getStringExtra("id") ?: return, i.getStringExtra("event").orEmpty(), i.getStringExtra("text").orEmpty(), i.getStringExtra("title").orEmpty(), 0)
+        val e = entryOf(i)
+        if (e.id.isNotEmpty()) postLive(context, e)
+    }
+
+    internal fun live(context: Context, i: Intent) = fire(context, i)
+
+    /** The task's live alert: counts down to the due time, then counts the time overdue, until Done or Tomorrow. */
+    private fun postLive(context: Context, e: Entry) {
+        val due = LiveLogic.taskPhase(System.currentTimeMillis(), e.at) == TaskPhase.Due
         Reminders.ensureChannel(context)
-        val n = NotificationCompat.Builder(context, Reminders.CHANNEL)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(e.text)
-            .setContentText(if (e.title.isNotBlank()) "Follow-up from ${e.title}" else "Follow-up")
+        LiveAlert.ensureChannel(context)
+        // Quiet while it counts down; at the due time it uses the alerting channel so it can make a sound.
+        val b = LiveAlert.builder(context, if (due) Reminders.CHANNEL else LiveAlert.CHANNEL, e.text, Reminders.open(context, e.eventId.ifBlank { null }, 2, code(e.id) + 3))
+            .setOnlyAlertOnce(!due)
+            .setContentText((if (due) "Due now" else "Due ${TimeFmt.clock(e.at)}") + (if (e.title.isNotBlank()) " · Follow-up from ${e.title}" else ""))
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setAutoCancel(true)
-            .setContentIntent(Reminders.open(context, e.eventId.ifBlank { null }, 2, code(e.id) + 3))
             .addAction(0, "Done", pending(context, ACTION_DONE, e, 1))
             .addAction(0, "Tomorrow", pending(context, ACTION_LATER, e, 2))
-            .build()
-        runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(code(e.id), n) }
+        if (e.at > 0) with(LiveAlert) { b.timer(e.at, !due) }
+        runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(code(e.id), b.build()) }
     }
 
     internal fun done(context: Context, i: Intent) {

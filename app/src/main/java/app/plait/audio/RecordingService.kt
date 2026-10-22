@@ -14,6 +14,9 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import app.plait.MainActivity
+import app.plait.reminder.LiveAlert
+import app.plait.reminder.LiveAlert.timer
+import app.plait.reminder.LiveMeeting
 
 /**
  * Keeps the process alive and the microphone open while a note is being recorded, so capture
@@ -24,34 +27,47 @@ class RecordingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val title = intent?.getStringExtra(EXTRA_TITLE).orEmpty()
+        // The notification's buttons drive the same session the Record screen shows, so they can never disagree.
+        when (intent?.action) {
+            ACTION_TOGGLE -> {
+                val c = RecordingHub.active
+                if (c == null) stopSelf() else if (c.phase == RecPhase.Paused) c.resume() else c.pause()
+                return START_NOT_STICKY
+            }
+            ACTION_STOP -> {
+                if (RecordingHub.active == null) stopSelf() else RecordingHub.requestStop(applicationContext)
+                return START_NOT_STICKY
+            }
+        }
+        title = intent?.getStringExtra(EXTRA_TITLE).orEmpty()
         ensureChannel(this)
-        val open = PendingIntent.getActivity(
-            this, 0,
-            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Recording a voice note")
-            .setContentText(title.ifBlank { "Tap to return to Plait" })
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setContentIntent(open)
-            .build()
+        val notification = build(this)
+        live = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+        LiveMeeting.refreshAsync(this) // a recording wins over the meeting countdown
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        live = false
+        LiveMeeting.refreshAsync(this)
+        super.onDestroy()
     }
 
     companion object {
         private const val CHANNEL = "recording"
         private const val NOTIFICATION_ID = 41
         private const val EXTRA_TITLE = "title"
+        private const val ACTION_TOGGLE = "app.plait.REC_TOGGLE"
+        private const val ACTION_STOP = "app.plait.REC_STOP"
+
+        /** True while the service is up, so other alerts can step aside. */
+        @Volatile var live = false; private set
+        @Volatile private var title = ""
 
         private fun ensureChannel(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -61,6 +77,41 @@ class RecordingService : Service() {
                     NotificationChannel(CHANNEL, "Voice note recording", NotificationManager.IMPORTANCE_LOW)
                 )
             }
+        }
+
+        private fun action(context: Context, code: Int, action: String) = PendingIntent.getService(
+            context, code, Intent(context, RecordingService::class.java).setAction(action),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        /** The live alert: running timer while recording, the frozen time while paused, Pause/Resume and Stop. */
+        private fun build(context: Context): Notification {
+            val c = RecordingHub.active
+            val paused = c?.phase == RecPhase.Paused
+            val elapsed = c?.elapsedMs ?: 0L
+            val open = PendingIntent.getActivity(
+                context, 0,
+                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            val who = title.ifBlank { "Tap to return to Plait" }
+            val b = LiveAlert.builder(context, CHANNEL, "Recording a voice note", open)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .addAction(0, if (paused) "Resume" else "Pause", action(context, 1, ACTION_TOGGLE))
+                .addAction(0, "Stop", action(context, 2, ACTION_STOP))
+            if (paused) {
+                val s = elapsed / 1000
+                b.setContentText("Paused %d:%02d · %s".format(s / 60, s % 60, who)).setShowWhen(false)
+            } else {
+                b.setContentText("Recording · $who").timer(System.currentTimeMillis() - elapsed, false)
+            }
+            return b.build()
+        }
+
+        /** Re-posts the notification after the state changed (Pause or Resume from the app or the notification). */
+        fun refresh(context: Context) {
+            if (!live) return
+            runCatching { context.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, build(context)) }
         }
 
         fun start(context: Context, title: String) {

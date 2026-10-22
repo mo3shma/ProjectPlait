@@ -45,6 +45,8 @@ import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Forward10
+import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -146,6 +148,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                         }
                         Spacer(Modifier.height(10.dp))
                         Text(eventDate(ev) + " · ${ev.time}" + (if (ev.duration.isNotBlank()) " · ${ev.duration}" else ""), style = PlaitType.monoLabel, color = plait.muted)
+                        app.plait.data.ZoneHint.line(ev)?.let { Text(it, style = PlaitType.monoLabel, color = plait.muted, modifier = Modifier.padding(top = 4.dp)) }
                         Spacer(Modifier.height(10.dp))
                         Text(ev.title, style = PlaitType.title.copy(fontSize = 44.sp, lineHeight = 43.sp), color = plait.text)
                         Spacer(Modifier.height(14.dp))
@@ -369,6 +372,20 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
                 }
             }
             Text(formatClock(if (player.isPlaying || player.positionMs > 0) player.positionMs else note.durationMs), style = PlaitType.monoSmall.copy(fontSize = 13.sp), color = plait.muted)
+        }
+        if (hasAudio) {
+            val speedPrefs = LocalContext.current.getSharedPreferences("plait", android.content.Context.MODE_PRIVATE)
+            LaunchedEffect(player) { player.restoreSpeed(speedPrefs.getFloat("play_speed", 1f)) }
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+                CircleIconButton(Icons.Filled.Replay10, "Back 10 seconds", { player.skip(-NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+                PlaitButton(
+                    NotePlayer.label(player.speed),
+                    { speedPrefs.edit().putFloat("play_speed", player.cycleSpeed()).apply() },
+                    size = ButtonSize.Small,
+                )
+                CircleIconButton(Icons.Filled.Forward10, "Forward 10 seconds", { player.skip(NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+            }
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

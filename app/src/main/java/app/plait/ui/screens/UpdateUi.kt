@@ -49,9 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -104,7 +102,7 @@ fun WhatsNewDialog(news: News, onDone: () -> Unit) {
 }
 
 /**
- * The update card: shown by itself when a newer Plait is out (once per version, until "Later"), and from Settings.
+ * The update card: shown by itself when a newer Plait is out (once per version each launch, until "Later"), and from Settings.
  * It downloads with progress, asks Android for permission to install the first time, and hands over to the installer.
  */
 @Composable
@@ -114,14 +112,23 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
     val info: UpdateInfo? = when (state) {
         is UpdateState.Available -> state.info
         is UpdateState.Downloading -> state.info
-        is UpdateState.Ready -> state.info
         is UpdateState.NeedsPermission -> state.info
         is UpdateState.Installing -> state.info
         is UpdateState.Failed -> state.info
         else -> null
     }
-    if (info == null || !forceOpen) return // the quiet pill (UpdatePill) is the automatic surface; this card opens from Settings
-    val close = onClose
+    var hidden by remember(info?.version) { mutableStateOf(false) }
+    val autoShow = info != null && !hidden && true
+    if (info == null || !(forceOpen || autoShow)) return
+    val close = { hidden = true; onClose() }
+
+    // Back from Android's "install unknown apps" screen: carry on if it was allowed.
+    val owner = LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val obs = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_RESUME) Updater.resumeInstall(context) }
+        owner.lifecycle.addObserver(obs)
+        onDispose { owner.lifecycle.removeObserver(obs) }
+    }
 
     PlaitDialog(onDismissRequest = close) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -148,10 +155,6 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
                         PlaitButton("Cancel", { Updater.cancel() }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                     }
                 }
-                is UpdateState.Ready -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PlaitButton("Restart now", { Updater.applyUpdate(context); close() }, style = ButtonStyle.Primary)
-                    PlaitButton("Later", close, style = ButtonStyle.Quiet)
-                }
                 is UpdateState.NeedsPermission -> {
                     Text("Android asks you once to let Plait install its own updates. Turn on \"Allow from this source\", then come back.", style = PlaitType.body, color = plait.text)
                     PlaitButton("Allow updates", {
@@ -160,7 +163,7 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
                         }
                     }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
                 }
-                is UpdateState.Installing -> Text("Installing… Plait will restart. Android may ask you to confirm this first time.", style = PlaitType.body, color = plait.muted)
+                is UpdateState.Installing -> Text("Installing… Android will ask you to confirm.", style = PlaitType.body, color = plait.muted)
                 is UpdateState.Failed -> {
                     Text(state.reason, style = PlaitType.body, color = plait.signal)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -170,7 +173,7 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
                 }
                 else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     PlaitButton("Update now", { Updater.download(context, info) }, style = ButtonStyle.Primary)
-                    PlaitButton("Later", { Updater.dismiss(context, info.version); close() }, style = ButtonStyle.Quiet)
+                    PlaitButton("Later", close, style = ButtonStyle.Quiet)
                 }
             }
         }
@@ -257,62 +260,6 @@ fun LaunchCards() {
             val news = remember { WhatsNew.current(context) }
             if (news != null) WhatsNewDialog(news) { WhatsNew.newsSeen(context) } else WhatsNew.newsSeen(context)
         }
-        WhatsNew.Show.Nothing -> UpdatePill()
-    }
-}
-
-/** "Update 0.28.2 ready", or just "0.28.2 ready" on a narrow screen. */
-internal fun pillText(what: String, version: String, narrow: Boolean) = if (narrow) "$version $what" else "Update $version $what"
-
-/**
- * A quiet glass pill at the top: download progress, "Update x ready · Restart" (the user's tap is what installs it),
- * or "Try again". Hidden while checking, up to date, or mid-install.
- */
-@Composable
-fun UpdatePill() {
-    val context = LocalContext.current
-    val state = Updater.state
-    // Back from Android's "install unknown apps" screen: carry on if it was allowed.
-    val owner = LocalLifecycleOwner.current
-    DisposableEffect(owner) {
-        val obs = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_RESUME) Updater.resumeInstall(context) }
-        owner.lifecycle.addObserver(obs)
-        onDispose { owner.lifecycle.removeObserver(obs) }
-    }
-    val version = when (state) {
-        is UpdateState.Available -> state.info.version
-        is UpdateState.Downloading -> state.info.version
-        is UpdateState.Ready -> state.info.version
-        is UpdateState.NeedsPermission -> state.info.version
-        is UpdateState.Failed -> state.info?.version
-        else -> null
-    }
-    var hidden by remember(version) { mutableStateOf(false) }
-    if (version == null || hidden) return
-    val narrow = LocalConfiguration.current.screenWidthDp < 360
-    val (label, action) = when (state) {
-        is UpdateState.Downloading -> "Updating to $version… ${(state.done * 100 / state.info.bytes.coerceAtLeast(1)).coerceIn(0, 100)}%" to null
-        is UpdateState.Ready -> pillText("ready", version, narrow) to ("Restart" to { Updater.applyUpdate(context) })
-        is UpdateState.NeedsPermission -> "Allow Plait to update itself" to ("Allow" to {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) runCatching {
-                context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
-        })
-        is UpdateState.Failed -> "Update $version didn't finish" to ("Try again" to { state.info?.let { Updater.download(context, it) }; Unit })
-        is UpdateState.Available -> pillText("available", version, narrow) to ("Download" to { Updater.download(context, state.info) })
-        else -> return
-    }
-    // 16dp from both screen edges; the message (weight, not filling) gives way with an ellipsis, the buttons keep their full width.
-    Box(Modifier.fillMaxSize().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp), contentAlignment = Alignment.TopCenter) {
-        Row(
-            Modifier.popupSurface(RoundedCornerShape(50)).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Icon(Icons.Filled.SystemUpdate, null, tint = plait.accent, modifier = Modifier.size(18.dp))
-            Text(label, Modifier.weight(1f, fill = false), style = PlaitType.caption, color = plait.text, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-            if (action != null) PlaitButton(action.first, action.second, style = ButtonStyle.Primary, size = ButtonSize.Small)
-            else Spacer(Modifier.size(10.dp))
-            if (state !is UpdateState.Downloading) PlaitButton("Later", { hidden = true }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
-        }
+        WhatsNew.Show.Nothing -> UpdatePrompt()
     }
 }

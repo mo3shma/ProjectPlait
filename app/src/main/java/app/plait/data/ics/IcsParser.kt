@@ -28,7 +28,7 @@ object IcsParser {
     private class Prop(val name: String, val params: Map<String, String>, val value: String)
 
     /** A start or end: either a calendar date (all-day) or an instant with the zone it was written in. */
-    private class Moment(val date: LocalDate?, val wall: LocalDateTime?, val zone: ZoneId) {
+    private class Moment(val date: LocalDate?, val wall: LocalDateTime?, val zone: ZoneId, val tz: String? = null) {
         val allDay get() = date != null
         fun instantMs(): Long = if (date != null) date.atStartOfDay(zone).toInstant().toEpochMilli()
         else ZonedDateTime.of(wall, zone).toInstant().toEpochMilli()
@@ -136,6 +136,7 @@ object IcsParser {
             endLabel = if (allDay) "" else Instant.ofEpochMilli(endMs).atZone(zone).format(clock),
             startMs = startMs, endMs = endMs, allDay = allDay,
             guests = r.guests, recurring = r.rrule != null || r.recurrenceId != null,
+            zone = if (allDay) null else r.start.tz,
         )
         val provider = event.callLink?.provider?.label
         out.add(event.copy(place = provider ?: location?.substringBefore(',')?.trim()?.takeIf { it.isNotBlank() } ?: (calName ?: source.label)))
@@ -223,15 +224,18 @@ object IcsParser {
             p.params["VALUE"].equals("DATE", ignoreCase = true) || v.length == 8 ->
                 Moment(LocalDate.parse(v, DateTimeFormatter.BASIC_ISO_DATE), null, deviceZone)
             v.endsWith("Z") -> Moment(null, LocalDateTime.parse(v.dropLast(1), DT), ZoneOffset.UTC)
-            else -> Moment(null, LocalDateTime.parse(v, DT), if (tzid != null) zoneFor(tzid, deviceZone) else deviceZone)
+            else -> {
+                val z = tzid?.let { zoneOf(it) } // null: floating or an unknown name, treated as the phone's zone
+                Moment(null, LocalDateTime.parse(v, DT), z ?: deviceZone, z?.id)
+            }
         }
     } catch (e: Exception) {
         null
     }
 
-    private fun zoneFor(tzid: String, fallback: ZoneId): ZoneId {
+    private fun zoneOf(tzid: String): ZoneId? {
         val clean = tzid.trim('"')
-        return runCatching { ZoneId.of(clean) }.getOrNull() ?: WINDOWS_ZONES[clean]?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: fallback
+        return runCatching { ZoneId.of(clean) }.getOrNull() ?: WINDOWS_ZONES[clean]?.let { runCatching { ZoneId.of(it) }.getOrNull() }
     }
 
     private fun parseProp(line: String): Prop? {

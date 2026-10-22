@@ -33,6 +33,8 @@ data class DeviceRow(
     val selfStatus: Int,
     /** CalendarContract.Events.STATUS_* or -1 when unset. */
     val status: Int,
+    /** CalendarContract.Events.EVENT_TIMEZONE (IANA id), null when absent. */
+    val zone: String? = null,
 )
 
 /**
@@ -94,6 +96,7 @@ object DeviceCalendar {
             recurring = recurring,
             calId = row.calendarId,
             account = row.accountName.orEmpty(),
+            zone = if (row.allDay) null else row.zone?.takeIf { it.isNotBlank() },
         )
         val provider = event.callLink?.provider?.label
         return event.copy(place = provider ?: location?.substringBefore(',')?.trim()?.takeIf { it.isNotBlank() } ?: (row.calendarName ?: source.label))
@@ -169,6 +172,7 @@ object DeviceCalendar {
             CalendarContract.Instances.CALENDAR_ID,
             CalendarContract.Instances.SELF_ATTENDEE_STATUS,
             CalendarContract.Instances.STATUS,
+            CalendarContract.Instances.EVENT_TIMEZONE,
         )
         val rows = ArrayList<DeviceRow>()
         context.contentResolver.query(uri, projection, null, null, "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
@@ -180,6 +184,7 @@ object DeviceCalendar {
                         title = c.getString(4), location = c.getString(5), description = c.getString(6),
                         accountType = cal?.type, accountName = cal?.account, calendarName = cal?.name, calendarId = c.getLong(7),
                         selfStatus = if (c.isNull(8)) 0 else c.getInt(8), status = if (c.isNull(9)) -1 else c.getInt(9),
+                        zone = c.getString(10),
                     )
                 )
             }

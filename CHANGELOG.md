@@ -2,6 +2,16 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.29.0: live alerts, a voice-note tile, snooze, time zones, a calmer updater
+
+- **Live alerts.** While you record, a live alert shows a running timer with Pause and Stop. Before a meeting it counts down to the start with a Join button, then shows the meeting in progress. Tasks due soon get one with Done and Snooze. On Android 16 they appear as a status-bar chip and on the lock screen; on older versions they are normal ongoing notifications. A "Live alerts" row in Settings (Android 16 only) takes you to the phone's switch for them. Recording takes priority over a meeting countdown.
+- **Snooze on meeting alerts.** Snooze 5 or 10 minutes from the alert.
+- **A Quick Settings tile.** "Plait voice note" opens the recorder in one tap, and asks you to unlock first on a locked phone.
+- **Playback speed and skip.** Voice notes play at 1x, 1.25x, 1.5x or 2x, remembered, with 10-second skip back and forward.
+- **Time zones.** A meeting in a different time zone shows its own time next to yours, for example "3:00 PM Dubai · 6:00 AM your time".
+- **Updates are back to the simple flow.** Plait still checks every time you open it, but it only tells you an update is available and downloads when you tap Update. No background download, no restart pill.
+- Not yet checked on a phone: the live alert chip (needs Android 16), the tile, the snooze buttons and the zone line.
+
 ## 0.28.4: fixes an app that would not respond to touches
 
 - **Touches work again.** The shared dim layer added in 0.28.3 stayed over the whole screen even with no menu open and could swallow every tap. It now exists only while a menu, sheet or dialog is actually dimming the screen.

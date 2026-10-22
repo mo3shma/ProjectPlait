@@ -21,6 +21,8 @@ import app.plait.data.context.ContextAnalyzer
 import app.plait.data.context.ContextStore
 import app.plait.data.memo.MemoStore
 import app.plait.widget.NextMeetingWidget
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -46,6 +48,8 @@ object Reminders {
     private const val ACTION_MEETING = "app.plait.MEETING_REMINDER"
     private const val ACTION_NUDGE = "app.plait.NOTE_NUDGE"
     private const val NUDGE_CODE = 7001
+    internal const val ACTION_SNOOZE = "app.plait.MEETING_SNOOZE"
+    private const val ACTION_SNOOZED = "app.plait.MEETING_SNOOZED"
 
     private var lastScheduled = 0L
 
@@ -61,6 +65,7 @@ object Reminders {
     fun scheduleAll(context: Context) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val p = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+        resnooze(context, am)
         val old = p.getStringSet("reminder_codes", emptySet()).orEmpty()
         old.mapNotNull { it.toIntOrNull() }.forEach { code -> am.cancel(pending(context, code, Intent(context, ReminderReceiver::class.java).setAction(ACTION_MEETING))) }
         val codes = HashSet<String>()
@@ -84,6 +89,7 @@ object Reminders {
                 val intent = Intent(context, ReminderReceiver::class.java).setAction(ACTION_MEETING)
                     .putExtra(EXTRA_EVENT, ev.id).putExtra("title", ev.title).putExtra("min", (lead / 60_000).toInt())
                     .putExtra("when", TimeFmt.clock(ev.startMs)).putExtra("line", line.take(160)).putExtra("join", ev.callLink?.url)
+                    .putExtra("start", ev.startMs).putExtra("end", ev.endMs)
                 setAlarm(am, ev.startMs - lead, pending(context, code, intent))
             }
         }
@@ -96,13 +102,14 @@ object Reminders {
             if (at <= now) at += 86_400_000L
             setAlarm(am, at, nudge)
         }
+        runCatching { LiveMeeting.refresh(context) }
         NextMeetingWidget.updateAll(context)
     }
 
     private fun pending(context: Context, code: Int, intent: Intent): PendingIntent =
         PendingIntent.getBroadcast(context, code, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-    private fun setAlarm(am: AlarmManager, at: Long, pi: PendingIntent) {
+    internal fun setAlarm(am: AlarmManager, at: Long, pi: PendingIntent) {
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
         if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi) else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
     }
@@ -125,10 +132,12 @@ object Reminders {
     internal fun notifyMeeting(context: Context, i: Intent) {
         ensureChannel(context)
         val id = i.getStringExtra(EXTRA_EVENT) ?: return
-        val min = i.getIntExtra("min", 10)
+        val start = i.getLongExtra("start", 0L)
+        val min = if (start > 0) LiveLogic.minutesLeft(System.currentTimeMillis(), start) else i.getIntExtra("min", 10)
+        val end = i.getLongExtra("end", 0L)
         val n = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("In $min min: ${i.getStringExtra("title")}")
+            .setContentTitle((if (min > 0) "In $min min: " else "Starting now: ") + i.getStringExtra("title"))
             .setContentText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString(" · "))
             .setStyle(NotificationCompat.BigTextStyle().bigText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString("\n")))
             .setCategory(NotificationCompat.CATEGORY_EVENT).setAutoCancel(true)
@@ -143,9 +152,67 @@ object Reminders {
                     // On a paired watch the same alert shows up with a Join button.
                     b.extend(NotificationCompat.WearableExtender().addAction(join))
                 }
+                // Both snoozes fit beside Join (three actions). Each puts the alert back, never after the meeting ends.
+                if (end <= 0 || System.currentTimeMillis() + 5 * 60_000L < end) {
+                    listOf(5, 10).forEach { m ->
+                        b.addAction(0, "Snooze $m min", PendingIntent.getBroadcast(
+                            context, id.hashCode() + m, Intent(context, ReminderReceiver::class.java).setAction(ACTION_SNOOZE).putExtras(i).putExtra("mins", m),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        ))
+                    }
+                }
             }
             .build()
         runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(id.hashCode(), n) }
+    }
+
+    private fun snoozes(p: android.content.SharedPreferences): List<JSONObject> = runCatching {
+        JSONArray(p.getString("snoozes", "[]")).let { a -> List(a.length()) { a.getJSONObject(it) } }
+    }.getOrDefault(emptyList())
+
+    private fun snoozePending(context: Context, id: String, extras: Intent?) = pending(
+        context, id.hashCode() and 0x3FFFFFFF,
+        Intent(context, ReminderReceiver::class.java).setAction(ACTION_SNOOZED).also { if (extras != null) it.putExtras(extras) },
+    )
+
+    /** Snooze button: drops this alert and sets it again in [mins] minutes, kept so it survives a restart. */
+    internal fun snooze(context: Context, i: Intent) {
+        val id = i.getStringExtra(EXTRA_EVENT) ?: return
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(id.hashCode())
+        val end = i.getLongExtra("end", 0L)
+        val at = LiveLogic.snoozeAt(System.currentTimeMillis(), i.getIntExtra("mins", 5), end) ?: return
+        val p = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+        val row = JSONObject().put("id", id).put("title", i.getStringExtra("title").orEmpty()).put("when", i.getStringExtra("when").orEmpty())
+            .put("line", i.getStringExtra("line").orEmpty()).put("start", i.getLongExtra("start", 0L)).put("end", end).put("at", at)
+        i.getStringExtra("join")?.let { row.put("join", it) }
+        val arr = JSONArray(); (snoozes(p).filter { it.optString("id") != id } + row).forEach { arr.put(it) }
+        p.edit().putString("snoozes", arr.toString()).apply()
+        val extras = Intent().putExtras(i); extras.removeExtra("mins")
+        setAlarm(context.getSystemService(Context.ALARM_SERVICE) as AlarmManager, at, snoozePending(context, id, extras))
+    }
+
+    /** The snoozed alert is due: show it again. */
+    internal fun snoozeDue(context: Context, i: Intent) {
+        val id = i.getStringExtra(EXTRA_EVENT) ?: return
+        val p = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+        val arr = JSONArray(); snoozes(p).filter { it.optString("id") != id }.forEach { arr.put(it) }
+        p.edit().putString("snoozes", arr.toString()).apply()
+        notifyMeeting(context, i)
+    }
+
+    /** After a restart or a re-plan: snoozes still waiting are set again; ones the phone slept through fire in a minute if the meeting is not over. */
+    private fun resnooze(context: Context, am: AlarmManager) {
+        val p = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val keep = snoozes(p).filter { it.optLong("end") <= 0 || it.optLong("end") > now }
+        keep.forEach { r ->
+            val x = Intent().putExtra(EXTRA_EVENT, r.getString("id")).putExtra("title", r.optString("title")).putExtra("when", r.optString("when"))
+                .putExtra("line", r.optString("line")).putExtra("start", r.optLong("start")).putExtra("end", r.optLong("end"))
+                .putExtra("join", r.optString("join").ifBlank { null })
+            setAlarm(am, maxOf(r.optLong("at"), now + 30_000L), snoozePending(context, r.getString("id"), x))
+        }
+        val arr = JSONArray(); keep.forEach { arr.put(it) }
+        p.edit().putString("snoozes", arr.toString()).apply()
     }
 
     /** At the end of the day: how many finished meetings still have no note. */
@@ -173,6 +240,10 @@ class ReminderReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     "app.plait.MEETING_REMINDER" -> Reminders.notifyMeeting(context, intent)
+                    Reminders.ACTION_SNOOZE -> Reminders.snooze(context, intent)
+                    "app.plait.MEETING_SNOOZED" -> Reminders.snoozeDue(context, intent)
+                    LiveMeeting.ACTION -> LiveMeeting.refresh(context)
+                    TaskReminders.ACTION_LIVE -> TaskReminders.live(context, intent)
                     "app.plait.NOTE_NUDGE" -> { Reminders.notifyNudge(context); Reminders.scheduleAll(context) }
                     TaskReminders.ACTION_FIRE -> TaskReminders.fire(context, intent)
                     TaskReminders.ACTION_DONE -> TaskReminders.done(context, intent)
