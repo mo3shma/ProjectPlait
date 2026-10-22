@@ -113,7 +113,9 @@ class Vad(private val sampleRate: Int = 16_000) {
 
     companion object {
         const val MARGIN_DB = 9.0
-        const val ABSOLUTE_FLOOR_DB = -48.0
+        // Android calibrates VOICE_RECOGNITION so 90 dB SPL reads about -22 dBFS: talk at a table or from a speakerphone
+        // lands near -52..-58 dBFS, which a -48 floor threw away. A quiet room sits near -75; the adaptive floor covers noisy ones.
+        const val ABSOLUTE_FLOOR_DB = -60.0
         const val ONSET_FRAMES = 3
         const val HANGOVER_FRAMES = 22
         const val PREROLL_FRAMES = 15

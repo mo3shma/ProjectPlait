@@ -1,6 +1,7 @@
 package app.plait.audio
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.getValue
@@ -43,6 +44,10 @@ class RecordingController(
     /** True while the voice detector hears someone talking. */
     var speaking by mutableStateOf(false); private set
     var failure by mutableStateOf<String?>(null); private set
+    /** Why only silence is arriving, while Android keeps the microphone from Plait (a call holds it); null when audio flows. */
+    var blocked by mutableStateOf<String?>(null); private set
+    /** The last [blocked] reason seen, kept on the note so an empty transcript says why. */
+    private var silentReason: String? = null
     val bookmarksMs = mutableStateListOf<Long>()
 
     private val id = UUID.randomUUID().toString()
@@ -58,6 +63,10 @@ class RecordingController(
 
         val rec = WavRecorder(file, onFail = {
             main.post { failure = "The recording stopped: the microphone or the storage failed. What was recorded is kept; tap stop to save it." }
+        }, onBlocked = { on ->
+            val mode = appContext.getSystemService(AudioManager::class.java)?.mode
+            val reason = if (mode == AudioManager.MODE_IN_COMMUNICATION || mode == AudioManager.MODE_IN_CALL) MicWatch.BLOCKED_IN_CALL else MicWatch.BLOCKED
+            main.post { blocked = if (on) reason else null; if (on) silentReason = reason }
         }) { buf, n ->
             pcm.trySend(buf.copyOf(n))
             loudness = loudnessOf(buf, n)
@@ -115,6 +124,7 @@ class RecordingController(
                         id = id, eventId = eventId, title = eventTitle,
                         createdAt = System.currentTimeMillis(), durationMs = duration,
                         audioFile = file.name, lines = emptyList(), bookmarksMs = bookmarksMs.toList(),
+                        silentReason = silentReason,
                     )
                     store.add(note)
                     NoteProcessor.afterSave(appContext, store, note)

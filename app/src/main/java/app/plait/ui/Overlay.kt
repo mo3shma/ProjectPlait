@@ -18,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -38,8 +39,55 @@ class OverlayLayer(val content: @Composable () -> Unit)
 @Stable
 class OverlayState { val layers = mutableStateListOf<OverlayLayer>() }
 
-/** Alpha of a scrim a screen draws under the root status-bar fade; the root tints its status fade with it so the top matches the dim below. */
-object ScreenDim { var alpha by mutableStateOf(0f) }
+/** The one set of scrim strengths: a menu or dialog, and a bottom sheet. */
+object Dim {
+    const val Menu = 0.45f
+    const val Sheet = 0.55f
+}
+
+/**
+ * Every live [DimScrim] registers a reader of its animated alpha here. [alpha] is the strongest one; the root status fade
+ * reads it inside a draw lambda, so a changing dim redraws that one rect and recomposes nothing.
+ */
+object ScreenDim {
+    private val readers = mutableStateListOf<() -> Float>()
+    fun register(reader: () -> Float) { readers.add(reader) }
+    fun unregister(reader: () -> Float) { readers.remove(reader) }
+    val alpha: Float get() = maxOfReaders(readers)
+
+    /** The strongest of [readers]; an index loop, so no iterator is allocated per frame. */
+    internal fun maxOfReaders(readers: List<() -> Float>): Float {
+        var m = 0f
+        for (i in readers.indices) m = maxOf(m, readers[i]())
+        return m
+    }
+
+    /** How much of the light status fade survives under a dim: gone once the dim reaches 0.4, so Dim.Menu and Dim.Sheet both hide it. */
+    fun fadeMultiplier(dim: Float): Float = 1f - minOf(1f, dim * 2.5f).coerceAtLeast(0f)
+}
+
+/**
+ * The single scrim for every sheet, menu and dialog: an edge-to-edge rect (behind the status and navigation bars) whose alpha
+ * animates in the draw lambda, so it never recomposes per frame. It publishes its alpha to [ScreenDim] and a tap calls
+ * [onDismiss] (taps pass through when it is hidden or [onDismiss] is null).
+ */
+@Composable
+fun DimScrim(visible: Boolean, level: Float, onDismiss: (() -> Unit)? = null, modifier: Modifier = Modifier) {
+    // Starts hidden and flips on after the first frame, so a scrim that appears with its screen still fades in.
+    var on by remember { mutableStateOf(false) }
+    LaunchedEffect(visible) { on = visible }
+    val a = animateFloatAsState(if (on && visible) level else 0f, tween(160), label = "dim")
+    val reader = remember { { a.value } }
+    DisposableEffect(reader) {
+        ScreenDim.register(reader)
+        onDispose { ScreenDim.unregister(reader) }
+    }
+    Box(
+        modifier.fillMaxSize()
+            .drawBehind { val v = a.value; if (v > 0.001f) drawRect(Color.Black, alpha = v) }
+            .clickable(enabled = visible && onDismiss != null, interactionSource = null, indication = null) { onDismiss?.invoke() },
+    )
+}
 
 val LocalOverlay =staticCompositionLocalOf<OverlayState?> { null }
 
@@ -75,19 +123,16 @@ fun PlaitDialog(onDismissRequest: () -> Unit, fullScreen: Boolean = false, conte
         OverlayLayer {
             var shown by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) { shown = true }
-            val scrim by animateFloatAsState(if (shown) 0.5f else 0f, tween(200), label = "dialog-scrim")
             BackHandler { dismiss() }
-            Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim))
-                    .clickable(interactionSource = null, indication = null) { dismiss() }
-                    .systemBarsPadding().imePadding(),
-                contentAlignment = Alignment.Center,
-            ) {
+            Box(Modifier.fillMaxSize()) {
+            DimScrim(shown, Dim.Menu, { dismiss() })
+            Box(Modifier.fillMaxSize().systemBarsPadding().imePadding(), contentAlignment = Alignment.Center) {
                 // Swallows taps on the panel itself so they do not reach the scrim.
                 Box(
                     Modifier.padding(horizontal = if (full) 0.dp else 24.dp, vertical = 16.dp).widthIn(max = if (full) 2000.dp else 560.dp)
                         .clickable(interactionSource = null, indication = null) {},
                 ) { body() }
+            }
             }
         }
     }

@@ -483,7 +483,7 @@ internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
                     "Recorded " + app.plait.data.TimeFmt.stamp(n.createdAt),
                     style = PlaitType.monoLabel, color = plait.muted,
                 )
-                if (n.lines.isEmpty()) EmptyHint("No speech was detected in this note.")
+                if (n.lines.isEmpty()) EmptyHint(n.silentReason ?: "No speech was detected in this note.")
                 else Column(
                     Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(horizontal = 20.dp, vertical = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),

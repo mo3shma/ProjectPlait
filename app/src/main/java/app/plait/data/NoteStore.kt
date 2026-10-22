@@ -24,6 +24,8 @@ data class SavedNote(
     val aiBy: String? = null,
     /** Who recorded it, when it came from a teammate. Null for your own. */
     val author: String? = null,
+    /** Why the recording holds only silence, when Android blocked the microphone while it ran (a call held it). */
+    val silentReason: String? = null,
 )
 
 /** JSON encoding kept separate from file handling so it can be unit tested. */
@@ -43,7 +45,7 @@ object NoteJson {
                         n.lines.forEach { a.put(JSONObject().put("atMs", it.atMs).put("text", it.text).put("conf", it.conf.toDouble())) }
                     })
                     .put("bookmarksMs", JSONArray().also { a -> n.bookmarksMs.forEach { a.put(it) } })
-                    .also { o -> n.ai?.let { o.put("ai", it) }; n.aiBy?.let { o.put("aiBy", it) }; n.author?.let { o.put("author", it) } }
+                    .also { o -> n.ai?.let { o.put("ai", it) }; n.aiBy?.let { o.put("aiBy", it) }; n.author?.let { o.put("author", it) }; n.silentReason?.let { o.put("silentReason", it) } }
             )
         }
         return JSONObject().put("version", 1).put("notes", arr).toString()
@@ -73,6 +75,7 @@ object NoteJson {
             ai = o.optString("ai").takeIf { it.isNotBlank() },
             aiBy = o.optString("aiBy").takeIf { it.isNotBlank() },
             author = o.optString("author").takeIf { it.isNotBlank() },
+            silentReason = o.optString("silentReason").takeIf { it.isNotBlank() },
         )
     }
 }

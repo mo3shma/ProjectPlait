@@ -2,6 +2,13 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.28.3: recording honesty, update pill, one dim for everything
+
+- **Quiet and blocked recordings.** Plait now picks up quieter speech, such as a call on speaker, that it used to ignore. If your phone gives it complete silence, which Android often does while a call app is using the mic, it tries another microphone source once. If it is still silent, the recorder and the note say so plainly instead of "No speech was detected". Android may still block the call's audio entirely; Plait cannot get around that.
+- **Update pill.** It keeps clear of the screen edges and "Later" no longer splits onto two lines.
+- **Dimming.** Every menu, sheet and pop-up now dims the whole screen the same way, from the very top. The Calendar day sheet no longer leaves a white band.
+- Not yet checked on a phone: the call recording on a real call, the update pill layout, and the dim in every style and mode.
+
 ## 0.28.2: calmer card edges, cleaner menu and dim, aligned Material bar
 
 - **Card edges.** The fade at the bottom of long Home cards is taller and starts higher: white in light mode, grey in dark mode. It is there from the first frame, so nothing forms after a swipe.

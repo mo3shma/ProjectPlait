@@ -146,9 +146,10 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
             ) {
                 LanguagePicker()
-                if (granted && (controller.phase == RecPhase.Recording || paused)) {
+                // While Android sends silence, nothing is being heard: the blocked message below says so instead.
+                if (granted && (controller.phase == RecPhase.Recording || paused) && controller.blocked == null) {
                     Text(
-                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Put it on speaker so everyone is heard." else "Listening. The words are written after you stop.",
+                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Speaker works best, but some phones block the mic during calls." else "Listening. The words are written after you stop.",
                         style = PlaitType.monoSmall, color = if (controller.speaking && !paused) plait.signal else plait.muted,
                     )
                 }
@@ -165,7 +166,7 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                     Text("Voice notes stay on your phone. Allow microphone access in Settings to continue.", style = PlaitType.body, color = plait.muted, textAlign = TextAlign.Center)
                 }
             }
-            controller.failure?.let {
+            (controller.failure ?: controller.blocked)?.let {
                 Text(
                     it, style = PlaitType.bodyStrong, color = plait.text, textAlign = TextAlign.Center,
                     modifier = Modifier.align(Alignment.Center).padding(horizontal = 36.dp).offset(y = 40.dp),

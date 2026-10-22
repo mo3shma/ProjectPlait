@@ -61,6 +61,11 @@ class UpdateTest {
         assertEquals("https://example.org/plait-armv7.apk", Updater.parseRelease(release, listOf("armeabi-v7a"))!!.url)
     }
 
+    @Test fun pillMessageShortensOnNarrowScreens() {
+        assertEquals("Update 0.28.2 ready", app.plait.ui.screens.pillText("ready", "0.28.2", false))
+        assertEquals("0.28.2 ready", app.plait.ui.screens.pillText("ready", "0.28.2", true))
+    }
+
     @Test fun suffixesAndShortVersionsCompare() {
         assertTrue(Updater.isNewer("0.28.1", "0.28.0"))
         assertFalse(Updater.isNewer("0.28", "0.28.0"))

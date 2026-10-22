@@ -659,10 +659,7 @@ private fun DaySheet(state: CalendarState, events: List<CalEvent>, nowMs: Long, 
     if (date == null || !visible) return
 
     Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier.fillMaxSize().graphicsLayer { alpha = progress.value * 0.5f }.background(Color.Black)
-                .clickable(interactionSource = null, indication = null) { state.close() },
-        )
+        app.plait.ui.DimScrim(open, app.plait.ui.Dim.Sheet, { state.close() })
         val shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp)
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.62f)

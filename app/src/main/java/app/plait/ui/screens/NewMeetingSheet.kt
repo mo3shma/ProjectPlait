@@ -190,9 +190,7 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
         }
     }
 
-    AnimatedVisibility(visible, enter = fadeIn(tween(160)), exit = fadeOut(tween(160))) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(interactionSource = null, indication = null, onClick = onDismiss))
-    }
+    app.plait.ui.DimScrim(visible, app.plait.ui.Dim.Sheet, onDismiss)
     AnimatedVisibility(
         visible,
         enter = slideInVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) { it } + fadeIn(tween(140)),

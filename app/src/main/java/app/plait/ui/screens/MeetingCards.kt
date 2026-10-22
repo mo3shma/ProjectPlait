@@ -392,7 +392,7 @@ internal fun BriefTab(ev: CalEvent, brief: MeetingBrief, onRecord: () -> Unit, n
         val items = remember(notes, memos) {
             notes.map { n ->
                 ("Voice note · " + app.plait.data.TimeFmt.stamp(n.createdAt)) to (n.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary }
-                    ?: app.plait.data.brief.Summarizer.bullets(n.lines.map { it.text }, 3).joinToString(" ").ifBlank { "No speech was detected." })
+                    ?: app.plait.data.brief.Summarizer.bullets(n.lines.map { it.text }, 3).joinToString(" ").ifBlank { n.silentReason ?: "No speech was detected." })
             } + memos.map { m ->
                 val photo = m.kind == app.plait.data.memo.MemoKind.Photo
                 if (m.kind == app.plait.data.memo.MemoKind.Checklist) {

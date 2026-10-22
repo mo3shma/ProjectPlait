@@ -82,9 +82,7 @@ fun AttachSheet(shared: SharedMail, onAttached: (CalEvent) -> Unit, onDismiss: (
     }
     val enter = remember { MutableTransitionState(false).apply { targetState = true } }
 
-    AnimatedVisibility(enter, enter = fadeIn(tween(200))) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)).clickable(interactionSource = null, indication = null, onClick = onDismiss))
-    }
+    app.plait.ui.DimScrim(true, app.plait.ui.Dim.Sheet, onDismiss)
     AnimatedVisibility(enter, enter = slideInVertically(spring(dampingRatio = 0.82f, stiffness = 320f)) { it } + fadeIn(tween(160))) {
         Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.BottomCenter) {
             Column(

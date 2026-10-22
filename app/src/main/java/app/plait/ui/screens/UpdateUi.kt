@@ -49,7 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -259,6 +261,9 @@ fun LaunchCards() {
     }
 }
 
+/** "Update 0.28.2 ready", or just "0.28.2 ready" on a narrow screen. */
+internal fun pillText(what: String, version: String, narrow: Boolean) = if (narrow) "$version $what" else "Update $version $what"
+
 /**
  * A quiet glass pill at the top: download progress, "Update x ready · Restart" (the user's tap is what installs it),
  * or "Try again". Hidden while checking, up to date, or mid-install.
@@ -284,25 +289,27 @@ fun UpdatePill() {
     }
     var hidden by remember(version) { mutableStateOf(false) }
     if (version == null || hidden) return
+    val narrow = LocalConfiguration.current.screenWidthDp < 360
     val (label, action) = when (state) {
         is UpdateState.Downloading -> "Updating to $version… ${(state.done * 100 / state.info.bytes.coerceAtLeast(1)).coerceIn(0, 100)}%" to null
-        is UpdateState.Ready -> "Update $version ready" to ("Restart" to { Updater.applyUpdate(context) })
+        is UpdateState.Ready -> pillText("ready", version, narrow) to ("Restart" to { Updater.applyUpdate(context) })
         is UpdateState.NeedsPermission -> "Allow Plait to update itself" to ("Allow" to {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) runCatching {
                 context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         })
         is UpdateState.Failed -> "Update $version didn't finish" to ("Try again" to { state.info?.let { Updater.download(context, it) }; Unit })
-        is UpdateState.Available -> "Update $version available" to ("Download" to { Updater.download(context, state.info) })
+        is UpdateState.Available -> pillText("available", version, narrow) to ("Download" to { Updater.download(context, state.info) })
         else -> return
     }
-    Box(Modifier.fillMaxSize().statusBarsPadding().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
+    // 16dp from both screen edges; the message (weight, not filling) gives way with an ellipsis, the buttons keep their full width.
+    Box(Modifier.fillMaxSize().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp), contentAlignment = Alignment.TopCenter) {
         Row(
             Modifier.popupSurface(RoundedCornerShape(50)).padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(Icons.Filled.SystemUpdate, null, tint = plait.accent, modifier = Modifier.size(18.dp))
-            Text(label, style = PlaitType.caption, color = plait.text)
+            Text(label, Modifier.weight(1f, fill = false), style = PlaitType.caption, color = plait.text, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             if (action != null) PlaitButton(action.first, action.second, style = ButtonStyle.Primary, size = ButtonSize.Small)
             else Spacer(Modifier.size(10.dp))
             if (state !is UpdateState.Downloading) PlaitButton("Later", { hidden = true }, style = ButtonStyle.Quiet, size = ButtonSize.Small)

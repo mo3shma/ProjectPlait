@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import app.plait.share.ShareInbox
 import app.plait.ui.screens.AttachSheet
 import androidx.compose.animation.ExitTransition
@@ -178,12 +179,17 @@ class MainActivity : ComponentActivity() {
                 // A soft fade under the status bar: scrolling content no longer collides with the clock and icons.
                 val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 val ground = app.plait.ui.theme.plait.ground
-                // The screen's scrim already dims the content under this fade; the fade only needs to be the dimmed ground colour
-                // (what ground looks like under that scrim), so the top matches the rest and no extra black is stacked on it.
-                val dimmedGround = androidx.compose.ui.graphics.lerp(ground, androidx.compose.ui.graphics.Color.Black, app.plait.ui.ScreenDim.alpha)
+                // Under any scrim this fade paints nothing (its alpha is read in the draw lambda), so the dimmed top is the
+                // scrim over the content, uniform edge to edge, with no light band left over it.
+                val fade = androidx.compose.runtime.remember(ground) {
+                    androidx.compose.ui.graphics.Brush.verticalGradient(listOf(ground.copy(alpha = 0.92f), ground.copy(alpha = 0f)))
+                }
                 Box(
                     Modifier.align(androidx.compose.ui.Alignment.TopCenter).fillMaxWidth().height(statusTop + 12.dp)
-                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(dimmedGround.copy(alpha = 0.92f), dimmedGround.copy(alpha = 0f)))),
+                        .drawBehind {
+                            val k = app.plait.ui.ScreenDim.fadeMultiplier(app.plait.ui.ScreenDim.alpha)
+                            if (k > 0.001f) drawRect(fade, alpha = k)
+                        },
                 )
                 if (app.plait.diag.FrameMonitor.enabled) {
                     androidx.compose.material3.Text(

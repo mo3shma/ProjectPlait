@@ -181,12 +181,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
     val tab = HomeState.tab
     var menuOpen by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
-    val scrim by animateFloatAsState(if (menuOpen) 0.45f else 0f, tween(220), label = "scrim")
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val sheetDim by animateFloatAsState(if (showNew) 0.55f else 0f, tween(160), label = "sheet-dim")
-    val dimNow = maxOf(scrim, sheetDim)
-    androidx.compose.runtime.SideEffect { app.plait.ui.ScreenDim.alpha = dimNow }
-    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { app.plait.ui.ScreenDim.alpha = 0f } }
     // On the Notes tab a voice note stands alone; elsewhere it goes to the meeting that is next.
     val recordTarget = if (tab == 2) "" else today.upNext?.id ?: ""
 
@@ -271,12 +266,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
         }
 
         if (menuOpen) androidx.activity.compose.BackHandler { menuOpen = false }
-        if (scrim > 0.001f) {
-            Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim))
-                    .clickable(interactionSource = null, indication = null) { menuOpen = false }
-            )
-        }
+        app.plait.ui.DimScrim(menuOpen, app.plait.ui.Dim.Menu, { menuOpen = false })
 
         // One round "+" button with three choices, as tall as the bar beside it and sharing its bottom inset; on a wide screen it
         // sits at the edge of the centred column.
