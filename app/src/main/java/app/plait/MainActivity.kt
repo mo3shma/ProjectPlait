@@ -178,11 +178,12 @@ class MainActivity : ComponentActivity() {
                 // A soft fade under the status bar: scrolling content no longer collides with the clock and icons.
                 val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 val ground = app.plait.ui.theme.plait.ground
+                // The screen's scrim already dims the content under this fade; the fade only needs to be the dimmed ground colour
+                // (what ground looks like under that scrim), so the top matches the rest and no extra black is stacked on it.
+                val dimmedGround = androidx.compose.ui.graphics.lerp(ground, androidx.compose.ui.graphics.Color.Black, app.plait.ui.ScreenDim.alpha)
                 Box(
                     Modifier.align(androidx.compose.ui.Alignment.TopCenter).fillMaxWidth().height(statusTop + 12.dp)
-                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(ground.copy(alpha = 0.92f), ground.copy(alpha = 0f))))
-                        // Same dim as the screen's scrim, so the fade does not leave a light band at the top.
-                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = app.plait.ui.ScreenDim.alpha)),
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(dimmedGround.copy(alpha = 0.92f), dimmedGround.copy(alpha = 0f)))),
                 )
                 if (app.plait.diag.FrameMonitor.enabled) {
                     androidx.compose.material3.Text(

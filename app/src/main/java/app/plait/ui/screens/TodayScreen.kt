@@ -183,7 +183,8 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
     var showNew by remember { mutableStateOf(false) }
     val scrim by animateFloatAsState(if (menuOpen) 0.45f else 0f, tween(220), label = "scrim")
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val dimNow = maxOf(scrim, if (showNew) 0.55f else 0f)
+    val sheetDim by animateFloatAsState(if (showNew) 0.55f else 0f, tween(160), label = "sheet-dim")
+    val dimNow = maxOf(scrim, sheetDim)
     androidx.compose.runtime.SideEffect { app.plait.ui.ScreenDim.alpha = dimNow }
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { app.plait.ui.ScreenDim.alpha = 0f } }
     // On the Notes tab a voice note stands alone; elsewhere it goes to the meeting that is next.

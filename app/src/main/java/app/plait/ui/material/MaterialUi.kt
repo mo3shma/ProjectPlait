@@ -53,6 +53,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.unit.dp
 import app.plait.ui.ButtonSize
 import app.plait.ui.ButtonStyle
@@ -190,7 +191,9 @@ fun MTabs(tabs: List<GlassTab>, selected: Int, onSelect: (Int) -> Unit, modifier
 @Composable
 fun MFabMenu(expanded: Boolean, onExpandedChange: (Boolean) -> Unit, actions: List<GlassMenuAction>, modifier: Modifier) {
     FloatingActionButtonMenu(
-        expanded = expanded, modifier = modifier,
+        expanded = expanded,
+        // The library keeps 16 dp of its own padding at the end and bottom; take it back so the button sits level with the bar.
+        modifier = modifier.offset(16.dp, 16.dp),
         button = {
             // As tall as the bar next to it, open or closed, so their tops and bottoms line up.
             ToggleFloatingActionButton(checked = expanded, onCheckedChange = onExpandedChange, containerSize = { app.plait.ui.ControlHeights.Fab }) {

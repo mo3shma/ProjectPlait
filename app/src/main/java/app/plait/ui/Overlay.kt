@@ -38,7 +38,7 @@ class OverlayLayer(val content: @Composable () -> Unit)
 @Stable
 class OverlayState { val layers = mutableStateListOf<OverlayLayer>() }
 
-/** Alpha of a scrim a screen draws under the root status-bar fade; the root draws the same dim over that fade so the top is not a lighter band. */
+/** Alpha of a scrim a screen draws under the root status-bar fade; the root tints its status fade with it so the top matches the dim below. */
 object ScreenDim { var alpha by mutableStateOf(0f) }
 
 val LocalOverlay =staticCompositionLocalOf<OverlayState?> { null }

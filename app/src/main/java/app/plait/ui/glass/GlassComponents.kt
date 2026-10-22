@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -425,7 +426,8 @@ fun GlassMorphMenu(
                     .padding(8.dp),
             ) {
               Box {
-                val restFill = if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.09f)
+                val restFill = if (dark) Color.White.copy(alpha = 0.16f) else Color(0xFF1E4FA0).copy(alpha = 0.13f)
+                val rim = if (dark) Color.White.copy(alpha = 0.26f) else Color(0xFF1E4FA0).copy(alpha = 0.22f)
                 Box(
                     Modifier
                         .offset { IntOffset(0, (pillPos.value * rowPx).roundToInt()) }
@@ -436,13 +438,9 @@ fun GlassMorphMenu(
                             val s = 1f + 0.03f * pillShow.value
                             scaleX = s; scaleY = s
                         }
-                        .drawBackdrop(
-                            backdrop = backdrop,
-                            shape = { Capsule() },
-                            effects = { if (!env.solid) lens(8.dp.toPx() * pillShow.value, 12.dp.toPx() * pillShow.value) },
-                            highlight = { Highlight.Default.copy(alpha = if (env.solid) 0f else pillShow.value.coerceIn(0f, 1f)) },
-                            onDrawSurface = { drawRect(restFill) },
-                        ),
+                        // A flat tint plus a thin rim on the menu's own surface; no backdrop sampling, so the page never shows through.
+                        .background(restFill, androidx.compose.foundation.shape.CircleShape)
+                        .border(1.dp, rim, androidx.compose.foundation.shape.CircleShape),
                 )
                 Column {
                     actions.forEachIndexed { i, action ->

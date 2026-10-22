@@ -2,6 +2,14 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.28.2: calmer card edges, cleaner menu and dim, aligned Material bar
+
+- **Card edges.** The fade at the bottom of long Home cards is taller and starts higher: white in light mode, grey in dark mode. It is there from the first frame, so nothing forms after a swipe.
+- **The + menu.** The glass pill that follows your finger is now a clean highlight on the menu. The page behind it no longer shows through.
+- **Dimming.** The status bar area now dims to the same level as the rest of the screen when a menu or the new meeting sheet is open.
+- **Material style.** The + button now lines up with the navigation bar: same height, same centre, same margin.
+- Not yet checked on a phone: the card edge colours, the dim in every style and mode, and the open + menu in Material style.
+
 ## 0.28.1: fixes, call links, smoother cards, quieter updates
 
 - **Card edge fixed.** The glass at the bottom of long Home cards now fades in softly and follows the card's rounded corners, with no hard line or boxy corners.

@@ -1,7 +1,6 @@
 package app.plait.ui.screens
 
 import android.widget.Toast
-import com.kyant.backdrop.backdrops.layerBackdrop
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -423,18 +422,14 @@ private fun FeedCard(
     ) {
         val env = app.plait.ui.glass.LocalGlassEnv.current
         val dark = app.plait.ui.theme.LocalIsDark.current
-        val blurDp = edgeBlurRadiusDp(!env.solid && !env.material, android.os.Build.VERSION.SDK_INT)
-        // One backdrop layer, only for the active card while it overflows with blur available; the others get the tint-only strip.
-        val edgeBackdrop = if (cut && blurDp != null && active) com.kyant.backdrop.backdrops.rememberLayerBackdrop() else null
         Box(Modifier.fillMaxSize().onSizeChanged { cardHeight = it.height }.graphicsLayer { shape = CardGlassShapeOf(); clip = true }) {
             CardColumn(
                 Modifier.fillMaxSize().growDown().onSizeChanged { contentHeight = it.height }
-                    .then(if (edgeBackdrop != null) Modifier.layerBackdrop(edgeBackdrop) else Modifier)
                     .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 36.dp),
             ) {
                 content()
             }
-            if (cut) GlassEdge(edgeBackdrop, blurDp, dark, env.material, kind.container(androidx.compose.material3.MaterialTheme.colorScheme, phase))
+            if (cut) GlassEdge(dark, env.material, kind.container(androidx.compose.material3.MaterialTheme.colorScheme, phase))
         }
     }
 }
