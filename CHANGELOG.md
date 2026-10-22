@@ -2,6 +2,10 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.28.4: fixes an app that would not respond to touches
+
+- **Touches work again.** The shared dim layer added in 0.28.3 stayed over the whole screen even with no menu open and could swallow every tap. It now exists only while a menu, sheet or dialog is actually dimming the screen.
+
 ## 0.28.3: recording honesty, update pill, one dim for everything
 
 - **Quiet and blocked recordings.** Plait now picks up quieter speech, such as a call on speaker, that it used to ignore. If your phone gives it complete silence, which Android often does while a call app is using the mic, it tries another microphone source once. If it is still silent, the recorder and the note say so plainly instead of "No speech was detected". Android may still block the call's audio entirely; Plait cannot get around that.

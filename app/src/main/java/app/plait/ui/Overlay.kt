@@ -82,11 +82,15 @@ fun DimScrim(visible: Boolean, level: Float, onDismiss: (() -> Unit)? = null, mo
         ScreenDim.register(reader)
         onDispose { ScreenDim.unregister(reader) }
     }
-    Box(
-        modifier.fillMaxSize()
-            .drawBehind { val v = a.value; if (v > 0.001f) drawRect(Color.Black, alpha = v) }
-            .clickable(enabled = visible && onDismiss != null, interactionSource = null, indication = null) { onDismiss?.invoke() },
-    )
+    // Nothing is composed while no dim is showing, so a hidden scrim can never sit over the app and swallow touches.
+    val showing by remember { androidx.compose.runtime.derivedStateOf { visible || a.value > 0.001f } }
+    if (showing) {
+        Box(
+            modifier.fillMaxSize()
+                .drawBehind { val v = a.value; if (v > 0.001f) drawRect(Color.Black, alpha = v) }
+                .then(if (visible && onDismiss != null) Modifier.clickable(interactionSource = null, indication = null) { onDismiss() } else Modifier),
+        )
+    }
 }
 
 val LocalOverlay =staticCompositionLocalOf<OverlayState?> { null }
