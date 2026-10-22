@@ -2,7 +2,9 @@ package app.plait.ui.screens
 
 import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
-import androidx.activity.compose.BackHandler
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,7 +74,7 @@ private class Entry(val key: String, val createdAt: Long, val eventId: String, v
     val kindLabel get() = if (voice != null) "Voice" else if (photo) "Photo" else if (list) "List" else "Text"
     val title: String get() = when {
         voice != null -> if (eventId.isEmpty()) "Voice note" else voice.title.ifBlank { "Voice note" }
-        list -> "Checklist · " + app.plait.data.memo.Checklist.progress(memo!!.text)
+        list -> app.plait.data.memo.Checklist.heading(memo!!.title, memo.text)
         else -> memo!!.text.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(60) ?: if (photo) "Photo" else "Note"
     }
     val snippet: String get() = when {
@@ -121,14 +123,21 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
         else if (e.memo != null) undo.delete(e.key, "note") { memoStore.delete(e.memo) }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        if (open != null) {
-            BackHandler { openKey = null }
-            NoteDetail(open, voiceStore, memoStore, onBack = { openKey = null }, onOpenEvent = onOpenEvent, onLink = { linking = open }, onEdit = { editing = open })
-        } else {
+    val rootAt = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    val rowAt = remember { HashMap<String, LayoutCoordinates>() }
+    // The tapped row's rectangle in this screen, if it is on screen; otherwise the note fades and scales in.
+    val card = remember(openKey) {
+        openKey?.let { k ->
+            val r = rootAt[0]; val a = rowAt[k]
+            NoteOpen(if (r != null && a != null && r.isAttached && a.isAttached) r.localBoundingBoxOf(a, clipBounds = false) else null)
+        }
+    }
+
+    Box(Modifier.fillMaxSize().onPlaced { rootAt[0] = it }) {
+        run {
             LazyColumn(
                 state = HomeState.notesList,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 1f - (card?.progress?.value ?: 0f).coerceIn(0f, 1f) },
                 contentPadding = listPadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -152,11 +161,21 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
                 } else {
                     items(shown, key = { it.key }) { e ->
                         SwipeToDelete(onDelete = { delete(e) }, modifier = Modifier.animateItem()) {
-                            LibraryCard(e, onClick = { openKey = e.key }, onLongClick = { actionsFor = e })
+                            LibraryCard(
+                                e, onClick = { openKey = e.key }, onLongClick = { actionsFor = e },
+                                Modifier.onPlaced { rowAt[e.key] = it }.graphicsLayer { alpha = if (openKey == e.key) 0f else 1f },
+                            )
                         }
                     }
                 }
             }
+        }
+        if (open != null && card != null) {
+            ExpandedNote(card, onClosed = { openKey = null }) { close ->
+                NoteDetail(open, voiceStore, memoStore, onBack = close, onOpenEvent = onOpenEvent, onLink = { linking = open }, onEdit = { editing = open })
+            }
+            // The detail scrolls under the fixed app header, so fade it out there like the event screen does.
+            app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         }
         undo.Host(Modifier.align(Alignment.BottomCenter).padding(bottom = 116.dp))
     }
@@ -204,10 +223,10 @@ private fun EditEntry(e: Entry, voices: NoteStore, memos: MemoStore, onDismiss: 
 }
 
 @Composable
-private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
     val linked = meetingTitle(e.eventId)
     Column(
-        Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp))
+        modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp))
             .pressable(onClick, onLongClick = onLongClick).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -241,7 +260,7 @@ private fun NoteDetail(
 ) {
     val linked = meetingTitle(e.eventId)
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(listPadding()),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         PlaitButton("Notes", onBack, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.AutoMirrored.Filled.ArrowBack)

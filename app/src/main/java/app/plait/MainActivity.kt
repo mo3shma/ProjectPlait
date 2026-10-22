@@ -180,7 +180,9 @@ class MainActivity : ComponentActivity() {
                 val ground = app.plait.ui.theme.plait.ground
                 Box(
                     Modifier.align(androidx.compose.ui.Alignment.TopCenter).fillMaxWidth().height(statusTop + 12.dp)
-                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(ground.copy(alpha = 0.92f), ground.copy(alpha = 0f)))),
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(ground.copy(alpha = 0.92f), ground.copy(alpha = 0f))))
+                        // Same dim as the screen's scrim, so the fade does not leave a light band at the top.
+                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = app.plait.ui.ScreenDim.alpha)),
                 )
                 if (app.plait.diag.FrameMonitor.enabled) {
                     androidx.compose.material3.Text(

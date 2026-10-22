@@ -116,7 +116,7 @@ object GoogleParser {
         return out
     }
 
-    private fun conferenceUri(o: JSONObject): String? {
+    internal fun conferenceUri(o: JSONObject): String? {
         o.optString("hangoutLink").takeIf { it.isNotBlank() }?.let { return it }
         val points = o.optJSONObject("conferenceData")?.optJSONArray("entryPoints") ?: return null
         for (i in 0 until points.length()) {

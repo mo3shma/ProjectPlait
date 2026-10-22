@@ -21,7 +21,7 @@ object SearchSource {
             out.add(Doc("v:${n.id}", DocKind.Voice, n.eventId, title(n.eventId), n.lines.joinToString(" ") { it.text } + (n.ai?.let { "\n$it" } ?: ""), n.createdAt))
         }
         for (m in memos) {
-            if (m.text.isNotBlank()) out.add(Doc("m:${m.id}", if (m.kind == MemoKind.Photo) DocKind.Photo else DocKind.Memo, m.eventId, title(m.eventId), if (m.kind == MemoKind.Checklist) app.plait.data.memo.Checklist.plain(m.text) else m.text, m.createdAt))
+            if (m.text.isNotBlank()) out.add(Doc("m:${m.id}", if (m.kind == MemoKind.Photo) DocKind.Photo else DocKind.Memo, m.eventId, title(m.eventId), if (m.kind == MemoKind.Checklist) listOfNotNull(m.title, app.plait.data.memo.Checklist.plain(m.text)).joinToString("\n") else m.text, m.createdAt))
         }
         for (e in mail) {
             out.add(Doc("e:${e.id}", DocKind.Email, e.eventId, e.subject.ifBlank { title(e.eventId) }, e.body.take(6000), e.addedAt))

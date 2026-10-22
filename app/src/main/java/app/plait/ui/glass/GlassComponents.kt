@@ -62,6 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import app.plait.ui.theme.LocalIsDark
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
@@ -341,11 +345,76 @@ fun GlassMorphMenu(
         animationSpec = spring(dampingRatio = 0.72f, stiffness = 380f, visibilityThreshold = 0.001f),
         label = "menu",
     )
-    Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val env = LocalGlassEnv.current
+    val dark = LocalIsDark.current
+    val density = LocalDensity.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val viewConfig = androidx.compose.ui.platform.LocalViewConfiguration.current
+    val scope = rememberCoroutineScope()
+    val curExpanded by rememberUpdatedState(expanded)
+    val curToggle by rememberUpdatedState(onExpandedChange)
+    val curActions by rememberUpdatedState(actions)
+    // The highlight pill follows the finger on the same springs as the tab bar's knob; it moves in a draw lambda, so nothing recomposes per frame.
+    val pillPos = remember { Animatable(0f, 0.001f) }
+    val pillShow = remember { Animatable(0f, 0.001f) }
+    val panelTop = remember { floatArrayOf(0f) }
+    val follow = spring<Float>(dampingRatio = 0.9f, stiffness = 520f, visibilityThreshold = 0.001f)
+    val lift = spring<Float>(dampingRatio = 0.6f, stiffness = 300f, visibilityThreshold = 0.001f)
+    LaunchedEffect(expanded) { if (!expanded) pillShow.snapTo(0f) }
+    fun pillTo(i: Int) {
+        scope.launch {
+            if (i < 0) { pillShow.animateTo(0f, lift); return@launch }
+            if (pillShow.value < 0.05f) pillPos.snapTo(i.toFloat()) else launch { pillPos.animateTo(i.toFloat(), follow) }
+            pillShow.animateTo(1f, lift)
+        }
+    }
+    val rowPx = with(density) { app.plait.ui.ControlHeights.Large.toPx() }
+    val padPx = with(density) { 8.dp.toPx() }
+    val gestures = Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            fun hit(y: Float) = menuIndexAt(y, panelTop[0] + padPx, rowPx, curActions.size)
+            var heldOpen = false
+            var dragging = false
+            if (!curExpanded) {
+                // Press and hold on the button opens the menu and starts a drag; a quick tap is left to the button's own click.
+                val ended = withTimeoutOrNull(viewConfig.longPressTimeoutMillis) { waitForUpOrCancellation(PointerEventPass.Initial); true }
+                if (ended != null) return@awaitEachGesture
+                heldOpen = true; dragging = true
+                curToggle(true)
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            }
+            var hover = if (dragging) -1 else hit(down.position.y).also { if (it >= 0) pillTo(it) }
+            while (true) {
+                val ev = awaitPointerEvent(PointerEventPass.Initial)
+                val c = ev.changes.firstOrNull { it.id == down.id } ?: break
+                if (!dragging && (c.position - down.position).getDistance() > viewConfig.touchSlop) dragging = true
+                if (c.pressed) {
+                    if (dragging) {
+                        val h = hit(c.position.y)
+                        if (h != hover) {
+                            hover = h; pillTo(h)
+                            if (h >= 0) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                        }
+                        c.consume()
+                    }
+                } else {
+                    if (dragging) {
+                        c.consume()
+                        if (hover >= 0) { curToggle(false); curActions[hover].onClick() } else if (heldOpen) curToggle(false)
+                    }
+                    pillTo(-1)
+                    break
+                }
+            }
+        }
+    }
+    Column(modifier.then(gestures), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (t > 0.01f) {
             Column(
                 Modifier
                     .width(expandedWidth)
+                    .onGloballyPositioned { panelTop[0] = it.positionInParent().y }
                     .graphicsLayer {
                         val s = 0.7f + 0.3f * t
                         scaleX = s; scaleY = s
@@ -355,9 +424,32 @@ fun GlassMorphMenu(
                     .glassPanel(app.plait.ui.PanelShape, backdrop)
                     .padding(8.dp),
             ) {
-                actions.forEachIndexed { i, action ->
-                    app.plait.ui.MenuRow(action.label, action.icon, app.plait.ui.toneAt(i), { onExpandedChange(false); action.onClick() }, Modifier.fillMaxWidth())
+              Box {
+                val restFill = if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.09f)
+                Box(
+                    Modifier
+                        .offset { IntOffset(0, (pillPos.value * rowPx).roundToInt()) }
+                        .fillMaxWidth()
+                        .height(app.plait.ui.ControlHeights.Large)
+                        .graphicsLayer {
+                            alpha = pillShow.value.coerceIn(0f, 1f)
+                            val s = 1f + 0.03f * pillShow.value
+                            scaleX = s; scaleY = s
+                        }
+                        .drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { Capsule() },
+                            effects = { if (!env.solid) lens(8.dp.toPx() * pillShow.value, 12.dp.toPx() * pillShow.value) },
+                            highlight = { Highlight.Default.copy(alpha = if (env.solid) 0f else pillShow.value.coerceIn(0f, 1f)) },
+                            onDrawSurface = { drawRect(restFill) },
+                        ),
+                )
+                Column {
+                    actions.forEachIndexed { i, action ->
+                        app.plait.ui.MenuRow(action.label, action.icon, app.plait.ui.toneAt(i), { onExpandedChange(false); action.onClick() }, Modifier.fillMaxWidth())
+                    }
                 }
+              }
             }
         }
         Box(

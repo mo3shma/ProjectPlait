@@ -2,6 +2,19 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.28.1: fixes, call links, smoother cards, quieter updates
+
+- **Card edge fixed.** The glass at the bottom of long Home cards now fades in softly and follows the card's rounded corners, with no hard line or boxy corners.
+- **The top card opens again.** The animated sky behind it was swallowing taps.
+- **Smoother Home.** Pages that are off screen are no longer drawn, only the active card blurs its edge, the animated sky is kept instead of rebuilt each time, and widgets refresh once instead of three times.
+- **Call links when you create a meeting.** Pick Google Meet (on a connected Google calendar) or paste a Teams, Zoom or Webex link, so Join shows right away. You can add one when editing too.
+- **Checklists.** The heading no longer sits under the app header, and you can rename a checklist by tapping its title.
+- **Notes open and close with the same expanding animation as the Home cards.**
+- **The + menu.** The dim now covers the whole screen including the top. Hold + and slide your finger across the options; a glass pill follows it and letting go picks one.
+- **Widgets.** Back to the old background colours. Only the Join button carries the meeting-source colour, with a soft glow around it, and its icon and label are centred.
+- **Updates.** Plait checks every time it opens, downloads the update in the background, checks it is genuine, and shows "Update ready, Restart" at the top. The first update on each phone still shows Android's own prompt once.
+- Not yet checked on a phone: the Meet link flow, the silent update, the + menu drag feel, and smoothness measurements.
+
 ## 0.28.0: glass card edges, better widgets, a quick-add widget
 
 - **Liquid glass on long cards.** The progressive blur is gone. When a Home card holds more than fits, its bottom edge is now a frosted glass strip with a soft top and a thin rim. With glass effects off, or on older phones, it falls back to a plain feathered tint.

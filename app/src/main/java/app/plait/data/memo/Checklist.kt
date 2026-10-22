@@ -68,6 +68,12 @@ object Checklist {
 
     fun setDue(text: String, index: Int, dueMs: Long?): String = format(parse(text).mapIndexed { i, it -> if (i == index) it.copy(dueMs = dueMs) else it })
 
+    /** The name to show for a list: the user's own title, or "Checklist" when it is empty or blank. */
+    fun label(title: String?): String = title?.trim().orEmpty().ifEmpty { "Checklist" }
+
+    /** "Groceries · 2 of 5 done" */
+    fun heading(title: String?, text: String): String = label(title) + " · " + progress(text)
+
     /** "2 of 5 done" */
     fun progress(text: String): String = parse(text).let { l -> "${l.count { it.done }} of ${l.size} done" }
 }

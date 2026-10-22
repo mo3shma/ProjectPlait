@@ -5,8 +5,8 @@ import app.plait.ui.screens.bandHeightDp
 import app.plait.ui.screens.edgeBlurRadiusDp
 import app.plait.ui.screens.edgeTint
 import app.plait.ui.screens.edgeTintAlpha
+import app.plait.ui.screens.fadeCurve
 import app.plait.ui.screens.featherAlphaAt
-import app.plait.ui.screens.rimAlpha
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -28,8 +28,6 @@ class GlassEdgeTest {
         assertEquals(0.22f, edgeTintAlpha(dark = false, material = false), 0f)
         assertEquals(0.30f, edgeTintAlpha(dark = true, material = false), 0f)
         assertEquals(0.25f, edgeTintAlpha(dark = true, material = true), 0f)
-        assertEquals(0.35f, rimAlpha(false), 0f)
-        assertEquals(0.18f, rimAlpha(true), 0f)
     }
 
     @Test fun blurNeedsGlassAndApi31() {
@@ -47,5 +45,12 @@ class GlassEdgeTest {
         assertEquals(1f, featherAlphaAt(0f, 0f), 0f)
         val a = (0..12).map { featherAlphaAt(it * 5f, 60f) }
         assertTrue(a.zipWithNext().all { (x, y) -> y >= x })
+    }
+
+    @Test fun fadeCurveIsFlatAtEnds() {
+        assertEquals(0f, fadeCurve(0f), 0f)
+        assertEquals(1f, fadeCurve(1f), 0f)
+        assertEquals(0.5f, fadeCurve(0.5f), 1e-6f)
+        assertTrue(fadeCurve(0.1f) < 0.1f)
     }
 }

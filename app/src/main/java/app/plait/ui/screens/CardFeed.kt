@@ -233,7 +233,7 @@ private fun Modifier.peekFade(state: PagerState, page: Int, stretch: Stretch, li
         scaleY = s
         translationY = neighbourLag(stretch.travel, lag) * o.coerceAtMost(1f)
         transformOrigin = TransformOrigin(0.5f, if (d > 0f) 0f else 1f)
-        compositingStrategy = CompositingStrategy.Offscreen
+        compositingStrategy = if (o > 0.001f) CompositingStrategy.Offscreen else CompositingStrategy.Auto
     }
     .drawWithCache {
         // The visible peek is about a third of a card: the erase ramp covers that stretch, nearest edge untouched.

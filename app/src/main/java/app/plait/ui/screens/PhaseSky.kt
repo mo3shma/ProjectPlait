@@ -10,7 +10,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -94,33 +97,67 @@ fun PhaseSky(phase: Phase, hour: Float, modifier: Modifier = Modifier, active: B
     val hourKey = (hour * 4).toInt() // the evening darkens a quarter hour at a time
     val env = LocalGlassEnv.current
     // The web layer only runs on the page you are looking at, and not at all with reduced animations, plain surfaces or Material.
-    val webOn = active && !env.reduceMotion && !env.solid
-    val web = remember(webOn) {
-        if (!webOn) null else runCatching {
-            android.webkit.WebView(context).apply {
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                settings.javaScriptEnabled = true
-                settings.allowFileAccess = true
-                isClickable = false; isFocusable = false; isVerticalScrollBarEnabled = false; isHorizontalScrollBarEnabled = false
-                importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
-                setOnTouchListener { _, _ -> false }
-                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-            }
-        }.getOrNull()
+    val webAllowed = !env.reduceMotion && !env.solid
+    // One WebView per card, built the first time the card is active and then only paused/hidden, never rebuilt on a flip.
+    var web by remember { mutableStateOf<android.webkit.WebView?>(null) }
+    androidx.compose.runtime.LaunchedEffect(webAllowed, active) {
+        if (webAllowed && active && web == null) {
+            web = runCatching {
+                object : android.webkit.WebView(context) {
+                    // The sky is decoration: it must never take a touch, or the card under it cannot be tapped.
+                    override fun onTouchEvent(event: android.view.MotionEvent?) = false
+                    override fun dispatchTouchEvent(event: android.view.MotionEvent?) = false
+                }.apply {
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    settings.javaScriptEnabled = true
+                    settings.allowFileAccess = true
+                    isClickable = false; isFocusable = false; isVerticalScrollBarEnabled = false; isHorizontalScrollBarEnabled = false
+                    importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                }
+            }.getOrNull()?.also { v -> SkyWebs.add(v) { if (web === v) web = null } }
+        } else if (!webAllowed && web != null) {
+            web?.let { SkyWebs.release(it) }; web = null
+        }
     }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { web?.let { SkyWebs.release(it) } } }
     // A drawn sky is always underneath, so there is colour even if the web layer is slow or unavailable.
     PhaseSkyCanvas(phase, hour, dark, modifier)
-    if (web == null) return
-    androidx.compose.runtime.DisposableEffect(web) {
-        onDispose { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() }
-    }
+    val view = web ?: return
     androidx.compose.ui.viewinterop.AndroidView(
-        factory = { web },
+        factory = { view },
         modifier = modifier,
         update = {
-            it.onResume(); it.resumeTimers()
-            val url = "file:///android_asset/sky/sky.html#$name,${hourKey / 4f},${if (still) 1 else 0}"
-            if (it.tag != url) { it.tag = url; it.loadUrl("about:blank"); it.loadUrl(url) }
+            // onPause/onResume are per view; pauseTimers/resumeTimers are process-wide and are not used.
+            if (active) {
+                SkyWebs.touch(it)
+                it.visibility = android.view.View.VISIBLE; it.onResume()
+                val url = "file:///android_asset/sky/sky.html#$name,${hourKey / 4f},${if (still) 1 else 0}"
+                if (it.tag != url) { it.tag = url; it.loadUrl("about:blank"); it.loadUrl(url) }
+            } else {
+                it.onPause(); it.visibility = android.view.View.INVISIBLE
+            }
         },
     )
+}
+
+/** The live sky WebViews, least recently active first. Past [MAX] the oldest is destroyed and its card falls back to the drawn sky. */
+private object SkyWebs {
+    private const val MAX = 2
+    private val live = LinkedHashMap<android.webkit.WebView, () -> Unit>()
+
+    fun add(v: android.webkit.WebView, onEvicted: () -> Unit) {
+        live[v] = onEvicted
+        while (live.size > MAX) {
+            val old = live.keys.first { it !== v }
+            live.remove(old)?.invoke()
+            destroy(old)
+        }
+    }
+
+    fun touch(v: android.webkit.WebView) { live.remove(v)?.let { live[v] = it } }
+
+    fun release(v: android.webkit.WebView) { if (live.remove(v) != null) destroy(v) }
+
+    private fun destroy(v: android.webkit.WebView) { v.stopLoading(); v.loadUrl("about:blank"); v.destroy() }
 }

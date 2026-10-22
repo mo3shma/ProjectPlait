@@ -1,18 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Join pill in the meeting source colour (ServicePalette): colour 55% over white 12%, lightened rim; pressed is stronger. -->
+<!-- Join pill in the meeting source colour (ServicePalette), crisp rim; a faint same-colour halo (4dp, inside the view bounds) around the pill only. Pressed is stronger. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <layer-list>
-            <item><shape android:shape="rectangle"><solid android:color="#1FFFFFFF" /><corners android:radius="18dp" /></shape></item>
-            <item><shape android:shape="rectangle"><solid android:color="#B300A0D1" /><corners android:radius="18dp" /></shape></item>
-            <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#D973CBE6" /><corners android:radius="18dp" /></shape></item>
+            <item android:top="0dp" android:bottom="0dp" android:left="0dp" android:right="0dp"><shape android:shape="rectangle"><solid android:color="#1000A0D1" /><corners android:radius="22dp" /></shape></item>
+            <item android:top="1dp" android:bottom="1dp" android:left="1dp" android:right="1dp"><shape android:shape="rectangle"><solid android:color="#1A00A0D1" /><corners android:radius="21dp" /></shape></item>
+            <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp"><shape android:shape="rectangle"><solid android:color="#2600A0D1" /><corners android:radius="20dp" /></shape></item>
+            <item android:top="3dp" android:bottom="3dp" android:left="3dp" android:right="3dp"><shape android:shape="rectangle"><solid android:color="#3600A0D1" /><corners android:radius="19dp" /></shape></item>
+            <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp"><layer-list>
+                <item><shape android:shape="rectangle"><solid android:color="#1FFFFFFF" /><corners android:radius="18dp" /></shape></item>
+                <item><shape android:shape="rectangle"><solid android:color="#B300A0D1" /><corners android:radius="18dp" /></shape></item>
+                <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#D973CBE6" /><corners android:radius="18dp" /></shape></item>
+            </layer-list></item>
         </layer-list>
     </item>
     <item>
         <layer-list>
-            <item><shape android:shape="rectangle"><solid android:color="#1FFFFFFF" /><corners android:radius="18dp" /></shape></item>
-            <item><shape android:shape="rectangle"><solid android:color="#8C00A0D1" /><corners android:radius="18dp" /></shape></item>
-            <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#D973CBE6" /><corners android:radius="18dp" /></shape></item>
+            <item android:top="0dp" android:bottom="0dp" android:left="0dp" android:right="0dp"><shape android:shape="rectangle"><solid android:color="#0A00A0D1" /><corners android:radius="22dp" /></shape></item>
+            <item android:top="1dp" android:bottom="1dp" android:left="1dp" android:right="1dp"><shape android:shape="rectangle"><solid android:color="#1200A0D1" /><corners android:radius="21dp" /></shape></item>
+            <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp"><shape android:shape="rectangle"><solid android:color="#1C00A0D1" /><corners android:radius="20dp" /></shape></item>
+            <item android:top="3dp" android:bottom="3dp" android:left="3dp" android:right="3dp"><shape android:shape="rectangle"><solid android:color="#2800A0D1" /><corners android:radius="19dp" /></shape></item>
+            <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp"><layer-list>
+                <item><shape android:shape="rectangle"><solid android:color="#1FFFFFFF" /><corners android:radius="18dp" /></shape></item>
+                <item><shape android:shape="rectangle"><solid android:color="#8C00A0D1" /><corners android:radius="18dp" /></shape></item>
+                <item><shape android:shape="rectangle"><stroke android:width="1dp" android:color="#D973CBE6" /><corners android:radius="18dp" /></shape></item>
+            </layer-list></item>
         </layer-list>
     </item>
 </selector>

@@ -70,6 +70,7 @@ import app.plait.ui.PlaitChip
 import app.plait.ui.ButtonSize
 import app.plait.ui.ButtonStyle
 import app.plait.ui.pressable
+import app.plait.ui.popupSurface
 import app.plait.ui.PlaitButton
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
@@ -253,6 +254,7 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
     val context = LocalContext.current
     val items = app.plait.data.memo.Checklist.parse(memo.text)
     var draft by remember(memo.id) { mutableStateOf("") }
+    var renaming by remember(memo.id) { mutableStateOf(false) }
     val save: (String) -> Unit = { t -> memos.update(memo.copy(text = t)); app.plait.data.sync.SyncEngine.requestAsync(context, force = true) }
     val done = items.count { it.done }
     val progress by androidx.compose.animation.core.animateFloatAsState(
@@ -264,9 +266,18 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.Checklist, null, tint = plait.accent, modifier = Modifier.size(20.dp))
-            Text("Checklist", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text, modifier = Modifier.weight(1f))
+            Text(
+                app.plait.data.memo.Checklist.label(memo.title), style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text,
+                maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).pressable({ renaming = true }, lift = 2.dp),
+            )
             Text("$done of ${items.size}", style = PlaitType.monoSmall, color = plait.muted)
+            CircleIconButton(Icons.Filled.Edit, "Rename checklist", { renaming = true }, plait.surfaceHigh, plait.text, size = 32.dp, iconSize = 16.dp)
         }
+        if (renaming) RenameDialog(memo.title.orEmpty(), onSave = { t ->
+            memos.update(memo.copy(title = t.trim().ifEmpty { null }))
+            app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
+        }, onDismiss = { renaming = false })
         androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(plait.surfaceHigh)) {
             androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth(progress).height(6.dp).clip(RoundedCornerShape(3.dp)).background(plait.accent))
         }
@@ -307,6 +318,34 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
             CircleIconButton(Icons.Filled.Add, "Add item", { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }, plait.accent, plait.onAccent, size = 44.dp, iconSize = 20.dp)
         }
     }
+}
+
+/** Name a checklist; saving an empty box puts the default "Checklist" back. */
+@Composable
+private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf(initial) }
+    app.plait.ui.PlaitDialog(onDismissRequest = onDismiss) { PopIn {
+        Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text("Rename checklist", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            BasicTextField(
+                value = text, onValueChange = { text = it }, singleLine = true,
+                textStyle = PlaitType.body.copy(color = plait.text, textDirection = androidx.compose.ui.text.style.TextDirection.Content), cursorBrush = SolidColor(plait.accent),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { onSave(text); onDismiss() }),
+                modifier = Modifier.fillMaxWidth(),
+                decorationBox = { inner ->
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surface).padding(horizontal = 16.dp, vertical = 14.dp)) {
+                        if (text.isEmpty()) Text("Checklist", style = PlaitType.body, color = plait.muted)
+                        inner()
+                    }
+                },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                PlaitButton("Save", { onSave(text); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+            }
+        }
+    } }
 }
 
 /** Edit any written note: a checklist opens the task editor, anything else the text box. */

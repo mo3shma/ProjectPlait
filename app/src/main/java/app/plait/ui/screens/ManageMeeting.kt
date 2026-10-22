@@ -137,8 +137,15 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
     if (menuVisible) ActionsDialog(if (manage) "Manage meeting" else "Your answer", actions, onDismiss = { menuVisible = false })
     androidx.compose.runtime.LaunchedEffect(menuVisible, editing, confirm, pending) { if (!menuVisible && !editing && confirm == null && pending == null) onDismiss() }
 
-    if (editing) EditEventDialog(ev, onSave = { t, p, d ->
-        run("Saved. Guests are told.", phone = { EventEdit.updateDetails(context, ev, t, p, d) }, web = { it.updateDetails(ev, t, p, d) })
+    if (editing) EditEventDialog(ev, canMeet = google && mine, onSave = { t, p, d, meet ->
+        run("Saved. Guests are told.", phone = { EventEdit.updateDetails(context, ev, t, p, d) }, web = {
+            it.updateDetails(ev, t, p, d)
+            // The details are already saved; a Meet link that Google refuses must not undo that.
+            if (meet) runCatching { it.addMeet(ev, java.util.UUID.randomUUID().toString()) }.onFailure { e ->
+                val why = app.plait.data.google.GoogleEventBody.whyNoMeet(e)
+                android.os.Handler(android.os.Looper.getMainLooper()).post { Toast.makeText(context, "$why Saved without a Meet link.", Toast.LENGTH_LONG).show() }
+            }
+        })
     }, onDismiss = { editing = false })
     confirm?.let { (question, act) ->
         DetailDialog("Are you sure?", { confirm = null }) {
@@ -149,18 +156,41 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
 }
 
 @Composable
-private fun EditEventDialog(ev: CalEvent, onSave: (String, String, String) -> Unit, onDismiss: () -> Unit) {
+private fun EditEventDialog(ev: CalEvent, canMeet: Boolean, onSave: (String, String, String, Boolean) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf(ev.title) }
     var place by remember { mutableStateOf(ev.location ?: ev.place) }
     var notes by remember { mutableStateOf(ev.description.orEmpty()) }
+    // Call link: 0 keep as it is, 1 make a Google Meet link, 2 add a pasted link.
+    var callMode by remember { mutableStateOf(0) }
+    var linkText by remember { mutableStateOf("") }
+    val has = ev.callLink
+    val parsed = if (callMode == 2) app.plait.data.CallLinkInput.parse(linkText) else null
     PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Edit meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Field("Title", title, 1) { title = it }
             Field("Place", place, 1) { place = it }
             Field("Description", notes, 6) { notes = it }
+            Text("CALL LINK", style = PlaitType.monoSmall, color = plait.muted)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                app.plait.ui.PlaitChip(if (has != null) "Keep ${has.provider.short}" else "None", callMode == 0, { callMode = 0 })
+                // A meeting that already has a call keeps it: the location and Google's own link are read before anything added here.
+                if (has == null && canMeet) app.plait.ui.PlaitChip("Google Meet", callMode == 1, { callMode = 1 })
+                if (has == null) app.plait.ui.PlaitChip("Add link", callMode == 2, { callMode = 2 })
+            }
+            if (callMode == 2) {
+                Field("Teams, Zoom or Webex link (https)", linkText, 1) { linkText = it }
+                (parsed as? app.plait.data.CallLinkInput.Parsed.Bad)?.takeIf { linkText.isNotBlank() }?.let { Text(it.reason, style = PlaitType.caption, color = plait.signal) }
+                (parsed as? app.plait.data.CallLinkInput.Parsed.Ok)?.let {
+                    Text(it.provider?.let { p -> "${p.label} link" } ?: "A link. Join only shows for Meet, Zoom, Teams and Webex links.", style = PlaitType.caption, color = plait.muted)
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Save", { onSave(title.trim(), place.trim(), notes.trim()); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = title.isNotBlank())
+                PlaitButton("Save", {
+                    val ok = parsed as? app.plait.data.CallLinkInput.Parsed.Ok
+                    val (p2, n2) = if (ok != null) app.plait.data.CallLinkInput.place(ok.url, place.trim(), notes.trim()) else place.trim() to notes.trim()
+                    onSave(title.trim(), p2, n2, callMode == 1); onDismiss()
+                }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = title.isNotBlank() && (callMode != 2 || parsed is app.plait.data.CallLinkInput.Parsed.Ok))
                 PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }

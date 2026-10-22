@@ -49,24 +49,26 @@
                 android:textAlignment="viewStart" android:textColor="#C7FFFFFF" android:textSize="12sp"
                 android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
         </LinearLayout>
-        <TextView android:id="@+id/widget_join"
-            android:layout_width="wrap_content" android:layout_height="36dp" android:layout_marginStart="10dp"
-            android:background="@drawable/widget_pill_other" android:gravity="center"
-            android:drawableStart="@drawable/ic_widget_video" android:drawablePadding="6dp"
-            android:paddingStart="14dp" android:paddingEnd="16dp"
+    <LinearLayout android:id="@+id/widget_join"
+        android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="6dp" android:layout_marginEnd="-4dp" android:layout_marginTop="-4dp" android:layout_marginBottom="-4dp"
+        android:background="@drawable/widget_pill_other" android:gravity="center" android:orientation="horizontal"
+        android:paddingStart="18dp" android:paddingEnd="20dp">
+        <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_widget_video" android:importantForAccessibility="no" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
             android:text="Join" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textFontWeight="600"
-            android:includeFontPadding="false" android:fontFamily="@font/widget_font" />
+            android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
+    </LinearLayout>
     </LinearLayout>
     <LinearLayout android:id="@+id/widget_strip"
         android:layout_width="match_parent" android:layout_height="20dp"
         android:background="@drawable/widget_capsule" android:gravity="center_vertical" android:orientation="horizontal"
-        android:paddingStart="12dp" android:paddingEnd="12dp">
+        android:paddingStart="10dp" android:paddingEnd="10dp">
         <TextView android:id="@+id/widget_then" android:text="Then Design review 12:00 PM"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:textAlignment="viewStart" android:textColor="#C7FFFFFF" android:textSize="12sp"
             android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
         <TextView android:id="@+id/widget_more" android:text="+2 more"
-            android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
             android:textColor="#FFFFFFFF" android:textSize="12sp" android:textFontWeight="600"
             android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
         <TextView android:id="@+id/widget_last" android:text="Last one today"

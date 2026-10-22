@@ -38,7 +38,10 @@ class OverlayLayer(val content: @Composable () -> Unit)
 @Stable
 class OverlayState { val layers = mutableStateListOf<OverlayLayer>() }
 
-val LocalOverlay = staticCompositionLocalOf<OverlayState?> { null }
+/** Alpha of a scrim a screen draws under the root status-bar fade; the root draws the same dim over that fade so the top is not a lighter band. */
+object ScreenDim { var alpha by mutableStateOf(0f) }
+
+val LocalOverlay =staticCompositionLocalOf<OverlayState?> { null }
 
 /** The layer a pop-up blurs. Only provided inside [OverlayHost], so a panel never samples itself. */
 val LocalPopupBackdrop = staticCompositionLocalOf<Backdrop?> { null }

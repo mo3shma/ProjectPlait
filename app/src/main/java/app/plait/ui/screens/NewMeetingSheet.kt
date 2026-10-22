@@ -55,6 +55,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import app.plait.data.Calendars
+import app.plait.data.CallLinkInput
+import app.plait.data.google.AuthOutcome
+import app.plait.data.google.GoogleAuth
+import app.plait.data.google.GoogleEventBody
+import app.plait.data.google.GoogleWrite
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.UUID
 import app.plait.data.device.DeviceCalendar
 import app.plait.data.device.DeviceWrite
 import app.plait.data.device.MeetingDraft
@@ -93,36 +101,91 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
     var notes by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    // Call link: 0 none, 1 a Google Meet link made by Google, 2 a link pasted in.
+    var callMode by remember { mutableIntStateOf(0) }
+    var linkText by remember { mutableStateOf("") }
+    var doneNote by remember { mutableStateOf<String?>(null) }
+    var pending by remember { mutableStateOf<(suspend (String?) -> Unit)?>(null) }
+    val consent = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()) { r ->
+        val job = pending
+        pending = null
+        if (job != null) scope.launch { job(GoogleAuth.tokenFrom(context, r.data)) }
+    }
 
     LaunchedEffect(visible) { if (visible && DeviceCalendar.hasPermission(context)) Calendars.refreshDevice(context) }
     val dest = Calendars.destination()
     val canWrite = DeviceWrite.hasPermission(context)
 
+    // Meet is made by Google for the account's own calendar, so it needs a Google calendar that is connected in the hub.
+    val meetOk = Calendars.googleOn && dest != null && dest.accountType == "com.google" && dest.primary
+    val reset = { title = ""; guests = ""; place = ""; notes = ""; allDay = false; error = null; callMode = 0; linkText = ""; doneNote = null; saving = false }
+    LaunchedEffect(visible) { if (!visible && doneNote != null) reset() }
+
+    // [note] is set when something did not go as asked; the meeting is still saved and the note stays on screen.
+    val saveToPhone: (MeetingDraft, String?) -> Unit = { draft, note ->
+        val calId = dest?.id ?: DeviceWrite.ensureLocalCalendar(context)
+        if (calId == null) {
+            error = "No calendar to save to. Open the hub to add an account."
+            saving = false
+        } else when (val r = DeviceWrite.insert(context, calId, draft)) {
+            is DeviceWrite.Result.Saved -> {
+                Calendars.refreshDevice(context)
+                if (note == null) {
+                    Toast.makeText(context, "Saved to ${r.calendar}", Toast.LENGTH_LONG).show()
+                    reset(); onDismiss()
+                } else { saving = false; doneNote = note }
+            }
+            is DeviceWrite.Result.Failed -> { error = r.reason; saving = false }
+        }
+    }
+
+    // Creates the event on Google with a Meet request; if Google says no, the event is made without it (and as a last
+    // resort on the phone) so the meeting is never lost.
+    val saveWithMeet: (MeetingDraft) -> Unit = { draft ->
+        val account = dest?.account.orEmpty()
+        val job: suspend (String?) -> Unit = job@{ token ->
+            if (token == null) { saveToPhone(draft, "Calendar editing wasn't approved, so there is no Meet link. Saved without one."); return@job }
+            var why: String? = null
+            val made = withContext(Dispatchers.IO) {
+                val w = GoogleWrite(token)
+                runCatching { w.create(account, draft, java.time.ZoneId.systemDefault(), UUID.randomUUID().toString()) }
+                    .recoverCatching { e -> why = GoogleEventBody.whyNoMeet(e); w.create(account, draft, java.time.ZoneId.systemDefault(), null) }
+                    .getOrNull()
+            }
+            if (made == null) { saveToPhone(draft, "${why ?: "Couldn't reach Google."} Saved to the phone's calendar without a Meet link."); return@job }
+            runCatching { Calendars.sync(context, token) } // so Join shows right away
+            val note = when {
+                why != null -> "$why Saved without a Meet link."
+                made.meetUrl == null -> "Saved. Google is still making the Meet link; Join appears after the next sync."
+                else -> null
+            }
+            if (note == null) { Toast.makeText(context, "Saved with a Google Meet link", Toast.LENGTH_LONG).show(); reset(); onDismiss() }
+            else { saving = false; doneNote = note }
+        }
+        scope.launch {
+            when (val a = GoogleAuth.authorizeWrite(context)) {
+                is AuthOutcome.Token -> job(a.accessToken)
+                is AuthOutcome.NeedsConsent -> { pending = job; consent.launch(androidx.activity.result.IntentSenderRequest.Builder(a.pendingIntent).build()) }
+                is AuthOutcome.Failed -> saveToPhone(draft, "${a.reason} Saved without a Meet link.")
+            }
+        }
+    }
+
     val save: () -> Unit = {
         if (!saving) {
+            val mode = if (callMode == 1 && !meetOk) 0 else callMode
+            val link = if (mode == 2) CallLinkInput.parse(linkText) else null
+            val (placed, notesWithLink) = (link as? CallLinkInput.Parsed.Ok)?.let { CallLinkInput.place(it.url, place, notes) } ?: (place to notes)
             val draft = MeetingDraft(
                 title = title, date = date, start = LocalTime.of(startMin / 60, startMin % 60), durationMin = duration,
-                allDay = allDay, guests = MeetingGuests.parse(guests), place = place, notes = notes,
+                allDay = allDay, guests = MeetingGuests.parse(guests), place = placed, notes = notesWithLink,
             )
-            val problem = draft.problem()
+            val problem = draft.problem() ?: (link as? CallLinkInput.Parsed.Bad)?.reason
             if (problem != null) error = problem
             else if (!canWrite || !DeviceCalendar.hasPermission(context)) allow()
             else {
                 saving = true
-                val calId = dest?.id ?: DeviceWrite.ensureLocalCalendar(context)
-                if (calId == null) {
-                    error = "No calendar to save to. Open the hub to add an account."
-                    saving = false
-                } else when (val r = DeviceWrite.insert(context, calId, draft)) {
-                    is DeviceWrite.Result.Saved -> {
-                        Calendars.refreshDevice(context)
-                        Toast.makeText(context, "Saved to ${r.calendar}", Toast.LENGTH_LONG).show()
-                        title = ""; guests = ""; place = ""; notes = ""; allDay = false; error = null
-                        saving = false
-                        onDismiss()
-                    }
-                    is DeviceWrite.Result.Failed -> { error = r.reason; saving = false }
-                }
+                if (mode == 1) saveWithMeet(draft) else saveToPhone(draft, null)
             }
         }
     }
@@ -238,6 +301,21 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                 }
 
                 Field(guests, { guests = it; error = null }, "Guests (email addresses)", keyboard = KeyboardType.Email)
+                // Call link
+                Text("Call link", style = PlaitType.monoSmall, color = plait.muted)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill("None", callMode == 0) { callMode = 0; error = null }
+                    if (meetOk) Pill("Google Meet", callMode == 1) { callMode = 1; error = null }
+                    Pill("Add link", callMode == 2) { callMode = 2; error = null }
+                }
+                if (!meetOk) Text("Google Meet can be created for a Google calendar connected in the hub.", style = PlaitType.caption, color = plait.muted)
+                if (callMode == 1 && meetOk) Text("Google makes the link when the meeting is saved.", style = PlaitType.caption, color = plait.muted)
+                if (callMode == 2) {
+                    Field(linkText, { linkText = it; error = null }, "https:// Teams, Zoom or Webex link", keyboard = KeyboardType.Uri)
+                    (CallLinkInput.parse(linkText) as? CallLinkInput.Parsed.Ok)?.let {
+                        Text(it.provider?.let { p -> "${p.label} link" } ?: "A link. Join only shows for Meet, Zoom, Teams and Webex links.", style = PlaitType.caption, color = plait.muted)
+                    }
+                }
                 Field(place, { place = it }, "Place or call link")
                 Field(notes, { notes = it }, "Notes", capitalize = true, singleLine = false)
 
@@ -256,7 +334,9 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                 }
 
                 error?.let { Text(it, style = PlaitType.caption, color = plait.signal) }
-                HubButton(if (!canWrite) "Allow saving to calendar" else if (saving) "Saving…" else "Save meeting", primary = true, onClick = save)
+                doneNote?.let { Text(it, style = PlaitType.caption, color = plait.text) }
+                if (doneNote != null) HubButton("Done", primary = true, onClick = { reset(); onDismiss() })
+                else HubButton(if (!canWrite) "Allow saving to calendar" else if (saving) "Saving…" else "Save meeting", primary = true, onClick = save)
                 Spacer(Modifier.height(6.dp))
             }
         }

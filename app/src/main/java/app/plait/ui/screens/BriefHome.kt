@@ -335,7 +335,7 @@ internal fun BriefPage(
                     // Pages beside the open one sit slightly back, like cards in a stack.
                     val off = abs((pager.currentPage - page) + pager.currentPageOffsetFraction).coerceIn(0f, 1f)
                     val s = peekScale(off)
-                    scaleX = s; scaleY = s; alpha = phaseAlpha(off)
+                    scaleX = s; scaleY = s; alpha = if (off > 0.999f) 0f else phaseAlpha(off)
                 },
                 enabled = open == null,
             ) { index, kind ->
@@ -424,9 +424,9 @@ private fun FeedCard(
         val env = app.plait.ui.glass.LocalGlassEnv.current
         val dark = app.plait.ui.theme.LocalIsDark.current
         val blurDp = edgeBlurRadiusDp(!env.solid && !env.material, android.os.Build.VERSION.SDK_INT)
-        // One backdrop layer per card, and only while it overflows with blur available.
-        val edgeBackdrop = if (cut && blurDp != null) com.kyant.backdrop.backdrops.rememberLayerBackdrop() else null
-        Box(Modifier.fillMaxSize().onSizeChanged { cardHeight = it.height }.clipToBounds()) {
+        // One backdrop layer, only for the active card while it overflows with blur available; the others get the tint-only strip.
+        val edgeBackdrop = if (cut && blurDp != null && active) com.kyant.backdrop.backdrops.rememberLayerBackdrop() else null
+        Box(Modifier.fillMaxSize().onSizeChanged { cardHeight = it.height }.graphicsLayer { shape = CardGlassShapeOf(); clip = true }) {
             CardColumn(
                 Modifier.fillMaxSize().growDown().onSizeChanged { contentHeight = it.height }
                     .then(if (edgeBackdrop != null) Modifier.layerBackdrop(edgeBackdrop) else Modifier)

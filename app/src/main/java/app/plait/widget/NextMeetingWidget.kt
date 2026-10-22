@@ -39,6 +39,7 @@ class NextMeetingWidget : AppWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        if (!providerUpdateDue(context)) return
         val pending = goAsync()
         Thread { try { updateAll(context) } finally { pending.finish() } }.start()
     }
@@ -69,9 +70,27 @@ class NextMeetingWidget : AppWidgetProvider() {
             if (providers.all { ids(context, m, it).isEmpty() }) (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(tick(context))
         }
 
+        private const val LAST_RUN = "widget_last_run"
+        private const val LAST_IDS = "widget_last_ids"
+        private const val MIN_GAP_MS = 120_000L
+
+        /** True when a provider callback may skip: the last full update was under two minutes ago and no widget was added or removed since. */
+        internal fun shouldSkip(lastRunMs: Long, nowMs: Long, sameIds: Boolean): Boolean = sameIds && nowMs - lastRunMs in 0 until MIN_GAP_MS
+
+        private fun idsKey(context: Context, m: AppWidgetManager) = providers.flatMap { ids(context, m, it).toList() }.sorted().joinToString(",")
+
+        /** The system's onUpdate: all three receivers fire together and each would rebuild all three widgets, so repeats within two minutes are dropped. */
+        internal fun providerUpdateDue(context: Context): Boolean {
+            val prefs = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
+            val key = idsKey(context, AppWidgetManager.getInstance(context))
+            return !shouldSkip(prefs.getLong(LAST_RUN, 0L), System.currentTimeMillis(), prefs.getString(LAST_IDS, null) == key)
+        }
+
         fun updateAll(context: Context) {
             val m = AppWidgetManager.getInstance(context)
             val (wide, small, quick) = providers.map { ids(context, m, it) }
+            context.getSharedPreferences("plait", Context.MODE_PRIVATE).edit()
+                .putLong(LAST_RUN, System.currentTimeMillis()).putString(LAST_IDS, idsKey(context, m)).apply()
             val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (wide.isEmpty() && small.isEmpty() && quick.isEmpty()) { am.cancel(tick(context)); return }
             val now = System.currentTimeMillis()

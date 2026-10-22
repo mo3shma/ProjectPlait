@@ -396,7 +396,7 @@ internal fun BriefTab(ev: CalEvent, brief: MeetingBrief, onRecord: () -> Unit, n
             } + memos.map { m ->
                 val photo = m.kind == app.plait.data.memo.MemoKind.Photo
                 if (m.kind == app.plait.data.memo.MemoKind.Checklist) {
-                    ("Checklist · " + app.plait.data.memo.Checklist.progress(m.text)) to
+                    app.plait.data.memo.Checklist.heading(m.title, m.text) to
                         app.plait.data.memo.Checklist.parse(m.text).filter { !it.done }.joinToString(" · ") { it.text }.ifBlank { "All done." }
                 } else ((if (photo) "Photo · " else "Note · ") + app.plait.data.TimeFmt.stamp(m.createdAt)) to m.text.ifBlank { "No text was found in the picture." }
             }

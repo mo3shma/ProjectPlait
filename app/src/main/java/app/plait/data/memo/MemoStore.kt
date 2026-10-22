@@ -25,6 +25,8 @@ data class Memo(
     val aiBy: String? = null,
     val aiHash: Int = 0,
     val aiEngine: String? = null,
+    /** A name the user gave a checklist; null means the default "Checklist". */
+    val title: String? = null,
 )
 
 object MemoJson {
@@ -34,7 +36,7 @@ object MemoJson {
             arr.put(
                 JSONObject().put("id", m.id).put("eventId", m.eventId).put("kind", m.kind.name)
                     .put("createdAt", m.createdAt).put("text", m.text).also { o -> m.imageFile?.let { o.put("imageFile", it) }; m.author?.let { o.put("author", it) }
-                        m.ai?.let { o.put("ai", it).put("aiHash", m.aiHash) }; m.aiBy?.let { o.put("aiBy", it) }; m.aiEngine?.let { o.put("aiEngine", it) } }
+                        m.ai?.let { o.put("ai", it).put("aiHash", m.aiHash) }; m.aiBy?.let { o.put("aiBy", it) }; m.aiEngine?.let { o.put("aiEngine", it) }; m.title?.let { o.put("title", it) } }
             )
         }
         return JSONObject().put("version", 1).put("memos", arr).toString()
@@ -49,6 +51,7 @@ object MemoJson {
                 runCatching { MemoKind.valueOf(o.optString("kind")) }.getOrDefault(MemoKind.Text),
                 o.optLong("createdAt"), o.optString("text"), o.optString("imageFile").takeIf { it.isNotBlank() }, o.optString("author").takeIf { it.isNotBlank() },
                 o.optString("ai").takeIf { it.isNotBlank() }, o.optString("aiBy").takeIf { it.isNotBlank() }, o.optInt("aiHash"), o.optString("aiEngine").takeIf { it.isNotBlank() },
+                o.optString("title").takeIf { it.isNotBlank() },
             )
         }
     }
