@@ -67,16 +67,17 @@ class WidgetLookTest {
         assertNull(last.then); assertNull(last.more); assertEquals("Last one today", last.lastText)
     }
 
-    @Test fun timeBlockUpcomingAndRunning() {
+    @Test fun timeLineUpcomingAndRunning() {
         val up = wide(ev("a", "A", ms(21, 13, 30), ms(21, 14, 30)))
-        assertEquals("1:30 PM", up.timeBig); assertEquals("to 2:30 PM", up.timeUnder); assertFalse(up.nowChip); assertEquals(24, up.timeSp)
+        assertEquals("1:30 – 2:30 PM", up.timeLine); assertFalse(up.nowChip)
+        assertEquals("11:30 AM – 12:30 PM", wide(ev("a", "A", ms(21, 11, 30), ms(21, 12, 30))).timeLine)
         val run = wide(ev("a", "A", ms(21, 8, 30), ms(21, 10, 30)))
-        assertEquals("until 10:30 AM", run.timeBig); assertNull(run.timeUnder); assertTrue(run.nowChip)
+        assertEquals("until 10:30 AM", run.timeLine); assertTrue(run.nowChip)
     }
 
     @Test fun clearDayWide() {
         val l = wide(ev("a", "Team stand-up", ms(26, 9)))
-        assertNull(l.timeBig); assertFalse(l.showJoin); assertNull(l.countLabel)
+        assertNull(l.timeLine); assertFalse(l.showJoin); assertNull(l.countLabel)
         assertEquals("A clear day", l.title); assertEquals(22, l.titleSp)
         assertEquals("Next: Mon 9:00 AM Team stand-up", l.sub)
         assertEquals("Nothing coming up", wide().sub)
@@ -84,9 +85,9 @@ class WidgetLookTest {
 
     @Test fun joinAndPlaceWide() {
         val call = wide(ev("a", "A", ms(21, 10), join = link))
-        assertTrue(call.showJoin); assertEquals("Online", call.sub); assertEquals(1, call.titleLines)
+        assertTrue(call.showJoin); assertEquals("Online", call.sub); assertEquals(1, call.titleLines); assertEquals(20, call.titleSp)
         val none = wide(ev("a", "A", ms(21, 10)))
-        assertFalse(none.showJoin); assertNull(none.sub); assertEquals(2, none.titleLines)
+        assertFalse(none.showJoin); assertNull(none.sub); assertEquals(1, none.titleLines)
     }
 
     @Test fun smallRunningAndJoin() {

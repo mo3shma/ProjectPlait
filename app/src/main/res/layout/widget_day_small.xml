@@ -4,7 +4,7 @@
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@drawable/widget_bg_midday"
     android:orientation="vertical"
-    android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="7dp" android:paddingBottom="7dp">
+    android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="6dp" android:paddingBottom="6dp">
     <LinearLayout android:layout_width="match_parent" android:layout_height="16dp" android:gravity="center_vertical" android:orientation="horizontal">
         <TextView android:id="@+id/widget_date" android:text="Thu 22"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
@@ -22,28 +22,28 @@
     <LinearLayout android:id="@+id/widget_next"
         android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
         android:gravity="center_vertical" android:orientation="vertical">
-        <TextView android:id="@+id/widget_time" android:text="1:30 PM"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textAlignment="viewStart" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textFontWeight="600"
-            android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
+        <LinearLayout android:id="@+id/widget_time_row" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:id="@+id/widget_dot" android:layout_width="5dp" android:layout_height="5dp" android:layout_marginEnd="4dp"
+                android:src="@drawable/widget_dot" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/widget_time" android:text="1:30 PM"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textAlignment="viewStart" android:textColor="#F2FFFFFF" android:textSize="16sp" android:textFontWeight="600"
+                android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
+        </LinearLayout>
         <TextView android:id="@+id/widget_title" android:text="Design review"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textAlignment="viewStart" android:textColor="#FFFFFFFF" android:textSize="15sp" android:textStyle="bold"
-            android:includeFontPadding="false" android:maxLines="2" android:ellipsize="end" android:fontFamily="@font/widget_font" />
+            android:textAlignment="viewStart" android:textColor="#FFFFFFFF" android:textSize="16sp" android:textStyle="bold"
+            android:includeFontPadding="false" android:maxLines="3" android:ellipsize="end" android:fontFamily="@font/widget_font" />
         <TextView android:id="@+id/widget_sub" android:text="Next: Mon 9:00 AM"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:textAlignment="viewStart" android:textColor="#C7FFFFFF" android:textSize="12sp"
             android:includeFontPadding="false" android:maxLines="2" android:ellipsize="end" android:fontFamily="@font/widget_font" />
     </LinearLayout>
     <TextView android:id="@+id/widget_join"
-        android:layout_width="match_parent" android:layout_height="34dp"
-        android:background="@drawable/widget_pill_glass" android:gravity="center"
+        android:layout_width="match_parent" android:layout_height="28dp"
+        android:background="@drawable/widget_pill_other" android:gravity="center"
         android:drawableStart="@drawable/ic_widget_video" android:drawablePadding="6dp"
-        android:text="Join" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textFontWeight="600"
+        android:text="Join" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textFontWeight="600"
         android:includeFontPadding="false" android:fontFamily="@font/widget_font" />
-    <TextView android:id="@+id/widget_footer" android:text="+2 more today"
-        android:layout_width="match_parent" android:layout_height="16dp"
-        android:background="@drawable/widget_capsule" android:gravity="center"
-        android:textColor="#C7FFFFFF" android:textSize="11sp"
-        android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
 </LinearLayout>

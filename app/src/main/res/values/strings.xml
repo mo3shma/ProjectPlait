@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description_small">Your next meeting and its start time, with a Join button when it has a call link. 2×2.</string>
+    <string name="widget_description_quick">Your next meeting with a Join button, and one tap to record a voice note, start a task list or write a text note. 4×3.</string>
     <string name="widget_description">Your next meeting, what comes after it, and a Join button when it has a call link. 4×2.</string>
 </resources>

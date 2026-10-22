@@ -2,6 +2,14 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.28.0: glass card edges, better widgets, a quick-add widget
+
+- **Liquid glass on long cards.** The progressive blur is gone. When a Home card holds more than fits, its bottom edge is now a frosted glass strip with a soft top and a thin rim. With glass effects off, or on older phones, it falls back to a plain feathered tint.
+- **Reworked 4x2 and 2x2 widgets.** Less wasted space, a bigger title, the time range, a stronger time-of-day tint, and Join at the end of the row.
+- **Join matches the meeting source.** The Join pill takes the colour of Meet, Teams, Zoom, Webex, or the calendar it came from, the same as in the app.
+- **New 4x3 "Plait quick add" widget.** The next meeting on top, and three tiles in the app's colours: Voice note, Task list and Text note. Each opens straight into that action.
+- Not yet checked on a phone: how the three widgets fit on a real home screen, and whether the 4x3 labels clip at the narrowest size.
+
 ## 0.27.0: easier cards, nicer widgets, AI for every note
 
 - **Swipe between the day times again.** Morning, Midday and Evening scroll sideways, with the tab chips following. Each one keeps its own vertical stack of cards.

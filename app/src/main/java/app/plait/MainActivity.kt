@@ -78,6 +78,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         ShareInbox.handle(this, intent)
         Launch.from(intent)
+        app.plait.ui.WidgetLaunch.from(intent)
     }
 
     override fun onStop() {
@@ -97,7 +98,7 @@ class MainActivity : ComponentActivity() {
         // Count any model files already on the phone (including ones copied into the drop folder), so nothing is downloaded twice.
         Thread { runCatching { app.plait.ai.ModelCenter.refresh(applicationContext); app.plait.ai.ModelFinder.scanThisPhone(applicationContext); app.plait.ai.ModelCenter.resumePending(applicationContext) } }.start()
         Entrance.arrived()
-        if (savedInstanceState == null) { ShareInbox.handle(this, intent); Launch.from(intent) }
+        if (savedInstanceState == null) { ShareInbox.handle(this, intent); Launch.from(intent); app.plait.ui.WidgetLaunch.from(intent) }
         setContent {
             PlaitTheme {
               ProvideGlassEnv {
@@ -193,6 +194,20 @@ class MainActivity : ComponentActivity() {
                         Entrance.arrived()
                         nav.navigate("event/${Uri.encode(id)}?tab=$tab")
                         Launch.event = null
+                    }
+                }
+                // The 4x3 widget: back to the home screen, then a voice note, or the Notes tab with its editor open.
+                app.plait.ui.WidgetLaunch.request?.let { kind ->
+                    androidx.compose.runtime.LaunchedEffect(kind) {
+                        app.plait.ui.WidgetLaunch.request = null
+                        nav.popBackStack("today", false)
+                        Entrance.arrived()
+                        if (kind == "voice") nav.navigate("record/_none_?call=false")
+                        else {
+                            app.plait.ui.HomeState.tab = 2
+                            app.plait.ui.HomeState.notesList.requestScrollToItem(0)
+                            app.plait.ui.WidgetLaunch.editor = kind
+                        }
                     }
                 }
                 app.plait.ui.screens.LaunchCards()

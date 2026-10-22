@@ -1,6 +1,8 @@
 package app.plait.widget
 
 import app.plait.data.CalEvent
+import app.plait.data.CallProvider
+import app.plait.data.Source
 import app.plait.data.TimeFmt
 import java.time.Instant
 import java.time.ZoneId
@@ -21,21 +23,40 @@ enum class Phase {
     }
 }
 
+/** The colour of the meeting's service, as ServicePalette leads with it (call provider first, then source). Drawables: widget_pill_<name>. */
+enum class JoinLook(val argb: Int) {
+    Teams(0xFF5B5FC7.toInt()), Meet(0xFF1A73E8.toInt()), Zoom(0xFF2D8CFF.toInt()), Webex(0xFF00A0D1.toInt()),
+    Google(0xFF4285F4.toInt()), Outlook(0xFF0078D4.toInt()), ICloud(0xFFFF9F0A.toInt()), Other(0xFF7B8CDE.toInt());
+
+    companion object {
+        fun of(provider: CallProvider?, source: Source): JoinLook = when (provider) {
+            CallProvider.Teams -> Teams
+            CallProvider.Meet -> Meet
+            CallProvider.Zoom -> Zoom
+            CallProvider.Webex -> Webex
+            null -> when (source) { Source.Google -> Google; Source.Outlook -> Outlook; Source.ICloud -> ICloud; Source.Other -> Other }
+        }
+    }
+}
+
 /** The 2x2 widget's slots, decided by [WidgetModel.smallLines]. [timeLine] is the sub line on a clear day. */
 data class SmallLines(
-    val title: String, val timeLine: String, val topEnd: String?, val bottomText: String?, val showJoin: Boolean, val titleLines: Int,
-    val timeSp: Int = 20,
+    val title: String, val timeLine: String, val topEnd: String?, val showJoin: Boolean, val titleLines: Int,
+    val timeSp: Int = 16, val titleSp: Int = 16,
 )
 
 /** The 4x2 widget's slots, decided by [WidgetModel.wideLines]. */
 data class WideLines(
     val title: String, val titleSp: Int, val titleLines: Int,
-    /** Time block: null on a clear day. While running it is "until 2:30 PM" and [timeUnder] is null. */
-    val timeBig: String?, val timeSp: Int, val timeUnder: String?, val nowChip: Boolean,
-    /** Place line, or the "Next: ..." line on a clear day. */
+    /** "1:30 – 2:30 PM", or "until 2:30 PM" while running; null on a clear day. */
+    val timeLine: String?, val nowChip: Boolean,
+    /** Place line (only when the title is short), or the "Next: ..." line on a clear day. */
     val sub: String?, val showJoin: Boolean,
     val countLabel: String?, val then: String?, val more: String?, val lastText: String?,
 )
+
+/** The 4x3 strip: [top] is the time or the "Next: ..." line, [title] the bold line. */
+data class QuickLines(val top: String?, val title: String, val showJoin: Boolean)
 
 /** What the widget shows, decided once from the events and the clock. Static clock times only: no countdowns. */
 data class WidgetModel(
@@ -49,8 +70,8 @@ data class WidgetModel(
     val running: Boolean = false,
     val clearDay: Boolean = false,
     val footer: String? = null,
-    /** 4x2 title lines: one when a place line shares the cell, so the worst case fits ~110dp. */
-    val titleLines: Int = 2,
+    /** 4x2 title lines: two only for a long title, which then gets no place line, so the worst case fits ~110dp. */
+    val titleLines: Int = 1,
     // Raw pieces for the 2x2 layout, see [smallLines].
     val dateShort: String = "",
     val startClock: String = "",
@@ -66,7 +87,14 @@ data class WidgetModel(
     val count: Int = 0,
     val thenLine: String? = null,
     val moreLine: String? = null,
+    val look: JoinLook = JoinLook.Other,
 ) {
+    /** ARGB of the meeting's service: the accent dot. */
+    val accent: Int get() = look.argb
+
+    /** ARGB the Join pill is tinted with; the pill itself is the matching widget_pill_* drawable. */
+    val joinTint: Int get() = look.argb
+
     companion object {
         fun build(events: List<CalEvent>, now: Long, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = Locale.getDefault()): WidgetModel {
             val day = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
@@ -95,20 +123,29 @@ data class WidgetModel(
             val footer = rest.firstOrNull()?.let {
                 "Then ${clean(it.title)} ${TimeFmt.clock(it.startMs, zone)}" + if (rest.size > 1) " · +${rest.size - 1} more" else ""
             } ?: "Last one today"
+            val title = clean(main.title)
             return WidgetModel(
-                date, clean(main.title), (if (running) "Now · " else "") + TimeFmt.clock(main.startMs, zone) + " – " + TimeFmt.clock(main.endMs, zone),
-                place, link, main.id, running, false, footer, if (place != null) 1 else 2, short,
+                date, title, (if (running) "Now · " else "") + TimeFmt.clock(main.startMs, zone) + " – " + TimeFmt.clock(main.endMs, zone),
+                place, link, main.id, running, false, footer, if (title.length > ONE_LINE_MAX) 2 else 1, short,
                 TimeFmt.clock(main.startMs, zone), TimeFmt.clock(main.endMs, zone), rest.size, null, null,
                 minOf(boundary, if (running) main.endMs else main.startMs),
                 phase, today.size, rest.firstOrNull()?.let { "Then ${clean(it.title)} ${TimeFmt.clock(it.startMs, zone)}" },
                 if (rest.size > 1) "+${rest.size - 1} more" else null,
+                JoinLook.of(main.callLink?.provider, main.source),
             )
         }
 
+        /** "1:30 – 2:30 PM"; the first AM/PM is dropped when both are the same. */
+        fun range(start: String, end: String): String =
+            if (start.takeLast(2) == end.takeLast(2)) start.dropLast(3) + " – " + end else "$start – $end"
+
+        /** 20sp up to 16 characters, 18sp up to [ONE_LINE_MAX], then two lines at 16sp. */
+        fun wideTitleSp(title: String): Int = if (title.length <= 16) 20 else if (title.length <= ONE_LINE_MAX) 18 else 16
+
         /**
-         * 2x2 layout, 7dp vertical padding so ~96dp inside a 110dp cell. Budget ([smallDp], 1.25 line height):
-         * top 16 + time 25 + title 19 per line + Join 34 = 94 with the pill (1 title line, no place line),
-         * or 16 + 25 + 37.5 + capsule 16 = 94.5 without it (2 lines). A running meeting swaps the time for "until ..." in 12sp.
+         * 2x2 layout, 6dp vertical padding so 98dp inside a 110dp cell. Budget ([smallDp], 1.25 line height):
+         * with Join: top 16 + time 13sp 16.25 + title 2 x 14sp 35 + pill 28 = 95.25; without: 16 + time 16sp 20 + title 3 x 16sp 60 = 96.
+         * A running meeting swaps the time for "until ..." in 12sp.
          */
         fun smallLines(m: WidgetModel): SmallLines {
             if (m.clearDay) {
@@ -118,34 +155,32 @@ data class WidgetModel(
                     full!!.length <= 22 -> full
                     else -> "Next: ${m.nextWhen}"
                 }
-                return SmallLines(m.title, line, null, null, false, 2)
+                return SmallLines(m.title, line, null, false, 2, titleSp = 20)
             }
             val join = m.joinUrl != null
-            val more = if (m.more > 0) "+${m.more} more" else null
             return SmallLines(
                 m.title, if (m.running) "until ${m.endClock}" else m.startClock,
-                if (m.running) "Now" else if (join) more else null,
-                if (join) null else if (more != null) "$more today" else "Last one today",
-                join, if (join) 1 else 2, if (m.running) 12 else 20,
+                if (m.running) "Now" else if (m.more > 0) "+${m.more} more" else null,
+                join, if (join) 2 else 3, if (m.running) 12 else if (join) 13 else 16, if (join) 14 else 16,
             )
         }
 
-        /** Estimated height of the 2x2 content in dp; must stay within the ~96dp inside a 110dp cell. */
+        /** Estimated height of the 2x2 content in dp; must stay within [SMALL_INNER_DP]. */
         fun smallDp(l: SmallLines, clearDay: Boolean): Double =
-            16 + (if (clearDay) 20 * 1.25 * 2 + 12 * 1.25 * 2 else l.timeSp * 1.25 + l.titleLines * 15 * 1.25) +
-                (if (l.showJoin) 34 else if (l.bottomText != null) 16 else 0)
+            16 + (if (clearDay) 20 * 1.25 * 2 + 12 * 1.25 * 2 else l.timeSp * 1.25 + l.titleLines * l.titleSp * 1.25) + (if (l.showJoin) SMALL_JOIN_DP else 0.0)
 
         /**
-         * 4x2 layout, 12dp vertical padding: 110 - 24 = 86 = top row 16 + main band 46 + strip 24. The main band holds the
-         * tallest of the time block (24sp + 12sp = 45), the text column (2 title lines 45, or 1 line + place 39) and Join 36.
+         * 4x2 layout, 8dp vertical padding: 110 - 16 = 94 = top row 16 + main band 58 + strip 20. The text column is the time
+         * line 13sp (16.25) + title + place 12sp (15): one title line (18-20sp, 22.5-25) plus place = 53.75-56.25, or a long
+         * title on 2 lines at 16sp (40) with no place = 56.25. Join is 36.
          */
         fun wideLines(m: WidgetModel): WideLines {
-            if (m.clearDay) return WideLines(m.title, 22, 1, null, 0, null, false, m.whenLine, false, null, null, null, null)
+            if (m.clearDay) return WideLines(m.title, 22, 1, null, false, m.whenLine, false, null, null, null, null)
             val rest = m.thenLine != null
             return WideLines(
-                m.title, 18, m.titleLines,
-                if (m.running) "until ${m.endClock}" else m.startClock, if (m.running) 15 else 24, if (m.running) null else "to ${m.endClock}", m.running,
-                m.place, m.joinUrl != null,
+                m.title, wideTitleSp(m.title), m.titleLines,
+                if (m.running) "until ${m.endClock}" else range(m.startClock, m.endClock), m.running,
+                if (m.title.length <= ONE_LINE_MAX) m.place else null, m.joinUrl != null,
                 when (m.count) { 0 -> null; 1 -> "1 meeting"; else -> "${m.count} meetings" },
                 m.thenLine, m.moreLine, if (rest) null else "Last one today",
             )
@@ -153,13 +188,28 @@ data class WidgetModel(
 
         /** Estimated height of the 4x2 main band in dp; must stay within [WIDE_MAIN_DP]. */
         fun wideMainDp(l: WideLines): Double {
-            val text = l.titleLines * l.titleSp * 1.25 + (if (l.sub != null) 13 * 1.25 else 0.0)
-            val time = if (l.timeBig == null) 0.0 else (if (l.nowChip) 18 else 0) + l.timeSp * 1.25 + (if (l.timeUnder != null) 12 * 1.25 else 0.0)
-            return maxOf(text, time, if (l.showJoin) 36.0 else 0.0)
+            val text = (if (l.timeLine != null) 16.25 else 0.0) + l.titleLines * l.titleSp * 1.25 + (if (l.sub != null) 12 * 1.25 else 0.0)
+            return maxOf(text, if (l.showJoin) 36.0 else 0.0)
         }
 
-        const val WIDE_MAIN_DP = 46.0
-        const val SMALL_INNER_DP = 96.0
+        /** What the 4x3 strip says: the next meeting, a running one, or why there is none. Join only with a call link. */
+        fun quickLines(m: WidgetModel): QuickLines {
+            if (m.clearDay) return QuickLines(if (m.nextWhen != null) "Next: ${m.nextWhen}" else "Nothing coming up", m.title, false)
+            val time = if (m.running) "Now · until ${m.endClock}" else m.startClock
+            // Without a call link the pill's room goes to what comes after.
+            return QuickLines(if (m.joinUrl != null) time else time + " · " + (m.thenLine ?: "Last one today"), m.title, m.joinUrl != null)
+        }
+
+        const val ONE_LINE_MAX = 24
+        const val WIDE_MAIN_DP = 58.0
+        const val SMALL_INNER_DP = 98.0
+        const val SMALL_JOIN_DP = 28.0
+
+        // 4x3: strip + gap + tiles inside a 180dp cell less 12dp padding top and bottom.
+        const val QUICK_STRIP_DP = 52.0
+        const val QUICK_GAP_DP = 8.0
+        const val QUICK_TILE_DP = 88.0
+        const val QUICK_INNER_DP = 156.0
 
         /** One line of at most 100 characters; the view ellipsizes the rest. */
         fun clean(title: String): String = title.replace(Regex("\\s+"), " ").trim().ifEmpty { "Untitled" }.let { if (it.length > 100) it.take(99).trimEnd() + "…" else it }

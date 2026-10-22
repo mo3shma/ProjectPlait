@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.height
 import app.plait.ui.CircleIconButton
 import androidx.compose.material.icons.filled.Add
@@ -92,6 +93,10 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
     var busy by remember { mutableStateOf(false) }
     var pendingCamera by remember { mutableStateOf<File?>(null) }
     var lang by remember { mutableStateOf(HomeState.ocrLang) }
+    // The 4x3 widget's "Text note" / "Task list": open that editor on the Notes tab's own card.
+    if (eventId.isEmpty()) app.plait.ui.WidgetLaunch.editor?.let { k ->
+        LaunchedEffect(k) { if (k == "text") writing = true else listing = true; app.plait.ui.WidgetLaunch.editor = null }
+    }
 
     val addPhoto: (Uri) -> Unit = { uri ->
         scope.launch {

@@ -22,24 +22,21 @@ class WidgetSmallTest {
     private fun model(vararg e: CalEvent) = WidgetModel.build(e.toList(), now, zone, Locale.ENGLISH)
     private fun small(vararg e: CalEvent) = WidgetModel.smallLines(model(*e))
 
-    @Test fun withoutLinkBottomTextHoldsMore() {
+    @Test fun withoutLinkMoreGoesToCapsuleAndTitleGetsThreeLines() {
         val m = model(ev("a", "Standup", ms(21, 10, 30)), ev("b", "B", ms(21, 12)), ev("c", "C", ms(21, 13)), ev("d", "D", ms(21, 14)))
         assertEquals("Wed 21", m.dateShort)
         val l = WidgetModel.smallLines(m)
         assertEquals("10:30 AM", l.timeLine)
-        assertEquals("+3 more today", l.bottomText)
-        assertNull(l.topEnd); assertFalse(l.showJoin); assertEquals(2, l.titleLines)
-    }
-
-    @Test fun lastOneToday() {
-        assertEquals("Last one today", small(ev("a", "Solo", ms(21, 10))).bottomText)
+        assertEquals("+3 more", l.topEnd)
+        assertFalse(l.showJoin); assertEquals(3, l.titleLines); assertEquals(16, l.timeSp); assertEquals(16, l.titleSp)
+        assertNull(small(ev("a", "Solo", ms(21, 10))).topEnd)
     }
 
     @Test fun withLinkMoveMoreToTopAndShowPill() {
         val l = small(ev("a", "Call", ms(21, 10), join = link), ev("b", "B", ms(21, 12)), ev("c", "C", ms(21, 13)))
-        assertTrue(l.showJoin); assertEquals("+2 more", l.topEnd); assertNull(l.bottomText); assertEquals(1, l.titleLines)
+        assertTrue(l.showJoin); assertEquals("+2 more", l.topEnd); assertEquals(2, l.titleLines); assertEquals(14, l.titleSp)
         val alone = small(ev("a", "Call", ms(21, 10), join = link))
-        assertTrue(alone.showJoin); assertNull(alone.topEnd); assertNull(alone.bottomText)
+        assertTrue(alone.showJoin); assertNull(alone.topEnd)
     }
 
     @Test fun runningShowsNowUntilEnd() {
@@ -51,7 +48,7 @@ class WidgetSmallTest {
         val short = small(ev("a", "Sync", ms(26, 9)))
         assertEquals("A clear day", short.title); assertEquals("Next: Mon 9:00 AM", short.timeLine.take(17))
         assertEquals("Next: Mon 9:00 AM", small(ev("a", "Quarterly planning offsite", ms(26, 9))).timeLine)
-        assertEquals(2, short.titleLines); assertFalse(short.showJoin); assertNull(short.bottomText)
+        assertEquals(2, short.titleLines); assertFalse(short.showJoin)
     }
 
     @Test fun nothingAtAll() {
@@ -64,8 +61,9 @@ class WidgetSmallTest {
         assertEquals("مراجعة التصميم", small(ev("a", " مراجعة التصميم ", ms(21, 10))).title)
     }
 
-    @Test fun wideTitleLinesFollowPlace() {
+    @Test fun wideTitleLinesFollowLength() {
         assertEquals(1, model(ev("a", "A", ms(21, 10), place = "Room 4")).titleLines)
-        assertEquals(2, model(ev("a", "A", ms(21, 10))).titleLines)
+        assertEquals(1, model(ev("a", "x".repeat(24), ms(21, 10))).titleLines)
+        assertEquals(2, model(ev("a", "x".repeat(25), ms(21, 10))).titleLines)
     }
 }

@@ -11,18 +11,20 @@ import android.net.Uri
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import app.plait.MainActivity
 import app.plait.R
 import app.plait.data.CalEvent
 import app.plait.data.Calendars
 import app.plait.data.NextUp
 import app.plait.data.google.CalEventJson
 import app.plait.reminder.Reminders
+import app.plait.ui.WidgetLaunch
 import java.time.Instant
 import java.time.ZoneId
 
 /**
- * Home-screen widget, 4x2 (this class) and 2x2 ([NextMeetingWidgetSmall]): the next meeting, no countdown (see [WidgetModel]).
- * Both sizes share one alarm and one update path: [updateAll] refreshes every widget of either class.
+ * Home-screen widget, 4x2 (this class), 2x2 ([NextMeetingWidgetSmall]) and the 4x3 quick add ([NextMeetingWidgetQuick]): the next
+ * meeting, no countdown (see [WidgetModel]). All three share one alarm and one update path: [updateAll] refreshes every widget of any class.
  * Refresh triggers, and nothing else wakes it:
  *  - the app saves a snapshot or reschedules reminders (calendar change, app left, boot via BootReceiver -> Reminders.scheduleAll)
  *  - one alarm at the next change (meeting start or end, 12:00 or 17:00 for the tint, or midnight), re-armed on every update, cancelled with the last widget
@@ -41,12 +43,15 @@ class NextMeetingWidget : AppWidgetProvider() {
         Thread { try { updateAll(context) } finally { pending.finish() } }.start()
     }
 
-    // onDisabled fires when the last widget of THIS class goes; the other size may remain, so re-check both.
+    // onDisabled fires when the last widget of THIS class goes; another size may remain, so re-check all.
     override fun onDisabled(context: Context) = cancelIfNone(context)
 
     companion object {
         private const val SNAPSHOT = "widget_snapshot"
         private const val TICK = "app.plait.WIDGET_TICK"
+
+        /** Every provider class that shares the data and the alarm. */
+        val providers: List<Class<*>> = listOf(NextMeetingWidget::class.java, NextMeetingWidgetSmall::class.java, NextMeetingWidgetQuick::class.java)
 
         /** The app writes the days it is showing, so the widget has the same meetings even for calendars it cannot read itself. */
         fun saveSnapshot(context: Context, events: List<CalEvent>) {
@@ -56,24 +61,24 @@ class NextMeetingWidget : AppWidgetProvider() {
             context.getSharedPreferences("plait", Context.MODE_PRIVATE).edit().putString(SNAPSHOT, CalEventJson.encode(keep)).apply()
         }
 
-        /** The alarm outlives a removed widget only while a widget of the other size remains. */
+        private fun ids(context: Context, m: AppWidgetManager, cls: Class<*>) = m.getAppWidgetIds(ComponentName(context, cls))
+
+        /** The alarm outlives a removed widget only while a widget of another size remains. */
         internal fun cancelIfNone(context: Context) {
             val m = AppWidgetManager.getInstance(context)
-            if (m.getAppWidgetIds(ComponentName(context, NextMeetingWidget::class.java)).isEmpty() &&
-                m.getAppWidgetIds(ComponentName(context, NextMeetingWidgetSmall::class.java)).isEmpty()
-            ) (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(tick(context))
+            if (providers.all { ids(context, m, it).isEmpty() }) (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(tick(context))
         }
 
         fun updateAll(context: Context) {
             val m = AppWidgetManager.getInstance(context)
-            val ids = m.getAppWidgetIds(ComponentName(context, NextMeetingWidget::class.java))
-            val smallIds = m.getAppWidgetIds(ComponentName(context, NextMeetingWidgetSmall::class.java))
+            val (wide, small, quick) = providers.map { ids(context, m, it) }
             val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (ids.isEmpty() && smallIds.isEmpty()) { am.cancel(tick(context)); return }
+            if (wide.isEmpty() && small.isEmpty() && quick.isEmpty()) { am.cancel(tick(context)); return }
             val now = System.currentTimeMillis()
             val model = runCatching { WidgetModel.build(load(context, now), now) }.getOrElse { WidgetModel.build(emptyList(), now) }
-            if (ids.isNotEmpty()) { val views = build(context, model); ids.forEach { m.updateAppWidget(it, views) } }
-            if (smallIds.isNotEmpty()) { val views = buildSmall(context, model); smallIds.forEach { m.updateAppWidget(it, views) } }
+            if (wide.isNotEmpty()) { val views = build(context, model); wide.forEach { m.updateAppWidget(it, views) } }
+            if (small.isNotEmpty()) { val views = buildSmall(context, model); small.forEach { m.updateAppWidget(it, views) } }
+            if (quick.isNotEmpty()) { val views = buildQuick(context, model); quick.forEach { m.updateAppWidget(it, views) } }
             // Inexact on purpose: a few minutes of slack costs nothing here and saves exact-alarm wakeups.
             am.setAndAllowWhileIdle(AlarmManager.RTC, model.nextChangeMs + 1_000L, tick(context))
         }
@@ -101,7 +106,24 @@ class NextMeetingWidget : AppWidgetProvider() {
             Phase.Evening -> R.drawable.widget_bg_evening
         }
 
+        private fun pill(l: JoinLook) = when (l) {
+            JoinLook.Teams -> R.drawable.widget_pill_teams
+            JoinLook.Meet -> R.drawable.widget_pill_meet
+            JoinLook.Zoom -> R.drawable.widget_pill_zoom
+            JoinLook.Webex -> R.drawable.widget_pill_webex
+            JoinLook.Google -> R.drawable.widget_pill_google
+            JoinLook.Outlook -> R.drawable.widget_pill_outlook
+            JoinLook.ICloud -> R.drawable.widget_pill_icloud
+            JoinLook.Other -> R.drawable.widget_pill_other
+        }
+
         private fun show(v: RemoteViews, id: Int, on: Boolean) = v.setViewVisibility(id, if (on) View.VISIBLE else View.GONE)
+
+        /** The source-coloured dot: the model's accent as a colour filter on the white dot drawable. */
+        private fun dot(v: RemoteViews, m: WidgetModel, on: Boolean = !m.clearDay) {
+            show(v, R.id.widget_dot, on)
+            v.setInt(R.id.widget_dot, "setColorFilter", m.accent)
+        }
 
         private fun build(context: Context, m: WidgetModel): RemoteViews {
             val l = WidgetModel.wideLines(m)
@@ -109,16 +131,12 @@ class NextMeetingWidget : AppWidgetProvider() {
             v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             v.setTextViewText(R.id.widget_date, m.date)
+            dot(v, m)
             show(v, R.id.widget_count, l.countLabel != null)
             l.countLabel?.let { v.setTextViewText(R.id.widget_count, it) }
-            show(v, R.id.widget_time_block, l.timeBig != null)
+            show(v, R.id.widget_time_row, l.timeLine != null)
             show(v, R.id.widget_now, l.nowChip)
-            l.timeBig?.let {
-                v.setTextViewText(R.id.widget_time, it)
-                v.setTextViewTextSize(R.id.widget_time, TypedValue.COMPLEX_UNIT_SP, l.timeSp.toFloat())
-            }
-            show(v, R.id.widget_time_under, l.timeUnder != null)
-            l.timeUnder?.let { v.setTextViewText(R.id.widget_time_under, it) }
+            l.timeLine?.let { v.setTextViewText(R.id.widget_time, it) }
             v.setTextViewText(R.id.widget_title, l.title)
             v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, l.titleSp.toFloat())
             v.setInt(R.id.widget_title, "setMaxLines", l.titleLines)
@@ -136,13 +154,14 @@ class NextMeetingWidget : AppWidgetProvider() {
             show(v, R.id.widget_last, l.lastText != null)
             l.lastText?.let { v.setTextViewText(R.id.widget_last, it) }
             m.eventId?.let { v.setOnClickPendingIntent(R.id.widget_next, Reminders.open(context, it, 0, 9102)) }
-            bindJoin(context, v, if (l.showJoin) m.joinUrl else null)
+            bindJoin(context, v, m, if (l.showJoin) m.joinUrl else null)
             return v
         }
 
-        private fun bindJoin(context: Context, v: RemoteViews, url: String?) {
+        private fun bindJoin(context: Context, v: RemoteViews, m: WidgetModel, url: String?) {
             if (url == null) { v.setViewVisibility(R.id.widget_join, View.GONE); return }
             v.setViewVisibility(R.id.widget_join, View.VISIBLE)
+            v.setInt(R.id.widget_join, "setBackgroundResource", pill(m.look))
             v.setOnClickPendingIntent(
                 R.id.widget_join,
                 PendingIntent.getActivity(
@@ -161,18 +180,43 @@ class NextMeetingWidget : AppWidgetProvider() {
             show(v, R.id.widget_top_end, l.topEnd != null)
             show(v, R.id.widget_mark, l.topEnd == null)
             l.topEnd?.let { v.setTextViewText(R.id.widget_top_end, it) }
-            show(v, R.id.widget_time, !m.clearDay)
+            // The dot would crowd "until 11:30 AM"; a running meeting already has its "Now" capsule.
+            dot(v, m, !m.clearDay && !m.running)
+            show(v, R.id.widget_time_row, !m.clearDay)
             v.setTextViewText(R.id.widget_time, l.timeLine)
             v.setTextViewTextSize(R.id.widget_time, TypedValue.COMPLEX_UNIT_SP, l.timeSp.toFloat())
             v.setTextViewText(R.id.widget_title, l.title)
-            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, if (m.clearDay) 20f else 15f)
+            v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, l.titleSp.toFloat())
             v.setInt(R.id.widget_title, "setMaxLines", l.titleLines)
             show(v, R.id.widget_sub, m.clearDay)
             if (m.clearDay) v.setTextViewText(R.id.widget_sub, l.timeLine)
-            show(v, R.id.widget_footer, l.bottomText != null)
-            l.bottomText?.let { v.setTextViewText(R.id.widget_footer, it) }
             m.eventId?.let { v.setOnClickPendingIntent(R.id.widget_next, Reminders.open(context, it, 0, 9102)) }
-            bindJoin(context, v, if (l.showJoin) m.joinUrl else null)
+            bindJoin(context, v, m, if (l.showJoin) m.joinUrl else null)
+            return v
+        }
+
+        private fun tile(context: Context, kind: String, code: Int): PendingIntent =
+            PendingIntent.getActivity(
+                context, code,
+                Intent(context, MainActivity::class.java).setAction(WidgetLaunch.ACTION).putExtra(WidgetLaunch.EXTRA_KIND, kind)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        private fun buildQuick(context: Context, m: WidgetModel): RemoteViews {
+            val l = WidgetModel.quickLines(m)
+            val v = RemoteViews(context.packageName, R.layout.widget_quick)
+            v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
+            v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
+            dot(v, m)
+            show(v, R.id.widget_time, l.top != null)
+            l.top?.let { v.setTextViewText(R.id.widget_time, it) }
+            v.setTextViewText(R.id.widget_title, l.title)
+            m.eventId?.let { v.setOnClickPendingIntent(R.id.widget_next, Reminders.open(context, it, 0, 9102)) }
+            bindJoin(context, v, m, if (l.showJoin) m.joinUrl else null)
+            v.setOnClickPendingIntent(R.id.widget_tile_voice, tile(context, "voice", 9111))
+            v.setOnClickPendingIntent(R.id.widget_tile_list, tile(context, "list", 9112))
+            v.setOnClickPendingIntent(R.id.widget_tile_text, tile(context, "text", 9113))
             return v
         }
     }
