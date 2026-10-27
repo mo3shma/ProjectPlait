@@ -134,7 +134,7 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
 
 - **Updating.** Plait tells you when a new version is out and installs it for you, keeping your notes and settings. The first time, Android asks you to let Plait install apps. You can also check by hand in Settings → Updates and help.
 - **Moving phones.** Settings → You and backups → Export backup, then Import backup on the new phone. Importing only adds what's missing and never deletes anything.
-- **Recording.** Plait records your own microphone only, not the other side of a call. Depending on where you are, recording a conversation can need the other people's consent.
+- **Recording.** Plait records voice notes from your own microphone. Depending on where you are, recording a conversation can need the other people's consent.
 
 ## Using it
 
@@ -142,7 +142,7 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
 | --- | --- |
 | See the day | Home. Swipe or tap Morning, Midday or Evening |
 | Join a call | **Join** on a meeting card or a meeting page |
-| Take a voice note, record a call, or make a meeting | The **+** button at the bottom right |
+| Take a voice note or make a meeting | The **+** button at the bottom right |
 | Add a written, photo or checklist note | Write, Photo or List on a meeting page or the Notes tab |
 | Edit, reschedule, cancel or answer a meeting | The calendar button at the top right of the meeting page |
 | Delete a note | Swipe it left (with Undo), or press and hold for more |

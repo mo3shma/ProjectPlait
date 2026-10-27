@@ -15,8 +15,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import app.plait.MainActivity
 import app.plait.reminder.LiveAlert
-import app.plait.reminder.LiveAlert.timer
-import app.plait.reminder.LiveMeeting
 
 /**
  * Keeps the process alive and the microphone open while a note is being recorded, so capture
@@ -48,13 +46,11 @@ class RecordingService : Service() {
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
-        LiveMeeting.refreshAsync(this) // a recording wins over the meeting countdown
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         live = false
-        LiveMeeting.refreshAsync(this)
         super.onDestroy()
     }
 
@@ -65,7 +61,7 @@ class RecordingService : Service() {
         private const val ACTION_TOGGLE = "app.plait.REC_TOGGLE"
         private const val ACTION_STOP = "app.plait.REC_STOP"
 
-        /** True while the service is up, so other alerts can step aside. */
+        /** True while the service is up, so [refresh] only re-posts a live notification. */
         @Volatile var live = false; private set
         @Volatile private var title = ""
 
@@ -84,11 +80,9 @@ class RecordingService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
-        /** The live alert: running timer while recording, the frozen time while paused, Pause/Resume and Stop. */
+        /** Static text (no timer), with Pause/Resume and Stop. */
         private fun build(context: Context): Notification {
-            val c = RecordingHub.active
-            val paused = c?.phase == RecPhase.Paused
-            val elapsed = c?.elapsedMs ?: 0L
+            val paused = RecordingHub.active?.phase == RecPhase.Paused
             val open = PendingIntent.getActivity(
                 context, 0,
                 Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
@@ -99,12 +93,7 @@ class RecordingService : Service() {
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .addAction(0, if (paused) "Resume" else "Pause", action(context, 1, ACTION_TOGGLE))
                 .addAction(0, "Stop", action(context, 2, ACTION_STOP))
-            if (paused) {
-                val s = elapsed / 1000
-                b.setContentText("Paused %d:%02d · %s".format(s / 60, s % 60, who)).setShowWhen(false)
-            } else {
-                b.setContentText("Recording · $who").timer(System.currentTimeMillis() - elapsed, false)
-            }
+                .setContentText("${if (paused) "Paused" else "Recording"} · $who").setShowWhen(false)
             return b.build()
         }
 

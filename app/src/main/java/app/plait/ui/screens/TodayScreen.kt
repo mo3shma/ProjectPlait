@@ -106,12 +106,18 @@ internal fun Source.color(): Color = when (this) {
 }
 
 /**
+ * About how long Home takes to slide in (page or tab). Work its first frame does not need waits this long, so it never
+ * lands mid-transition: the arrival refreshes, the sky's WebView, and the Brief pages that are off screen.
+ */
+internal const val SettleMs = 500L
+
+/**
  * Home. Three tabs: the day's brief, the calendar, and voice notes. Which tab is open, how far each
  * list is scrolled and which calendar day is selected are kept in [HomeState], so Back from any
  * other screen lands exactly where you left.
  */
 @Composable
-fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, onOpenAt: (String, Int) -> Unit, onRecord: (String, Boolean) -> Unit, onOpenHub: () -> Unit) {
+fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, onOpenAt: (String, Int) -> Unit, onRecord: (String) -> Unit, onOpenHub: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val backdrop = rememberLayerBackdrop()
@@ -122,6 +128,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
     var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     remember(context) { Calendars.load(context); app.plait.data.Profile.load(context) }
     LaunchedEffect(Unit) {
+        delay(SettleMs)
         if (Calendars.feeds.isNotEmpty()) Calendars.refreshFeeds(context)
         var ticks = 0
         while (true) {
@@ -160,7 +167,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
         }
     }
     val calendarAccess = rememberCalendarAccess()
-    LaunchedEffect(Calendars.googleOn) { if (Calendars.googleOn && Calendars.lastSyncMs > 0) googleSync() }
+    LaunchedEffect(Calendars.googleOn) { delay(SettleMs); if (Calendars.googleOn && Calendars.lastSyncMs > 0) googleSync() }
     val onSyncClick: () -> Unit = {
         if (!Calendars.connected) onOpenHub()
         else {
@@ -181,7 +188,6 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
     val tab = HomeState.tab
     var menuOpen by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
-    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     // On the Notes tab a voice note stands alone; elsewhere it goes to the meeting that is next.
     val recordTarget = if (tab == 2) "" else today.upNext?.id ?: ""
 
@@ -207,16 +213,13 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                     // The Morning / Midday / Evening chips live in BriefPage, under the card that opens over them.
                     0 -> BriefPage(today, nowMs, tomorrow, ambient, onOpenEvent, onOpenNotes, onOpenHub, calendarAccess)
                     1 -> CalendarContent(calendarState, calendarEvents, nowMs, zone, ambient, onOpenEvent)
-                    else -> NotesLibrary(ambient, onOpenEvent, onOpenAt) { onRecord(it, false) }
+                    else -> NotesLibrary(ambient, onOpenEvent, onOpenAt, onRecord)
                 }
             }
             }
             }
-            // Content fades out under the glass bars.
-            Box(
-                Modifier.align(Alignment.TopCenter).fillMaxWidth().height(statusTop + 28.dp)
-                    .background(Brush.verticalGradient(listOf(plait.ground.copy(alpha = 0.92f), Color.Transparent)))
-            )
+            // Content fades out under the glass bars; the top one hides the logo row's band.
+            app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
             Box(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(170.dp)
                     .background(Brush.verticalGradient(listOf(Color.Transparent, plait.ground.copy(alpha = 0.9f))))
@@ -278,8 +281,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 collapsedIcon = Icons.Filled.Add,
                 collapsedDescription = "Record or add",
                 actions = listOf(
-                    GlassMenuAction("Voice note", Icons.Filled.Mic) { onRecord(recordTarget, false) },
-                    GlassMenuAction("Record this call", Icons.Filled.Videocam) { onRecord(recordTarget, true) },
+                    GlassMenuAction("Voice note", Icons.Filled.Mic) { onRecord(recordTarget) },
                     GlassMenuAction("New meeting", Icons.Filled.EditCalendar) { showNew = true },
                 ),
                 backdrop = backdrop,

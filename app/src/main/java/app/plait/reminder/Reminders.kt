@@ -102,7 +102,6 @@ object Reminders {
             if (at <= now) at += 86_400_000L
             setAlarm(am, at, nudge)
         }
-        runCatching { LiveMeeting.refresh(context) }
         NextMeetingWidget.updateAll(context)
     }
 
@@ -242,7 +241,6 @@ class ReminderReceiver : BroadcastReceiver() {
                     "app.plait.MEETING_REMINDER" -> Reminders.notifyMeeting(context, intent)
                     Reminders.ACTION_SNOOZE -> Reminders.snooze(context, intent)
                     "app.plait.MEETING_SNOOZED" -> Reminders.snoozeDue(context, intent)
-                    LiveMeeting.ACTION -> LiveMeeting.refresh(context)
                     TaskReminders.ACTION_LIVE -> TaskReminders.live(context, intent)
                     "app.plait.NOTE_NUDGE" -> { Reminders.notifyNudge(context); Reminders.scheduleAll(context) }
                     TaskReminders.ACTION_FIRE -> TaskReminders.fire(context, intent)

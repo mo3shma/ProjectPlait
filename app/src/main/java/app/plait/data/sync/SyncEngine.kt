@@ -72,7 +72,9 @@ object SyncEngine {
     /** Syncs in the background, at most once every 90 seconds. */
     fun requestAsync(context: Context, force: Boolean = false) {
         val app = context.applicationContext
-        if (!configured(app)) return
+        // Only the folder is checked here: the passphrase is a keystore decrypt (binder calls) and callers are often on the
+        // main thread, so run() reads it on the IO thread and stops there if sync is not set up.
+        if (tree(app) == null) return
         val now = System.currentTimeMillis()
         if (!force && now - lastRequest < 90_000L) return
         lastRequest = now

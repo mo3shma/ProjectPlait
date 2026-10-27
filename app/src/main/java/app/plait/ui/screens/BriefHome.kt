@@ -130,7 +130,9 @@ import app.plait.ui.pressable
 import app.plait.ui.fauxGlass
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.math.abs
@@ -228,6 +230,13 @@ private class DayData(
 )
 
 /**
+ * The last meeting briefs and the notes they were read from. Building one cleans the whole invite and scans every note with
+ * regexes, on the main thread; a dated meeting's brief does not change with the clock, so a new minute or coming back to
+ * Home reuses it.
+ */
+private var lastBriefs: Pair<List<app.plait.data.SavedNote>, Map<CalEvent, MeetingBrief>>? = null
+
+/**
  * Home pages sideways through the parts of the day; each is a vertical feed of equal-size cards: the active card takes
  * three quarters of the height and its neighbour peeks, faded, in the rest. A tapped card opens over the whole area.
  */
@@ -254,7 +263,11 @@ internal fun BriefPage(
     val data = remember(today, nowMs / 60_000, voiceCount, memoCount) {
         val notes = noteStore.notes.toList()
         val all = (listOfNotNull(today.upNext) + today.later + today.earlier).distinctBy { it.id }.sortedWith(compareBy({ !it.allDay }, { it.startMs }))
-        val briefs = all.associate { it.id to BriefBuilder.build(it, notes, nowMs) }
+        // Unchanged notes compare by identity, so this check is cheap. The clock only stands in for a missing start time.
+        val known = lastBriefs?.takeIf { it.first == notes }?.second.orEmpty()
+        val built = all.associateWith { ev -> known[ev]?.takeIf { ev.startMs > 0 } ?: BriefBuilder.build(ev, notes, nowMs) }
+        lastBriefs = notes to built
+        val briefs = built.mapKeys { it.key.id }
         val flags = HashMap<String, String>()
         val lines = HashMap<String, String>()
         val kinds = briefs.mapValues { it.value.kind }
@@ -305,6 +318,14 @@ internal fun BriefPage(
     val nowPhase by rememberUpdatedState(phaseNow)
     val pager = rememberPagerState(initialPage = initialPhasePage(HomeState.page, HomeState.pagePhase, phaseNow.ordinal)) { Phase.entries.size }
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { HomeState.page = it; HomeState.pagePhase = nowPhase.ordinal } }
+    // The parts of the day beside the one on screen are invisible at rest (alpha 0 below), yet the pager builds them because
+    // a sliver sits in its padding. On arrival only the page on screen is built; the others follow once Home has slid in,
+    // or as soon as a swipe starts.
+    var neighbours by remember { mutableStateOf(false) }
+    LaunchedEffect(pager) {
+        withTimeoutOrNull(SettleMs) { snapshotFlow { pager.isScrollInProgress }.first { it } }
+        neighbours = true
+    }
 
     var open by remember { mutableStateOf<OpenCard?>(null) }
     val root = remember { arrayOfNulls<LayoutCoordinates>(1) }
@@ -325,6 +346,7 @@ internal fun BriefPage(
             userScrollEnabled = open == null,
             key = { it },
         ) { page ->
+            if (!neighbours && page != pager.currentPage) return@HorizontalPager
             val ph = Phase.entries[page]
             val cards = remember(ph, lastDay) { feedCards(ph, lastDay) }
             val feed = rememberPagerState { cards.size }

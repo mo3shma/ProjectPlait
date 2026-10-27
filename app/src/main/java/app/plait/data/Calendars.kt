@@ -311,7 +311,8 @@ object Calendars {
             feedEvents = updated
             lastSyncMs = System.currentTimeMillis()
             message = if (failed > 0) "$failed calendar link${if (failed > 1) "s" else ""} couldn't be refreshed. Showing the last copy." else null
-            persistFeeds(context)
+            // Encoding every linked event and writing the file took the main thread when Home refreshed on arrival.
+            withContext(Dispatchers.IO) { persistFeeds(context) }
         } finally {
             syncing = false
         }

@@ -2,6 +2,15 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.30.0: calmer alerts, a smoother Home, no more call recording
+
+- **Call recording is gone.** It only ever heard your own microphone, so it caught nothing during calls. The "Record this call" menu item and the Record chooser on a meeting are removed. Record on a meeting now starts a voice note straight away.
+- **Quieter alerts.** The meeting countdown alert is removed, and so are the ticking timers and the Android 16 status-bar chip. Recording shows a plain "Recording" or "Paused" notification with Pause and Stop. A task alert shows "Due 3:00 PM" with Done and Tomorrow. The reminder before a meeting, with Join and Snooze, is unchanged. The "Live alerts" row in Settings is gone.
+- **Text no longer slides under the logo.** On Home, in a meeting, and in Settings, scrolling content now fades out behind the Plait logo row instead of showing through it.
+- **Home is lighter when you come back to it.** Meeting briefs are remembered instead of rebuilt every visit and every minute. The pages next to the one you're on, the animated sky and the calendar refresh now wait until the screen has settled. The sync setting is no longer read on the main thread.
+- Build: Arabic photo reading now uses Tesseract4Android 4.8.0, because 4.9.0 can't be fetched from JitPack right now.
+- Not yet checked on a phone: how much smoother Home feels, the header fade in every theme and style, and the new recording and task notifications.
+
 ## 0.29.0: live alerts, a voice-note tile, snooze, time zones, a calmer updater
 
 - **Live alerts.** While you record, a live alert shows a running timer with Pause and Stop. Before a meeting it counts down to the start with a Join button, then shows the meeting in progress. Tasks due soon get one with Done and Snooze. On Android 16 they appear as a status-bar chip and on the lock screen; on older versions they are normal ongoing notifications. A "Live alerts" row in Settings (Android 16 only) takes you to the phone's switch for them. Recording takes priority over a meeting countdown.

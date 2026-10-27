@@ -504,14 +504,6 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                             PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, "Evening note reminder")
                         }
-                        if (android.os.Build.VERSION.SDK_INT >= 36) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Column(Modifier.weight(1f)) {
-                                Text("Live alerts", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Recording, meeting and task timers as live chips.", style = PlaitType.caption, color = plait.muted)
-                            }
-                            if (app.plait.reminder.LiveAlert.canPromote(context)) Text("On", style = PlaitType.caption, color = plait.muted)
-                            else HubBtn("Allow", { app.plait.reminder.LiveAlert.openSettings(context) }, size = ButtonSize.Small)
-                        }
                         Text("Widget: press and hold the home screen, choose Widgets, then Plait. It comes in two sizes, 4×2 and 2×2, and shows the next meeting with a Join button.", style = PlaitType.caption, color = plait.muted)
                     }
                 }
@@ -723,8 +715,9 @@ fun HubScreen(onBack: () -> Unit) {
                 }
 
             } }
+            // Inside the backdrop so the glass back button refracts the faded content, not the text.
+            app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         }
-        app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         Box(Modifier.statusBarsPaddingCompat().padding(start = 18.dp, top = 12.dp)) {
             GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", goBack, backdrop)
         }

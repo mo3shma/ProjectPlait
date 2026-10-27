@@ -100,8 +100,12 @@ fun PhaseSky(phase: Phase, hour: Float, modifier: Modifier = Modifier, active: B
     val webAllowed = !env.reduceMotion && !env.solid
     // One WebView per card, built the first time the card is active and then only paused/hidden, never rebuilt on a flip.
     var web by remember { mutableStateOf<android.webkit.WebView?>(null) }
+    // Building a WebView holds the main thread for tens of ms, and Home builds a new one on every arrival: a sky that has
+    // just arrived waits until Home has slid in. The drawn sky below shows meanwhile.
+    val born = remember { android.os.SystemClock.uptimeMillis() }
     androidx.compose.runtime.LaunchedEffect(webAllowed, active) {
         if (webAllowed && active && web == null) {
+            kotlinx.coroutines.delay(born + SettleMs - android.os.SystemClock.uptimeMillis())
             web = runCatching {
                 object : android.webkit.WebView(context) {
                     // The sky is decoration: it must never take a touch, or the card under it cannot be tapped.

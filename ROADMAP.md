@@ -34,7 +34,7 @@ Legend: yes / partial / no. "Plait now" is what is in the 0.24.0 build. Most of 
 | Recurring meeting memory ("last time") | yes (from your own notes) | no | no | partial |
 | Time-in-meetings analytics | yes (daily) | no | yes | partial |
 | Join calls from the card (Meet, Teams, Zoom, Webex) | yes | yes | partial | yes |
-| Record the call itself | partial (mic only) | no | no | yes |
+| Record the call itself | no | no | no | yes |
 | Home screen widget, notifications before meetings | yes | yes | yes | partial |
 | Wear OS / watch | partial (alerts mirror to the watch) | yes | partial | no |
 | Cross-device sync | yes, encrypted, through a folder you choose | yes | yes | yes |

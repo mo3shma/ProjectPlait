@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                             onOpenEvent = { id -> if (id.isNotEmpty()) { Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}") } },
                             onOpenAt = { id, tab -> if (id.isNotEmpty()) { Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}?tab=$tab") } },
                             onOpenNotes = { id -> Entrance.arrived(); nav.navigate("event/${Uri.encode(id)}?tab=2") },
-                            onRecord = { id, call -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id.ifEmpty { "_none_" })}?call=$call") },
+                            onRecord = { id -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id.ifEmpty { "_none_" })}") },
                             onOpenHub = { Entrance.arrived(); nav.navigate("hub") },
                         )
                     }
@@ -146,12 +146,12 @@ class MainActivity : ComponentActivity() {
                             eventId = id,
                             startTab = entry.arguments?.getInt("tab") ?: 0,
                             onBack = { nav.popBackStack() },
-                            onRecord = { id, call -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id)}?call=$call") },
+                            onRecord = { id -> Entrance.arrived(); nav.navigate("record/${Uri.encode(id)}") },
                         )
                     }
                     composable(
-                        "record/{id}?call={call}",
-                        arguments = listOf(navArgument("id") { type = NavType.StringType }, navArgument("call") { type = NavType.BoolType; defaultValue = false }),
+                        "record/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.StringType }),
                         enterTransition = { slideInVertically(tween(450)) { it / 6 } + fadeIn(tween(450)) },
                         exitTransition = { ExitTransition.None },
                         popExitTransition = { slideOutVertically(tween(350)) { it / 6 } + fadeOut(tween(300)) },
@@ -159,7 +159,6 @@ class MainActivity : ComponentActivity() {
                         val id = entry.arguments?.getString("id").orEmpty().let { if (it == "_none_") "" else it }
                         RecordScreen(
                             eventId = id,
-                            callMode = entry.arguments?.getBoolean("call") ?: false,
                             onClose = { nav.popBackStack() },
                             onSaved = { _ ->
                                 // Go back to where the recording started, so the new note is the first thing seen there.
@@ -211,7 +210,7 @@ class MainActivity : ComponentActivity() {
                         app.plait.ui.WidgetLaunch.request = null
                         nav.popBackStack("today", false)
                         Entrance.arrived()
-                        if (kind == "voice") nav.navigate("record/_none_?call=false")
+                        if (kind == "voice") nav.navigate("record/_none_")
                         else {
                             app.plait.ui.HomeState.tab = 2
                             app.plait.ui.HomeState.notesList.requestScrollToItem(0)

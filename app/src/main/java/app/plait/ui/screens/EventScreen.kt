@@ -108,7 +108,7 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
 @Composable
-fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord: (String, Boolean) -> Unit) {
+fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord: (String) -> Unit) {
     val context = LocalContext.current
     val found = remember(eventId) { if (eventId.isEmpty()) null else Calendars.find(eventId) }
     if (found == null) { LaunchedEffect(Unit) { onBack() }; return }
@@ -124,7 +124,6 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
     val earlierVoice = store.notes.filter { app.plait.data.Series.carriesTo(ev, it.eventId, it.createdAt, it.title) { id -> Calendars.find(id) } }
     val earlierMemos = memoStore.items.filter { app.plait.data.Series.carriesTo(ev, it.eventId, it.createdAt) { id -> Calendars.find(id) } }
     val look = remember(ev.id) { MeetingLook(ambient, ServicePalette.of(ev)) }
-    var recordMenu by remember { mutableStateOf(false) }
     var manageOpen by remember { mutableStateOf(false) }
     val undo = remember { UndoDelete() }
     var tab by rememberSaveable(eventId) { mutableIntStateOf(when (startTab) { 2 -> 1; 3 -> 2; else -> 0 }) }
@@ -173,18 +172,15 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                 item {
                   androidx.compose.runtime.CompositionLocalProvider(LocalMeetingLook provides look) {
                     when (tab) {
-                        0 -> BriefTab(ev, brief, { onRecord(ev.id, false) }, notes + earlierVoice, memoStore.items.filter { it.eventId == ev.id } + earlierMemos)
-                        1 -> NotesTab(ev.id, notes, store, undo, earlierVoice, earlierMemos) { onRecord(ev.id, false) }
+                        0 -> BriefTab(ev, brief, { onRecord(ev.id) }, notes + earlierVoice, memoStore.items.filter { it.eventId == ev.id } + earlierMemos)
+                        1 -> NotesTab(ev.id, notes, store, undo, earlierVoice, earlierMemos) { onRecord(ev.id) }
                         else -> TranscriptTab(ev.id, notes)
                     }
                   }
                 }
             }
-            // Scroll edge effect
-            Box(
-                Modifier.align(Alignment.TopCenter).fillMaxWidth().height(statusTop + 76.dp)
-                    .background(Brush.verticalGradient(listOf(plait.ground.copy(alpha = 0.94f), Color.Transparent)))
-            )
+            // Scroll edge effect; inside the backdrop so the glass toolbar refracts the faded content, not the text.
+            app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
             Box(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(180.dp)
                     .background(Brush.verticalGradient(listOf(Color.Transparent, plait.ground.copy(alpha = 0.92f))))
@@ -195,7 +191,6 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
 
         // Functional layer: toolbar. Back, then the account pill at its own width; the manage button sits at the far right.
         val canManageHere = ev.id.startsWith("d:") || ev.id.startsWith("g:")
-        app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         Box(Modifier.align(Alignment.TopCenter).widthIn(max = 720.dp).fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp).rise(0)) {
             Row(
                 Modifier.align(Alignment.CenterStart).padding(end = if (canManageHere) 60.dp else 0.dp),
@@ -256,19 +251,10 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                 )
             }
             GlassIconButton(
-                Icons.Filled.Mic, "Record", { recordMenu = true }, backdrop,
+                Icons.Filled.Mic, "Record", { onRecord(ev.id) }, backdrop,
                 size = 64.dp, iconSize = 28.dp, tint = plait.signal, iconTint = Color(0xFF0E1316),
             )
         }
-
-        if (recordMenu) ActionsDialog(
-            "Record",
-            listOf(
-                NoteAction("Record the call", Icons.Filled.Videocam) { onRecord(ev.id, true) },
-                NoteAction("Take a voice note", Icons.Filled.Mic) { onRecord(ev.id, false) },
-            ),
-            onDismiss = { recordMenu = false },
-        )
     }
 }
 

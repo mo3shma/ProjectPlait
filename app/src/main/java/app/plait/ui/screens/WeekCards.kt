@@ -138,7 +138,8 @@ internal fun WeekRecapBlock(nowMs: Long, zone: ZoneId) {
         val days = WorkWeek.thisWorkWeek(dayOf(nowMs, zone), start)
         val events = WeekEvents.between(days.first(), days.last(), zone)
         val notes = noteStore.notes.toList()
-        val kinds = events.associate { it.id to BriefBuilder.build(it, notes, nowMs).kind }
+        // Only the kind is needed: a full brief per meeting of the week cleaned every invite on the main thread.
+        val kinds = events.associate { it.id to BriefBuilder.classify(it) }
         val noted = (notes.map { it.eventId } + memoStore.items.map { it.eventId }).toSet()
         val (done, open) = WeekEvents.checklistCounts(context, events)
         WeekAnalytics.compute(days, events, kinds, noted, done, open, nowMs, zone)
@@ -215,8 +216,7 @@ private fun NextWeekBrief(days: List<LocalDate>, nowMs: Long, zone: ZoneId) {
     val noteCount = noteStore.notes.size
     val preview = remember(nowMs / 60_000, noteCount, days, app.plait.data.Calendars.events.hashCode()) {
         val events = WeekEvents.between(days.first(), days.last(), zone)
-        val notes = noteStore.notes.toList()
-        WeekPreviews.compute(days, events, events.associate { it.id to BriefBuilder.build(it, notes, nowMs).kind }, zone)
+        WeekPreviews.compute(days, events, events.associate { it.id to BriefBuilder.classify(it) }, zone)
     }
     val firstName = app.plait.data.Profile.firstName().takeIf { it.isNotBlank() }
     val factsKey = WeekBriefs.previewFacts(preview, firstName, zone)

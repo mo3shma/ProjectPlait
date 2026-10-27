@@ -68,7 +68,7 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
 @Composable
-fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit, onSaved: (String) -> Unit) {
+fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit) {
     val context = LocalContext.current
     val backdrop = rememberLayerBackdrop()
     val env = LocalGlassEnv.current
@@ -157,7 +157,7 @@ fun RecordScreen(eventId: String, callMode: Boolean = false, onClose: () -> Unit
                 // While Android sends silence, nothing is being heard: the blocked message below says so instead.
                 if (granted && (controller.phase == RecPhase.Recording || paused) && controller.blocked == null) {
                     Text(
-                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else if (callMode) "Listening to the call. Speaker works best, but some phones block the mic during calls." else "Listening. The words are written after you stop.",
+                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else "Listening. The words are written after you stop.",
                         style = PlaitType.monoSmall, color = if (controller.speaking && !paused) plait.signal else plait.muted,
                     )
                 }

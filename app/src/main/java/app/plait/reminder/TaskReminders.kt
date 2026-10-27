@@ -5,9 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
-import app.plait.R
 import app.plait.data.TimeFmt
 import app.plait.data.tasks.Tasks
 import org.json.JSONArray
@@ -58,7 +56,7 @@ object TaskReminders {
         val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = pending(c, ACTION_FIRE, e)
         Reminders.setAlarm(am, e.at, pi)
-        // The live alert starts 15 minutes before; if that is already past, it starts now.
+        // The quiet heads-up starts 15 minutes before; if that is already past, it starts now.
         val now = System.currentTimeMillis()
         val pre = e.at - LiveLogic.TASK_LEAD_MS
         if (pre > now) Reminders.setAlarm(am, pre, pending(c, ACTION_LIVE, e, 4)) else if (e.at > now) postLive(c, e)
@@ -85,19 +83,18 @@ object TaskReminders {
 
     internal fun live(context: Context, i: Intent) = fire(context, i)
 
-    /** The task's live alert: counts down to the due time, then counts the time overdue, until Done or Tomorrow. */
+    /** The task's alert: a quiet heads-up before, then the due alert at the due time, until Done or Tomorrow. */
     private fun postLive(context: Context, e: Entry) {
         val due = LiveLogic.taskPhase(System.currentTimeMillis(), e.at) == TaskPhase.Due
         Reminders.ensureChannel(context)
         LiveAlert.ensureChannel(context)
-        // Quiet while it counts down; at the due time it uses the alerting channel so it can make a sound.
+        // Quiet beforehand; at the due time it uses the alerting channel so it can make a sound.
         val b = LiveAlert.builder(context, if (due) Reminders.CHANNEL else LiveAlert.CHANNEL, e.text, Reminders.open(context, e.eventId.ifBlank { null }, 2, code(e.id) + 3))
             .setOnlyAlertOnce(!due)
-            .setContentText((if (due) "Due now" else "Due ${TimeFmt.clock(e.at)}") + (if (e.title.isNotBlank()) " · Follow-up from ${e.title}" else ""))
+            .setContentText("Due ${TimeFmt.clock(e.at)}" + (if (e.title.isNotBlank()) " · Follow-up from ${e.title}" else ""))
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .addAction(0, "Done", pending(context, ACTION_DONE, e, 1))
             .addAction(0, "Tomorrow", pending(context, ACTION_LATER, e, 2))
-        if (e.at > 0) with(LiveAlert) { b.timer(e.at, !due) }
         runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(code(e.id), b.build()) }
     }
 

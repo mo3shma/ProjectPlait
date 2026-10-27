@@ -174,8 +174,7 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
             ExpandedNote(card, onClosed = { openKey = null }) { close ->
                 NoteDetail(open, voiceStore, memoStore, onBack = close, onOpenEvent = onOpenEvent, onLink = { linking = open }, onEdit = { editing = open })
             }
-            // The detail scrolls under the fixed app header, so fade it out there like the event screen does.
-            app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
+            // Home's TopFade (TodayScreen) already sits over this tab, so the detail needs no fade of its own.
         }
         undo.Host(Modifier.align(Alignment.BottomCenter).padding(bottom = 116.dp))
     }
