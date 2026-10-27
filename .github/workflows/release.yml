@@ -67,7 +67,7 @@ jobs:
         if: steps.key.outputs.ready == 'true'
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: gradle
 
       - uses: android-actions/setup-android@v3
