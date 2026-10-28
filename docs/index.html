@@ -3,341 +3,375 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef0fa">
 <title>Plait · Every calendar, one day</title>
 <meta name="description" content="Plait is an Android calendar that merges every account into one day, with voice, written, photo and checklist notes, meeting management, a day-brief widget and AI that runs on the phone.">
 <script>document.documentElement.classList.add('js')</script>
-<link rel="preconnect" href="https://api.fontshare.com">
-<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-<link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=AR+One+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#e8e8e3; --surface:#dcdcd6; --ink:#181715; --muted:#4f4e49; --accent:#bfb21a; --accent-ink:#181715;
-  --f1:#181715; --f1-ink:#e8e8e3; --f1-muted:#a9a8a0;
-  --m:clamp(16px,3vw,40px);
-  --small:14px; --body:17px; --lead:22px; --head:clamp(32px,4vw,56px); --display:clamp(52px,5.2vw,80px);
-  --ui:"AR One Sans",system-ui,sans-serif;
+  --bg:#f1f2f8; --card:#ffffff; --ink:#14151c; --muted:#555a6b; --indigo:#4b59d9; --indigo-soft:#e3e6fb; --fab:#e8452c; --fab-ink:#fff;
+  --c1:#ffe3d3; --c2:#e6e0fa; --c3:#d5f0e3; --c4:#d6e7ff; --c5:#fdeccb; --c6:#fbd9e0;
+  --b1:#c9cdf5; --b2:#f9cfc2; --b3:#bfe6d6;
+  --glass:rgba(255,255,255,.72);
+  --m:clamp(16px,4vw,56px); --r:28px;
+  --f:"AR One Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#171613; --surface:#242320; --ink:#ececE6; --muted:#a9a8a0; --f1:#ececE6; --f1-ink:#171613; --f1-muted:#4f4e48;
+  --bg:#0d0e13; --card:#181a22; --ink:#eef0f6; --muted:#bcc1d1; --indigo:#aab4ff; --indigo-soft:#2a2f55; --fab:#ff7a63; --fab-ink:#14151c;
+  --c1:#3a2a26; --c2:#2c2845; --c3:#1f3329; --c4:#1f2f4a; --c5:#3a3220; --c6:#3d2630;
+  --b1:#2b3070; --b2:#5a2e26; --b3:#1d4a3a; --glass:rgba(24,26,34,.72);
 }}
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font-family:"Clash Grotesk",system-ui,sans-serif;font-size:var(--body);line-height:1.45;overflow-x:hidden}
-a{color:inherit}
-code{font-family:ui-monospace,Consolas,monospace;font-size:.9em;background:var(--surface);padding:.1em .35em}
-img,video{display:block;max-width:100%}
-.wrap{padding:0 var(--m)}
-h1,h2,h3{font-weight:500;letter-spacing:-.03em;line-height:1.05}
-h2{font-size:var(--head)}
-.lead{font-size:var(--lead);line-height:1.35;color:var(--muted);max-width:44ch}
-.small{font-size:var(--small);color:var(--muted)}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.5;overflow-x:hidden;padding-bottom:120px;-webkit-font-smoothing:antialiased}
+a{color:inherit} img,video{display:block;max-width:100%}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.88em;background:var(--indigo-soft);padding:.1em .45em;border-radius:8px}
+h1,h2,h3{font-weight:700;letter-spacing:-.035em;line-height:1.02}
+h2{font-size:clamp(34px,5vw,68px);max-width:14em}
+.lead{font-size:clamp(17px,1.5vw,21px);color:var(--muted);max-width:46ch;margin-top:18px}
+:focus-visible{outline:3px solid var(--indigo);outline-offset:3px}
 
-/* one button shape: square, flat */
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;font:500 var(--body)/1 "Clash Grotesk",system-ui,sans-serif;text-decoration:none;background:var(--ink);color:var(--bg);border:0;cursor:pointer;
-  transition:transform .25s cubic-bezier(.2,.8,.2,1),background .25s}
-.btn:hover{transform:translateY(-2px)} .btn:active{transform:translateY(1px)}
-.btn.brass{background:var(--accent);color:var(--accent-ink)}
-.btn:focus-visible,a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border-radius:999px;border:0;font:600 17px var(--f);text-decoration:none;cursor:pointer;background:var(--ink);color:var(--bg);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.btn:hover{transform:translateY(-2px)} .btn:active{transform:scale(.97)}
+.btn.fab{background:var(--fab);color:var(--fab-ink)}
+.btn.soft{background:var(--glass);color:var(--ink)}
 
-nav{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:24px;height:72px;padding:0 var(--m)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:20px;text-decoration:none;letter-spacing:-.02em}
-nav .links{margin-left:auto;display:flex;gap:28px;font-size:var(--small)}
-nav .links a{text-decoration:none} nav .links a:hover{text-decoration:underline;text-underline-offset:5px}
+/* ---------- welcome screen ---------- */
+.welcome{position:relative;min-height:100svh;overflow:hidden;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;padding:96px var(--m) 130px;isolation:isolate}
+.sky{position:absolute;inset:0;z-index:-2;transition:opacity 1.2s}
+.blob{position:absolute;border-radius:50%;will-change:transform;transition:background 1.4s}
+.blob.a{width:62vmax;height:62vmax;left:-14vmax;top:-22vmax;background:radial-gradient(closest-side,var(--wa),transparent);animation:drift1 16s ease-in-out infinite alternate}
+.blob.b{width:58vmax;height:58vmax;right:-18vmax;top:4vmax;background:radial-gradient(closest-side,var(--wb),transparent);animation:drift2 19s ease-in-out infinite alternate}
+.blob.c{width:54vmax;height:54vmax;left:18vmax;bottom:-30vmax;background:radial-gradient(closest-side,var(--wc),transparent);animation:drift3 22s ease-in-out infinite alternate}
+/* the welcome screen has its own sky: light by day, dark in the evening, whatever the system theme */
+.welcome{--bg:#f1f2f8;--ink:#14151c;--muted:#454a5c;--glass:rgba(255,255,255,.74);--indigo:#4b59d9;--indigo-soft:#e3e6fb;--wa:#c9cdf5;--wb:#f9cfc2;--wc:#bfe6d6;background:var(--bg);color:var(--ink);transition:background .9s,color .9s}
+.welcome[data-mode="1"]{--wa:#bfe0f7;--wb:#fbe3b8;--wc:#d6c9f5}
+.welcome[data-mode="2"]{--bg:#0d0e13;--ink:#f4f4fb;--muted:#c8cbe0;--glass:rgba(24,26,34,.74);--indigo:#aab4ff;--indigo-soft:#2a2f55;--wa:#4a3a7a;--wb:#7a3b52;--wc:#1f3d5a}
+@keyframes drift1{to{transform:translate(12vmax,10vmax) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-10vmax,12vmax) scale(.92)}}
+@keyframes drift3{to{transform:translate(-8vmax,-9vmax) scale(1.15)}}
+.strands{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent 22%,#000 58%);mask-image:linear-gradient(90deg,transparent 22%,#000 58%)}
+.strands path{fill:none;stroke-width:11;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;opacity:.8;animation:draw 2.4s cubic-bezier(.6,0,.2,1) forwards,sway 7s ease-in-out 2.4s infinite alternate}
+.strands path:nth-child(2){animation-delay:.18s,2.4s;animation-duration:2.4s,8s}
+.strands path:nth-child(3){animation-delay:.36s,2.4s;animation-duration:2.4s,9s}
+.strands path:nth-child(4){animation-delay:.54s,2.4s;animation-duration:2.4s,10s}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes sway{to{transform:translateY(22px)}}
 
-/* hero */
-.hero{position:relative;padding-top:150px}
-.hero .copy{padding:0 var(--m);max-width:calc(50% + var(--m))}
-.hero h1{font-size:var(--display);line-height:1;max-width:9.5em;text-wrap:balance}
-.hero p.lead{margin-top:24px;max-width:40ch;font-size:var(--body);color:var(--ink)}
-.hero .cta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.hero .alt{font-size:var(--small)}
-.stage{position:relative;margin:-60px 0 0 33.333%;background:var(--f1);overflow:hidden;height:640px;padding:56px 0 0 56px;
-  clip-path:polygon(96px 0,100% 0,100% 100%,0 100%,0 96px)}
-.stage .reveal{clip-path:inset(100% 0 0 0);transition:clip-path 1.1s cubic-bezier(.7,0,.2,1)}
-.stage .reveal > *{transform:scale(1.12);transform-origin:20% 90%;transition:transform 1.1s cubic-bezier(.7,0,.2,1)}
-.on .stage .reveal{clip-path:inset(0)} .on .stage .reveal > *{transform:none}
-html:not(.js) .stage .reveal{clip-path:none}
+.wtop{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px var(--m)}
+.wlogo{display:flex;align-items:center;gap:12px;font-weight:700;font-size:26px;letter-spacing:-.03em;text-decoration:none;transition:color .8s}
+.wlogo img{width:44px;height:44px;border-radius:14px}
+.wtop .btn{min-height:46px;padding:0 20px;font-size:15px}
+.wcopy{position:relative;z-index:2;transition:color .8s;max-width:640px}
+.wcopy h1{font-size:clamp(52px,8.2vw,128px);line-height:.92;letter-spacing:-.05em}
+.wcopy h1 span{display:inline-block;opacity:0;transform:translateY(60%) rotate(4deg);animation:word .9s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.5s + var(--w) * .12s)}
+@keyframes word{to{opacity:1;transform:none}}
+.wcopy .lead{opacity:0;animation:fade .9s 1.3s forwards;color:var(--muted)}
+.wcta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px;opacity:0;animation:fade .9s 1.5s forwards}
+@keyframes fade{from{transform:translateY(16px)}to{opacity:1;transform:none}}
 
-/* interface fragments: the product's own conventions live inside data-ui */
-[data-ui]{font-family:var(--ui);color:#16181f;font-size:14px;line-height:1.4;text-align:left}
-.agenda{width:min(640px,100%);background:#f6f6f4;border-radius:22px 0 0 0;padding:22px 24px 0;min-height:590px}
-.agenda .ttl{font:600 20px/1.3 var(--ui);letter-spacing:-.01em;color:#16181f}
-.agenda .sub{font-size:13px;color:#5b6070;margin-top:2px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}
-.chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid #cfd2da; /* taste-skill-ignore: inside a data-ui fragment */
-  background:#fff;font:500 14px var(--ui);color:#16181f;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
-.chip i{width:10px;height:10px;border-radius:50%;background:var(--c)}
-.chip[aria-pressed="false"]{background:transparent;color:#8a8f9c;border-style:dashed}
-.chip[aria-pressed="false"] i{background:#c7cad2}
-.chip:hover{transform:translateY(-1px)}
-.rows{list-style:none;margin-top:6px}
-.row{display:grid;grid-template-columns:78px 6px 1fr auto;gap:0 12px;align-items:center;padding:11px 0;max-height:80px;overflow:hidden;transition:max-height .35s ease,opacity .25s,padding .35s}
+.stage{position:relative;justify-self:center;display:flex;flex-direction:column;align-items:center;gap:18px;opacity:0;animation:rise 1.2s .7s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes rise{from{transform:translateY(14vh) scale(.94)}to{opacity:1;transform:none}}
+.seg{display:flex;padding:5px;border-radius:999px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:3}
+.seg button{border:0;background:transparent;color:var(--ink);font:600 15px var(--f);padding:10px 20px;border-radius:999px;cursor:pointer;position:relative;overflow:hidden;transition:background .3s,color .3s}
+.seg button[aria-pressed="true"]{background:var(--indigo-soft);color:var(--indigo)}
+.seg button i{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--indigo);transform:scaleX(0);transform-origin:left}
+.seg button[aria-pressed="true"] i{animation:prog var(--dur,4.6s) linear forwards}
+.paused .seg button i{animation:none!important;transform:scaleX(0)}
+@keyframes prog{to{transform:scaleX(1)}}
+.phone{position:relative;height:min(70svh,700px);aspect-ratio:540/1171;border-radius:clamp(34px,4.4svh,48px);padding:9px;background:#0c0d12;box-shadow:0 40px 90px -20px rgba(0,0,0,.4),0 0 0 2px rgba(255,255,255,.4) inset;animation:bob 6s ease-in-out infinite alternate;animation-delay:2s}
+@keyframes bob{to{transform:translateY(-12px) rotate(-.6deg)}}
+.phone .scr{position:relative;width:100%;height:100%;border-radius:calc(clamp(34px,4.4svh,48px) - 9px);overflow:hidden}
+.phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.04);transition:opacity .9s,transform 1.2s}
+.phone img.on{opacity:1;transform:none}
+.chip{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:20px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font:600 14px/1.25 var(--f);white-space:nowrap;color:var(--ink);animation:float 5s ease-in-out infinite alternate;box-shadow:0 14px 34px -14px rgba(0,0,0,.28)}
+.chip b{display:block;font-size:15px} .chip small{color:var(--muted);font-weight:500;font-size:12.5px}
+.chip i{width:10px;height:36px;border-radius:5px;background:var(--cc)}
+.chip.k1{--cc:#6c7cff;left:-34%;top:20%;animation-delay:-1s}
+.chip.k2{--cc:#ff8f7a;right:-32%;top:34%;animation-delay:-2.5s}
+.chip.k3{--cc:#3fc489;left:-28%;bottom:22%;animation-delay:-3.5s}
+.chip.k4{--cc:#f0b43a;right:-26%;bottom:12%;animation-delay:-.5s}
+@keyframes float{to{transform:translate(8px,-14px)}}
+.scrollhint{position:absolute;left:50%;bottom:104px;width:26px;height:44px;margin-left:-13px;border-radius:14px;border:2px solid currentColor;opacity:.45;color:var(--ink)}
+.scrollhint::after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:currentColor;animation:wheel 1.8s infinite}
+@keyframes wheel{0%{transform:translateY(0);opacity:1}100%{transform:translateY(16px);opacity:0}}
+
+/* ---------- sections ---------- */
+section{padding:clamp(80px,11vw,170px) var(--m) 0}
+.card{background:var(--card);border-radius:var(--r)}
+
+.demo{display:grid;grid-template-columns:5fr 6fr;gap:clamp(28px,5vw,80px);align-items:center}
+.agenda{background:var(--card);border-radius:36px;padding:26px;max-width:560px;justify-self:end;width:100%;box-shadow:0 30px 70px -30px rgba(0,0,0,.2)}
+.agenda .ttl{font-weight:700;font-size:24px;letter-spacing:-.02em}
+.agenda .sub{color:var(--muted);font-size:14px;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 10px}
+.acc{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:0;background:var(--indigo-soft);color:var(--ink);font:600 14px var(--f);cursor:pointer;transition:background .25s,opacity .25s,transform .2s}
+.acc i{width:11px;height:11px;border-radius:50%;background:var(--c)}
+.acc[aria-pressed="false"]{background:transparent;opacity:.55;text-decoration:line-through}
+.acc:active{transform:scale(.95)}
+.rows{list-style:none}
+.row{display:grid;grid-template-columns:76px 6px 1fr auto;gap:0 12px;align-items:center;padding:11px 0;max-height:78px;overflow:hidden;transition:max-height .4s ease,opacity .3s,padding .4s}
 .row.off{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
-.row time{font:500 13px var(--ui);color:#5b6070;font-variant-numeric:tabular-nums}
+.row time{font:600 13px var(--f);color:var(--muted);font-variant-numeric:tabular-nums}
 .row .bar{align-self:stretch;width:6px;border-radius:3px;background:var(--c)}
-.row b{display:block;font:600 15px var(--ui);color:#16181f}
-.row span{font-size:13px;color:#5b6070}
-.row .join{height:30px;padding:0 14px;border-radius:999px;background:#4b59d9;color:#fff;font:600 13px/30px var(--ui)}
-.count{margin-top:10px;font:500 13px var(--ui);color:#5b6070}
+.row b{display:block;font-size:15px;line-height:1.25} .row span{font-size:13px;color:var(--muted)}
+.row .join{height:30px;padding:0 14px;border-radius:999px;background:var(--indigo);color:var(--bg);font:600 13px/30px var(--f)}
+.count{margin-top:10px;font-size:13px;color:var(--muted)}
 .gc{--c:#4a8cf7}.oc{--c:#e8725f}.ic{--c:#2fae6a}.lc{--c:#e0a82e}
 
-/* sections */
-section{padding:clamp(80px,11vw,170px) var(--m) 0}
-section > h2{max-width:14em}
-section > .lead{margin-top:18px}
+.bento{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-flow:dense;gap:14px;margin-top:56px}
+.tile{border-radius:var(--r);padding:26px;display:flex;flex-direction:column;gap:10px;overflow:hidden;position:relative;min-height:250px}
+.tile h3{font-size:25px;letter-spacing:-.025em;line-height:1.08}
+.tile p{font-size:16px;color:var(--muted);line-height:1.45}
+.tile p b{color:var(--ink);font-weight:600}
+.tile.tall{grid-row:span 2;min-height:640px}
+.tile .shot{margin:auto -6px -26px;align-self:center;width:72%;border-radius:30px 30px 0 0;border:8px solid #0c0d12;border-bottom:0;aspect-ratio:540/640;object-fit:cover;object-position:top;margin-top:auto}
+.tile.wide{grid-column:span 2}
+.t1{background:var(--c1)}.t2{background:var(--c2)}.t3{background:var(--c3)}.t4{background:var(--c4)}.t5{background:var(--c5)}.t6{background:var(--c6)}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px}
+.pill{padding:9px 16px;border-radius:999px;background:var(--card);font:600 14px var(--f)}
+.pill.sel{background:var(--indigo);color:var(--bg)}
 
-.cells{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:56px}
-.cell{background:var(--surface);min-height:470px;padding:24px 24px 0;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.cell:nth-child(even){flex-direction:column-reverse;padding:0 24px 24px}
-.cell h3{font-size:22px;letter-spacing:-.01em;line-height:1.15;margin-bottom:8px}
-.cell p{font-size:17px;line-height:1.4;color:var(--muted)}
-.cell .txt{padding-bottom:20px}
-.cell:nth-child(even) .txt{padding:20px 0 0}
-.cell .frag{margin-top:auto;margin-left:auto;width:100%;max-width:360px;background:#f6f6f4;padding:16px;border-radius:14px 14px 0 0}
-.cell:nth-child(even) .frag{margin-top:0;margin-bottom:auto;border-radius:0 0 14px 14px;margin-left:0}
-.cell .shot{margin-top:auto;width:78%;margin-left:auto;border-radius:18px 18px 0 0;object-fit:cover;object-position:top;height:290px}
-.cell:nth-child(even) .shot{margin:0 auto 0 0;border-radius:0 0 18px 18px;object-position:bottom}
-.frag .t{font:600 15px var(--ui)} .frag .m{font-size:13px;color:#5b6070}
-.frag .line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;font:500 14px var(--ui)}
-.frag .sw{width:34px;height:20px;border-radius:10px;background:#4b59d9;position:relative;flex:none}
-.frag .sw::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
-.frag .seg{display:flex;background:#eceef3;border-radius:999px;padding:3px;margin:8px 0}
-.frag .seg span{flex:1;text-align:center;padding:6px 0;border-radius:999px;font:500 13px var(--ui);color:#5b6070}
-.frag .seg .on{background:#4b59d9;color:#fff}
-.frag .tag{display:inline-block;padding:6px 14px;border-radius:999px;background:#eceef3;font:500 13px var(--ui);margin:0 6px 6px 0}
-.frag .tag.sel{background:#4b59d9;color:#fff}
-.frag .field{border:1px solid #cfd2da; /* taste-skill-ignore: inside a data-ui fragment */
-  border-radius:12px;padding:12px 16px;background:#fff;font:500 14px var(--ui)}
-.frag .done{color:#666b77;text-decoration:line-through}
-.frag .box{display:inline-block;width:16px;height:16px;border-radius:5px;border:2px solid #4b59d9;margin-right:8px;vertical-align:-3px}
-.frag .box.k{background:#4b59d9}
-.frag .res{padding:8px 0;border-top:1px solid #e3e5ea} /* taste-skill-ignore: inside a data-ui fragment */
-.frag .res:first-of-type{border-top:0}
+.film{margin:clamp(80px,11vw,170px) var(--m) 0;position:relative;border-radius:40px;overflow:hidden;background:#14151c}
+.film video{width:100%;aspect-ratio:16/9;object-fit:cover}
+.film a.cap{position:absolute;left:20px;bottom:20px;padding:12px 20px;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-decoration:none;font-weight:600;font-size:15px}
 
-.widgets{display:grid;grid-template-columns:repeat(4,92px);grid-auto-rows:92px;gap:10px;margin-top:0}
-.wd{border-radius:20px;padding:12px 14px;color:#16181f;font:500 13px/1.3 var(--ui);overflow:hidden}
-.wd b{display:block;font:700 28px/1 var(--ui);margin-bottom:4px}
-.wd .jn{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#16181f;color:#fff;font:600 12px var(--ui)}
-.w1{grid-column:span 2;background:#ffe0cc}.w2{grid-column:span 2;grid-row:span 2;background:#d3e6ff}
-.w3{grid-column:span 4;grid-row:span 2;background:#ece0f8}.w4{grid-column:span 4;grid-row:span 4;background:#d2efdc}
-.w4 .r{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.12)} /* taste-skill-ignore: inside a data-ui fragment */
+.widgets{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:92px;gap:12px;max-width:460px;justify-self:end;width:100%}
+.wd{border-radius:24px;padding:14px 16px;color:#16181f;font:600 13px/1.3 var(--f);overflow:hidden}
+.wd b{display:block;font:700 30px/1 var(--f);margin-bottom:4px;letter-spacing:-.03em}
+.wd .jn{display:inline-block;margin-top:8px;padding:5px 14px;border-radius:999px;background:#16181f;color:#fff;font-size:12px}
+.w1{grid-column:span 2;background:#ffe0cc}.w2{grid-column:span 2;grid-row:span 2;background:#d3e6ff}.w3{grid-column:span 4;grid-row:span 2;background:#ece0f8}.w4{grid-column:span 4;grid-row:span 4;background:#d2efdc}
+.w4 .r{padding:8px 0;font-weight:500;font-size:14px}
 
-.split{display:grid;grid-template-columns:5fr 7fr;gap:var(--m);align-items:start}
-.panelrows{display:grid;gap:8px;margin-top:0}
-.tile{background:var(--surface);padding:18px 22px;display:flex;justify-content:space-between;gap:16px;align-items:baseline}
-.tile b{font-weight:500}.tile span{color:var(--muted);text-align:right;font-size:17px}
-ol.harness{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:h}
-ol.harness li{background:var(--surface);padding:18px 22px;font-size:17px;color:var(--muted)}
-ol.harness li b{color:var(--ink);font-weight:500}
-.shot-ai{width:100%;max-width:340px;height:auto;margin-top:8px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:48px}
+.panel{background:var(--card);border-radius:var(--r);padding:28px}
+.panel h3{font-size:24px;margin-bottom:16px}
+.eng{display:flex;justify-content:space-between;gap:16px;padding:14px 18px;border-radius:18px;background:var(--bg);margin-top:8px;font-size:16px}
+.eng b{font-weight:600}.eng span{color:var(--muted);text-align:right}
+ol.harness{list-style:none;display:grid;gap:8px}
+ol.harness li{padding:14px 18px;border-radius:18px;background:var(--bg);font-size:16px;color:var(--muted)}
+ol.harness li b{color:var(--ink);font-weight:600}
 
-/* one control, blown up */
-.show{background:var(--accent);color:var(--accent-ink);min-height:92svh;padding:clamp(40px,6vw,80px) var(--m) 0;position:relative;overflow:hidden;margin-top:clamp(80px,11vw,170px);transition:background .6s}
-.show.alt{background:var(--f1);color:var(--f1-ink)}
-.show h2{font-size:clamp(28px,2.6vw,40px);letter-spacing:-.02em}
-.show p{font-size:var(--body);max-width:40ch;margin-top:14px;opacity:.9}
-.ctl{position:absolute;left:46%;bottom:14svh;font-size:clamp(44px,13svh,140px);display:flex;font-family:var(--ui);padding:.12em;border-radius:1em;background:rgba(0,0,0,.14);white-space:nowrap}
-.ctl button{font:600 1em/1 var(--ui);padding:.55em .9em;border:0;border-radius:1em;background:transparent;color:inherit;cursor:pointer;transition:background .35s,color .35s}
-.ctl button[aria-pressed="true"]{background:#4b59d9;color:#fff}
+.looks{margin:clamp(80px,11vw,170px) var(--m) 0;border-radius:44px;padding:clamp(36px,6vw,84px);display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;background:var(--c2);transition:background .6s,color .6s}
+.looks.material{background:#2d3a8c;color:#eef0ff}.looks.material .lead{color:#c9d0ff}
+.looks h2{font-size:clamp(38px,6vw,84px)}
+.toggle{display:inline-flex;padding:6px;border-radius:999px;background:rgba(0,0,0,.12);margin-top:28px}
+.toggle button{border:0;background:transparent;color:inherit;font:700 20px var(--f);padding:14px 28px;border-radius:999px;cursor:pointer;transition:background .35s,color .35s}
+.toggle button[aria-pressed="true"]{background:var(--indigo);color:var(--bg)}
+.looks.material .toggle button[aria-pressed="true"]{background:#fff;color:#2d3a8c}
+.looks .pic{justify-self:center;display:flex;gap:16px}
+.looks .pic img{width:min(220px,40vw);border-radius:30px;border:6px solid #0c0d12;transition:transform .8s cubic-bezier(.2,.8,.2,1),filter .6s}
+.looks .pic img:nth-child(2){transform:translateY(34px)}
+.looks.material .pic img:first-child{transform:translateY(34px)}.looks.material .pic img:nth-child(2){transform:none}
 
-/* install: call and response */
-.calls{max-width:560px;margin:56px 0 0 clamp(0px,25vw,360px);display:grid;gap:88px}
-.calls p.s{font-size:22px;font-weight:500}
-.calls .call{margin-top:16px;background:var(--surface);padding:18px 20px;font-size:17px}
-.calls .resp{margin:16px 0 0 56px;background:#f6f6f4;padding:14px 16px;border-radius:14px;max-width:420px}
-.calls .resp.shotr{padding:0;overflow:hidden;max-height:300px;border-radius:14px}
-.calls .resp.shotr img{width:100%}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{text-align:left;padding:15px 16px 15px 0;vertical-align:top;border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent)}
+th{color:var(--muted);font-size:14px;font-weight:600} td:first-child{font-weight:600;width:20%}
+td small{display:block;color:var(--muted);font-size:13.5px}
+.tbl{margin-top:48px;padding:12px 28px 4px;overflow-x:auto}
 
-/* tables: real tables keep their lines */
-.tbl{margin-top:48px;overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:17px}
-th,td{text-align:left;padding:14px 16px 14px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 18%,transparent);vertical-align:top} /* taste-skill-ignore: a real table */
-th{font-weight:500;color:var(--muted);font-size:14px}
-td:first-child{font-weight:500;width:22%}
-td small{display:block;color:var(--muted);font-size:var(--small)}
+.priv{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:48px;align-items:stretch}
+.zero{background:var(--ink);color:var(--bg);border-radius:var(--r);padding:32px;display:flex;flex-direction:column;justify-content:space-between;min-height:420px}
+.zero .n{font-size:clamp(180px,22vw,340px);line-height:.8;letter-spacing:-.06em;font-weight:700}
+.zero p{font-size:19px;max-width:30ch}
+.perm{display:grid;gap:6px;padding:22px}
+.perm div{padding:12px 14px;border-radius:16px;background:var(--bg)}
+.perm b{font-weight:600;font-size:14px;display:block}.perm span{color:var(--muted);font-size:14.5px}
 
-/* privacy receipt */
-.priv{display:grid;grid-template-columns:6fr 4fr;gap:var(--m);margin-top:40px;align-items:start}
-.total{font-size:clamp(160px,18vw,300px);line-height:.8;letter-spacing:-.05em;font-weight:500;margin-top:72px}
-.slip{background:#f2f2f0;color:#181715;padding:28px 26px 40px;clip-path:polygon(0 0,100% 0,100% calc(100% - 40px),calc(100% - 40px) 100%,0 100%)}
-.slip h3{font-size:22px;margin-bottom:12px}
-.slip .r{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:9px 0;font-size:14px;align-items:baseline}
-.slip .r b{font-weight:500;white-space:nowrap}
-.slip .r span{color:#5d5c56;grid-column:1/-1}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px}
+.step{border-radius:var(--r);padding:26px;display:flex;flex-direction:column;gap:12px;min-height:280px}
+.step .n{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700}
+.step p{font-size:17px;font-weight:500;line-height:1.35}.step small{color:var(--muted);font-size:14px;margin-top:auto}
 
-/* closing */
-.close{padding:clamp(80px,11vw,170px) var(--m) 0}
-.close p.big{font-size:clamp(36px,6vw,92px);line-height:1.02;letter-spacing:-.035em;font-weight:500;max-width:12em}
-.close .row2{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;align-items:center}
-.follow img{height:46px}
-footer{margin-top:30svh;padding:0 var(--m) 30px;display:grid;grid-template-columns:1fr auto 1fr;gap:16px;font-size:var(--small);align-items:baseline}
-footer .mid{display:flex;gap:24px;justify-content:center;flex-wrap:wrap} footer .end{text-align:right}
-footer a{color:var(--ink)} footer span{color:var(--muted)}
+.close{text-align:center}
+.close p.big{font-size:clamp(46px,9vw,150px);line-height:.92;letter-spacing:-.05em;font-weight:700;margin:0 auto;max-width:9em}
+.close .row2{display:flex;gap:12px;flex-wrap:wrap;margin-top:36px;align-items:center;justify-content:center}
+.close .small{max-width:52ch;margin:22px auto 0;color:var(--muted);font-size:15px}
+footer{margin-top:90px;padding:0 var(--m) 20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+footer a{color:var(--ink)}
 
-video.trailer{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#181715}
-.band{margin-top:clamp(80px,11vw,170px);position:relative}
-.band a.cap{position:absolute;left:var(--m);bottom:24px;background:var(--bg);color:var(--ink);padding:10px 16px;text-decoration:none;font-size:var(--small)}
+/* ---------- app dock ---------- */
+.dockwrap{position:fixed;z-index:50;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;padding:0 14px;pointer-events:none}
+.dock{pointer-events:auto;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 16px 40px -14px rgba(0,0,0,.28)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:76px;padding:8px 12px 7px;border-radius:999px;text-decoration:none;font:600 12px var(--f);color:var(--ink);transition:background .3s,color .3s}
+.dock a svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dock a.on{background:var(--indigo-soft);color:var(--indigo)}
+.fabbtn{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:var(--fab);color:var(--fab-ink);display:grid;place-items:center;box-shadow:0 16px 36px -10px rgba(0,0,0,.3);transition:transform .25s}
+.fabbtn:hover{transform:scale(1.07) rotate(8deg)} .fabbtn:active{transform:scale(.94)}
+.fabbtn svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 
-/* motion */
-.js [data-rise]{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0) * 80ms)}
+.js [data-rise]{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0) * 90ms)}
 .js [data-rise].in{opacity:1;transform:none}
 
 @media (max-width:900px){
-  nav .links a:not(:last-child){display:none}
-  .hero{padding-top:110px}
-  .hero .copy{max-width:none}
-  .hero h1{font-size:clamp(40px,10vw,64px)}
-  .stage{margin:36px 0 0 0;padding:32px 0 0 16px;height:560px;clip-path:polygon(72px 0,100% 0,100% 100%,0 100%,0 72px)}
-  .agenda{min-width:640px}
-  .cells{grid-template-columns:1fr}
-  .cell,.cell:nth-child(even){flex-direction:column;padding:24px 24px 0;min-height:0}
-  .cell:nth-child(even) .txt{padding:0 0 20px}
-  .cell:nth-child(even) .frag{margin:auto 0 0 0;border-radius:14px 14px 0 0}
-  .cell:nth-child(even) .shot{margin:auto auto 0 0;border-radius:18px 18px 0 0;object-position:top}
-  .split,.priv{grid-template-columns:1fr}
-  .show{min-height:86svh}
-  .ctl{left:-4%;font-size:12vw;bottom:8svh}
-  .calls{margin-left:0}
-  .calls .resp{margin-left:0}
-  .widgets{grid-template-columns:repeat(4,1fr);grid-auto-rows:84px}
-  footer{grid-template-columns:1fr;gap:8px;margin-top:20svh}
-  footer .mid{justify-content:flex-start} footer .end{text-align:left}
-  td:first-child{width:auto}
+  .welcome{grid-template-columns:1fr;align-content:start;gap:14px;padding:84px var(--m) 0;height:100svh;min-height:600px;text-align:left}
+  .wcopy h1{font-size:clamp(46px,14vw,84px)}
+  .wcopy .lead{font-size:16px;margin-top:12px;max-width:34ch}
+  .wcta{margin-top:18px}.wcta .btn.soft{display:none}
+  .wcta .btn{min-height:52px}
+  .phone{height:min(60svh,560px)}
+  .stage{gap:12px}
+  .chip{padding:8px 12px 8px 10px;font-size:12px}.chip b{font-size:13px}.chip small{font-size:11px}
+  .chip.k1{left:-14%;top:16%}.chip.k2{right:-14%;top:38%}.chip.k3,.chip.k4{display:none}
+  .scrollhint{display:none}
+  .strands{-webkit-mask-image:linear-gradient(180deg,transparent 34%,#000 60%);mask-image:linear-gradient(180deg,transparent 34%,#000 60%)}
+  .demo,.split,.priv,.looks{grid-template-columns:1fr}
+  .agenda,.widgets{justify-self:stretch;max-width:none}
+  .bento{grid-template-columns:1fr}
+  .tile.tall{min-height:0;grid-row:auto}.tile.wide{grid-column:auto}
+  .tile .shot{width:78%}
+  .steps{grid-template-columns:1fr 1fr}
+  .film{border-radius:28px}
+  .dock a{min-width:62px;padding:8px 8px 7px}
+  .wtop .btn{display:none}
 }
+@media (max-width:520px){.steps{grid-template-columns:1fr}.dock a span{font-size:11px}}
+@media (max-height:700px) and (min-width:901px){.phone{height:66svh}.scrollhint{display:none}}
 @media (prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}html{scroll-behavior:auto}
+  *{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}
+  html{scroll-behavior:auto}
   .js [data-rise]{opacity:1;transform:none}
-  .stage .reveal{clip-path:none}.stage .reveal > *{transform:none}
+  .strands path{stroke-dashoffset:0}
 }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <symbol id="plait-mark" viewBox="0 0 108 108"><path d="M70.99 30.30L70.95 30.60L70.88 30.90L70.79 31.20L70.67 31.50L70.53 31.80L70.36 32.10L70.17 32.40L69.95 32.70L69.71 33.00L69.44 33.30L69.15 33.60L68.83 33.90L68.49 34.20L68.13 34.50L67.75 34.80L67.35 35.10L66.93 35.40L66.48 35.70L66.02 36.00L65.54 36.30L65.04 36.60L64.52 36.90L63.99 37.20L63.44 37.50L62.88 37.80L62.31 38.10L61.72 38.40L61.12 38.70L60.51 39.00L59.88 39.30L59.25 39.60L58.61 39.90L57.97 40.20L57.32 40.50L56.66 40.80L56.00 41.10L55.33 41.40L54.67 41.70L54.00 42.00L53.33 42.30L52.67 42.60L52.00 42.90L51.34 43.20L50.68 43.50L50.03 43.80L49.39 44.10L48.75 44.40L48.12 44.70L47.49 45.00L46.88 45.30L46.28 45.60L45.69 45.90L45.12 46.20L44.56 46.50L44.01 46.80L43.48 47.10L42.96 47.40L42.46 47.70L41.98 48.00L41.52 48.30L41.07 48.60L40.65 48.90L40.25 49.20L39.87 49.50L39.51 49.80L39.17 50.10L38.85 50.40L38.56 50.70L38.29 51.00L38.05 51.30L37.83 51.60L37.64 51.90L37.47 52.20L37.33 52.50L37.21 52.80L37.12 53.10L37.05 53.40L37.01 53.70L37.00 54.00L37.01 54.30" stroke="#464E96" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M70.99 78.30L70.95 78.60L70.88 78.90L70.79 79.20L70.67 79.50L70.53 79.80L70.36 80.10L70.17 80.40L69.95 80.70L69.71 81.00L69.44 81.30L69.15 81.60L68.83 81.90L68.49 82.20L68.13 82.50L67.75 82.80L67.35 83.10L66.93 83.40L66.48 83.70L66.02 84.00L65.54 84.30L65.04 84.60L64.52 84.90L63.99 85.20L63.44 85.50L62.88 85.80L62.31 86.10L61.72 86.40L61.12 86.70L60.51 87.00L59.88 87.30L59.25 87.60L58.61 87.90L57.97 88.20L57.32 88.50L56.66 88.80L56.00 89.10L55.33 89.40L54.67 89.70L54.00 90.00" stroke="#464E96" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M68.72 18.00L68.38 18.30L68.01 18.60L67.62 18.90L67.21 19.20L66.78 19.50L66.33 19.80L65.86 20.10L65.38 20.40L64.87 20.70L64.35 21.00L63.81 21.30L63.26 21.60L62.69 21.90L62.11 22.20L61.52 22.50L60.91 22.80L60.30 23.10L59.67 23.40L59.04 23.70L58.40 24.00L57.75 24.30L57.10 24.60L56.44 24.90L55.78 25.20L55.11 25.50L54.45 25.80L53.78 26.10L53.11 26.40L52.44 26.70L51.78 27.00L51.12 27.30L50.47 27.60L49.82 27.90L49.17 28.20L48.54 28.50L47.91 28.80L47.29 29.10L46.68 29.40L46.08 29.70L45.50 30.00L44.93 30.30L44.37 30.60L43.83 30.90L43.30 31.20L42.79 31.50L42.30 31.80L41.82 32.10L41.37 32.40L40.93 32.70L40.51 33.00L40.12 33.30L39.74 33.60L39.39 33.90L39.06 34.20L38.75 34.50L38.47 34.80L38.21 35.10L37.98 35.40L37.76 35.70L37.58 36.00L37.42 36.30L37.28 36.60L37.18 36.90L37.09 37.20L37.04 37.50L37.01 37.80L37.00 38.10" stroke="#875054" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M71.00 62.10L70.98 62.40L70.93 62.70L70.85 63.00L70.75 63.30L70.63 63.60L70.48 63.90L70.30 64.20L70.10 64.50L69.87 64.80L69.62 65.10L69.34 65.40L69.04 65.70L68.72 66.00L68.38 66.30L68.01 66.60L67.62 66.90L67.21 67.20L66.78 67.50L66.33 67.80L65.86 68.10L65.38 68.40L64.87 68.70L64.35 69.00L63.81 69.30L63.26 69.60L62.69 69.90L62.11 70.20L61.52 70.50L60.91 70.80L60.30 71.10L59.67 71.40L59.04 71.70L58.40 72.00L57.75 72.30L57.10 72.60L56.44 72.90L55.78 73.20L55.11 73.50L54.45 73.80L53.78 74.10L53.11 74.40L52.44 74.70L51.78 75.00L51.12 75.30L50.47 75.60L49.82 75.90L49.17 76.20L48.54 76.50L47.91 76.80L47.29 77.10L46.68 77.40L46.08 77.70L45.50 78.00L44.93 78.30L44.37 78.60L43.83 78.90L43.30 79.20L42.79 79.50L42.30 79.80L41.82 80.10L41.37 80.40L40.93 80.70L40.51 81.00L40.12 81.30L39.74 81.60L39.39 81.90L39.06 82.20L38.75 82.50L38.47 82.80L38.21 83.10L37.98 83.40L37.76 83.70L37.58 84.00L37.42 84.30L37.28 84.60L37.18 84.90L37.09 85.20L37.04 85.50L37.01 85.80L37.00 86.10" stroke="#875054" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M39.28 18.00L38.96 18.30L38.66 18.60L38.38 18.90L38.13 19.20L37.90 19.50L37.70 19.80L37.52 20.10L37.37 20.40L37.25 20.70L37.15 21.00L37.07 21.30L37.02 21.60L37.00 21.90L37.01 22.20" stroke="#87714A" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M70.99 46.20L70.96 46.50L70.91 46.80L70.82 47.10L70.72 47.40L70.58 47.70L70.42 48.00L70.24 48.30L70.02 48.60L69.79 48.90L69.53 49.20L69.25 49.50L68.94 49.80L68.61 50.10L68.26 50.40L67.88 50.70L67.49 51.00L67.07 51.30L66.63 51.60L66.18 51.90L65.70 52.20L65.21 52.50L64.70 52.80L64.17 53.10L63.63 53.40L63.07 53.70L62.50 54.00L61.92 54.30L61.32 54.60L60.71 54.90L60.09 55.20L59.46 55.50L58.83 55.80L58.18 56.10L57.53 56.40L56.88 56.70L56.22 57.00L55.56 57.30L54.89 57.60L54.22 57.90L53.55 58.20L52.89 58.50L52.22 58.80L51.56 59.10L50.90 59.40L50.25 59.70L49.60 60.00L48.96 60.30L48.33 60.60L47.70 60.90L47.09 61.20L46.48 61.50L45.89 61.80L45.31 62.10L44.74 62.40L44.19 62.70L43.65 63.00L43.13 63.30L42.62 63.60L42.14 63.90L41.67 64.20L41.22 64.50L40.79 64.80L40.38 65.10L39.99 65.40L39.62 65.70L39.28 66.00L38.96 66.30L38.66 66.60L38.38 66.90L38.13 67.20L37.90 67.50L37.70 67.80L37.52 68.10L37.37 68.40L37.25 68.70L37.15 69.00L37.07 69.30L37.02 69.60L37.00 69.90L37.01 70.20" stroke="#87714A" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M54.00 18.00L54.67 18.30L55.33 18.60L56.00 18.90L56.66 19.20L57.32 19.50L57.97 19.80L58.61 20.10L59.25 20.40L59.88 20.70L60.51 21.00L61.12 21.30L61.72 21.60L62.31 21.90L62.88 22.20L63.44 22.50L63.99 22.80L64.52 23.10L65.04 23.40L65.54 23.70L66.02 24.00L66.48 24.30L66.93 24.60L67.35 24.90L67.75 25.20L68.13 25.50L68.49 25.80L68.83 26.10L69.15 26.40L69.44 26.70L69.71 27.00L69.95 27.30L70.17 27.60L70.36 27.90L70.53 28.20L70.67 28.50L70.79 28.80L70.88 29.10L70.95 29.40L70.99 29.70L71.00 30.00L70.99 30.30" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M54.00 18.00L54.67 18.30L55.33 18.60L56.00 18.90L56.66 19.20L57.32 19.50L57.97 19.80L58.61 20.10L59.25 20.40L59.88 20.70L60.51 21.00L61.12 21.30L61.72 21.60L62.31 21.90L62.88 22.20L63.44 22.50L63.99 22.80L64.52 23.10L65.04 23.40L65.54 23.70L66.02 24.00L66.48 24.30L66.93 24.60L67.35 24.90L67.75 25.20L68.13 25.50L68.49 25.80L68.83 26.10L69.15 26.40L69.44 26.70L69.71 27.00L69.95 27.30L70.17 27.60L70.36 27.90L70.53 28.20L70.67 28.50L70.79 28.80L70.88 29.10L70.95 29.40L70.99 29.70L71.00 30.00L70.99 30.30" stroke="#7C8BFF" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 54.30L37.05 54.60L37.12 54.90L37.21 55.20L37.33 55.50L37.47 55.80L37.64 56.10L37.83 56.40L38.05 56.70L38.29 57.00L38.56 57.30L38.85 57.60L39.17 57.90L39.51 58.20L39.87 58.50L40.25 58.80L40.65 59.10L41.07 59.40L41.52 59.70L41.98 60.00L42.46 60.30L42.96 60.60L43.48 60.90L44.01 61.20L44.56 61.50L45.12 61.80L45.69 62.10L46.28 62.40L46.88 62.70L47.49 63.00L48.12 63.30L48.75 63.60L49.39 63.90L50.03 64.20L50.68 64.50L51.34 64.80L52.00 65.10L52.67 65.40L53.33 65.70L54.00 66.00L54.67 66.30L55.33 66.60L56.00 66.90L56.66 67.20L57.32 67.50L57.97 67.80L58.61 68.10L59.25 68.40L59.88 68.70L60.51 69.00L61.12 69.30L61.72 69.60L62.31 69.90L62.88 70.20L63.44 70.50L63.99 70.80L64.52 71.10L65.04 71.40L65.54 71.70L66.02 72.00L66.48 72.30L66.93 72.60L67.35 72.90L67.75 73.20L68.13 73.50L68.49 73.80L68.83 74.10L69.15 74.40L69.44 74.70L69.71 75.00L69.95 75.30L70.17 75.60L70.36 75.90L70.53 76.20L70.67 76.50L70.79 76.80L70.88 77.10L70.95 77.40L70.99 77.70L71.00 78.00L70.99 78.30" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 54.30L37.05 54.60L37.12 54.90L37.21 55.20L37.33 55.50L37.47 55.80L37.64 56.10L37.83 56.40L38.05 56.70L38.29 57.00L38.56 57.30L38.85 57.60L39.17 57.90L39.51 58.20L39.87 58.50L40.25 58.80L40.65 59.10L41.07 59.40L41.52 59.70L41.98 60.00L42.46 60.30L42.96 60.60L43.48 60.90L44.01 61.20L44.56 61.50L45.12 61.80L45.69 62.10L46.28 62.40L46.88 62.70L47.49 63.00L48.12 63.30L48.75 63.60L49.39 63.90L50.03 64.20L50.68 64.50L51.34 64.80L52.00 65.10L52.67 65.40L53.33 65.70L54.00 66.00L54.67 66.30L55.33 66.60L56.00 66.90L56.66 67.20L57.32 67.50L57.97 67.80L58.61 68.10L59.25 68.40L59.88 68.70L60.51 69.00L61.12 69.30L61.72 69.60L62.31 69.90L62.88 70.20L63.44 70.50L63.99 70.80L64.52 71.10L65.04 71.40L65.54 71.70L66.02 72.00L66.48 72.30L66.93 72.60L67.35 72.90L67.75 73.20L68.13 73.50L68.49 73.80L68.83 74.10L69.15 74.40L69.44 74.70L69.71 75.00L69.95 75.30L70.17 75.60L70.36 75.90L70.53 76.20L70.67 76.50L70.79 76.80L70.88 77.10L70.95 77.40L70.99 77.70L71.00 78.00L70.99 78.30" stroke="#7C8BFF" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.00 38.10L37.02 38.40L37.07 38.70L37.15 39.00L37.25 39.30L37.37 39.60L37.52 39.90L37.70 40.20L37.90 40.50L38.13 40.80L38.38 41.10L38.66 41.40L38.96 41.70L39.28 42.00L39.62 42.30L39.99 42.60L40.38 42.90L40.79 43.20L41.22 43.50L41.67 43.80L42.14 44.10L42.62 44.40L43.13 44.70L43.65 45.00L44.19 45.30L44.74 45.60L45.31 45.90L45.89 46.20L46.48 46.50L47.09 46.80L47.70 47.10L48.33 47.40L48.96 47.70L49.60 48.00L50.25 48.30L50.90 48.60L51.56 48.90L52.22 49.20L52.89 49.50L53.55 49.80L54.22 50.10L54.89 50.40L55.56 50.70L56.22 51.00L56.88 51.30L57.53 51.60L58.18 51.90L58.83 52.20L59.46 52.50L60.09 52.80L60.71 53.10L61.32 53.40L61.92 53.70L62.50 54.00L63.07 54.30L63.63 54.60L64.17 54.90L64.70 55.20L65.21 55.50L65.70 55.80L66.18 56.10L66.63 56.40L67.07 56.70L67.49 57.00L67.88 57.30L68.26 57.60L68.61 57.90L68.94 58.20L69.25 58.50L69.53 58.80L69.79 59.10L70.02 59.40L70.24 59.70L70.42 60.00L70.58 60.30L70.72 60.60L70.82 60.90L70.91 61.20L70.96 61.50L70.99 61.80L71.00 62.10" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.00 38.10L37.02 38.40L37.07 38.70L37.15 39.00L37.25 39.30L37.37 39.60L37.52 39.90L37.70 40.20L37.90 40.50L38.13 40.80L38.38 41.10L38.66 41.40L38.96 41.70L39.28 42.00L39.62 42.30L39.99 42.60L40.38 42.90L40.79 43.20L41.22 43.50L41.67 43.80L42.14 44.10L42.62 44.40L43.13 44.70L43.65 45.00L44.19 45.30L44.74 45.60L45.31 45.90L45.89 46.20L46.48 46.50L47.09 46.80L47.70 47.10L48.33 47.40L48.96 47.70L49.60 48.00L50.25 48.30L50.90 48.60L51.56 48.90L52.22 49.20L52.89 49.50L53.55 49.80L54.22 50.10L54.89 50.40L55.56 50.70L56.22 51.00L56.88 51.30L57.53 51.60L58.18 51.90L58.83 52.20L59.46 52.50L60.09 52.80L60.71 53.10L61.32 53.40L61.92 53.70L62.50 54.00L63.07 54.30L63.63 54.60L64.17 54.90L64.70 55.20L65.21 55.50L65.70 55.80L66.18 56.10L66.63 56.40L67.07 56.70L67.49 57.00L67.88 57.30L68.26 57.60L68.61 57.90L68.94 58.20L69.25 58.50L69.53 58.80L69.79 59.10L70.02 59.40L70.24 59.70L70.42 60.00L70.58 60.30L70.72 60.60L70.82 60.90L70.91 61.20L70.96 61.50L70.99 61.80L71.00 62.10" stroke="#FF8F7A" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.00 86.10L37.02 86.40L37.07 86.70L37.15 87.00L37.25 87.30L37.37 87.60L37.52 87.90L37.70 88.20L37.90 88.50L38.13 88.80L38.38 89.10L38.66 89.40L38.96 89.70L39.28 90.00" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.00 86.10L37.02 86.40L37.07 86.70L37.15 87.00L37.25 87.30L37.37 87.60L37.52 87.90L37.70 88.20L37.90 88.50L38.13 88.80L38.38 89.10L38.66 89.40L38.96 89.70L39.28 90.00" stroke="#FF8F7A" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 22.20L37.04 22.50L37.09 22.80L37.18 23.10L37.28 23.40L37.42 23.70L37.58 24.00L37.76 24.30L37.98 24.60L38.21 24.90L38.47 25.20L38.75 25.50L39.06 25.80L39.39 26.10L39.74 26.40L40.12 26.70L40.51 27.00L40.93 27.30L41.37 27.60L41.82 27.90L42.30 28.20L42.79 28.50L43.30 28.80L43.83 29.10L44.37 29.40L44.93 29.70L45.50 30.00L46.08 30.30L46.68 30.60L47.29 30.90L47.91 31.20L48.54 31.50L49.17 31.80L49.82 32.10L50.47 32.40L51.12 32.70L51.78 33.00L52.44 33.30L53.11 33.60L53.78 33.90L54.45 34.20L55.11 34.50L55.78 34.80L56.44 35.10L57.10 35.40L57.75 35.70L58.40 36.00L59.04 36.30L59.67 36.60L60.30 36.90L60.91 37.20L61.52 37.50L62.11 37.80L62.69 38.10L63.26 38.40L63.81 38.70L64.35 39.00L64.87 39.30L65.38 39.60L65.86 39.90L66.33 40.20L66.78 40.50L67.21 40.80L67.62 41.10L68.01 41.40L68.38 41.70L68.72 42.00L69.04 42.30L69.34 42.60L69.62 42.90L69.87 43.20L70.10 43.50L70.30 43.80L70.48 44.10L70.63 44.40L70.75 44.70L70.85 45.00L70.93 45.30L70.98 45.60L71.00 45.90L70.99 46.20" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 22.20L37.04 22.50L37.09 22.80L37.18 23.10L37.28 23.40L37.42 23.70L37.58 24.00L37.76 24.30L37.98 24.60L38.21 24.90L38.47 25.20L38.75 25.50L39.06 25.80L39.39 26.10L39.74 26.40L40.12 26.70L40.51 27.00L40.93 27.30L41.37 27.60L41.82 27.90L42.30 28.20L42.79 28.50L43.30 28.80L43.83 29.10L44.37 29.40L44.93 29.70L45.50 30.00L46.08 30.30L46.68 30.60L47.29 30.90L47.91 31.20L48.54 31.50L49.17 31.80L49.82 32.10L50.47 32.40L51.12 32.70L51.78 33.00L52.44 33.30L53.11 33.60L53.78 33.90L54.45 34.20L55.11 34.50L55.78 34.80L56.44 35.10L57.10 35.40L57.75 35.70L58.40 36.00L59.04 36.30L59.67 36.60L60.30 36.90L60.91 37.20L61.52 37.50L62.11 37.80L62.69 38.10L63.26 38.40L63.81 38.70L64.35 39.00L64.87 39.30L65.38 39.60L65.86 39.90L66.33 40.20L66.78 40.50L67.21 40.80L67.62 41.10L68.01 41.40L68.38 41.70L68.72 42.00L69.04 42.30L69.34 42.60L69.62 42.90L69.87 43.20L70.10 43.50L70.30 43.80L70.48 44.10L70.63 44.40L70.75 44.70L70.85 45.00L70.93 45.30L70.98 45.60L71.00 45.90L70.99 46.20" stroke="#FFD166" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 70.20L37.04 70.50L37.09 70.80L37.18 71.10L37.28 71.40L37.42 71.70L37.58 72.00L37.76 72.30L37.98 72.60L38.21 72.90L38.47 73.20L38.75 73.50L39.06 73.80L39.39 74.10L39.74 74.40L40.12 74.70L40.51 75.00L40.93 75.30L41.37 75.60L41.82 75.90L42.30 76.20L42.79 76.50L43.30 76.80L43.83 77.10L44.37 77.40L44.93 77.70L45.50 78.00L46.08 78.30L46.68 78.60L47.29 78.90L47.91 79.20L48.54 79.50L49.17 79.80L49.82 80.10L50.47 80.40L51.12 80.70L51.78 81.00L52.44 81.30L53.11 81.60L53.78 81.90L54.45 82.20L55.11 82.50L55.78 82.80L56.44 83.10L57.10 83.40L57.75 83.70L58.40 84.00L59.04 84.30L59.67 84.60L60.30 84.90L60.91 85.20L61.52 85.50L62.11 85.80L62.69 86.10L63.26 86.40L63.81 86.70L64.35 87.00L64.87 87.30L65.38 87.60L65.86 87.90L66.33 88.20L66.78 88.50L67.21 88.80L67.62 89.10L68.01 89.40L68.38 89.70L68.72 90.00" stroke="#10122E" stroke-opacity="0.7" stroke-width="10.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M37.01 70.20L37.04 70.50L37.09 70.80L37.18 71.10L37.28 71.40L37.42 71.70L37.58 72.00L37.76 72.30L37.98 72.60L38.21 72.90L38.47 73.20L38.75 73.50L39.06 73.80L39.39 74.10L39.74 74.40L40.12 74.70L40.51 75.00L40.93 75.30L41.37 75.60L41.82 75.90L42.30 76.20L42.79 76.50L43.30 76.80L43.83 77.10L44.37 77.40L44.93 77.70L45.50 78.00L46.08 78.30L46.68 78.60L47.29 78.90L47.91 79.20L48.54 79.50L49.17 79.80L49.82 80.10L50.47 80.40L51.12 80.70L51.78 81.00L52.44 81.30L53.11 81.60L53.78 81.90L54.45 82.20L55.11 82.50L55.78 82.80L56.44 83.10L57.10 83.40L57.75 83.70L58.40 84.00L59.04 84.30L59.67 84.60L60.30 84.90L60.91 85.20L61.52 85.50L62.11 85.80L62.69 86.10L63.26 86.40L63.81 86.70L64.35 87.00L64.87 87.30L65.38 87.60L65.86 87.90L66.33 88.20L66.78 88.50L67.21 88.80L67.62 89.10L68.01 89.40L68.38 89.70L68.72 90.00" stroke="#FFD166" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
-</defs></svg>
 
-<nav>
-  <a class="brand" href="#"><svg width="30" height="30" viewBox="0 0 108 108" aria-hidden="true"><use href="#plait-mark"/></svg>Plait</a>
-  <div class="links"><a href="#features">Features</a><a href="#ai">On-device AI</a><a href="#built">Technology</a><a href="#privacy">Privacy</a><a href="#install">Install</a></div>
-</nav>
+<header class="welcome" id="top" data-mode="0">
+  <div class="sky" aria-hidden="true"><i class="blob a"></i><i class="blob b"></i><i class="blob c"></i></div>
+  <svg class="strands" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path pathLength="1" stroke="#7C8BFF" d="M-60 170C280 60 520 400 1060 440"/>
+    <path pathLength="1" stroke="#FF8F7A" d="M-60 360C260 300 560 540 1060 450"/>
+    <path pathLength="1" stroke="#FFD166" d="M-60 570C320 660 560 380 1060 460"/>
+    <path pathLength="1" stroke="#5FD3A0" d="M-60 770C300 700 620 620 1060 470"/>
+  </svg>
 
-<header class="hero" id="top">
-  <div class="copy">
-    <h1 data-rise>Every calendar, one day.</h1>
-    <p class="lead" data-rise style="--i:1">An Android calendar that merges Google, Outlook, Exchange, iCloud and calendar links into one agenda, briefs you on every meeting, and keeps your notes and AI on your phone.</p>
-    <div class="cta" data-rise style="--i:2">
-      <a class="btn brass" id="dl" href="../../releases/latest/download/plait.apk">Download for Android</a>
-      <a class="alt" id="src" href="../..">Source on GitHub</a>
-      <a class="alt" href="trailer.html">Watch the trailer</a>
+  <div class="wtop">
+    <a class="wlogo" href="#top"><img src="favicon.svg" alt="">Plait</a>
+    <a class="btn fab" id="dl0" href="../../releases/latest/download/plait.apk">Download</a>
+  </div>
+
+  <div class="wcopy">
+    <h1 aria-label="Every calendar, one day."><span style="--w:0">Every</span> <span style="--w:1">calendar,</span> <span style="--w:2">one</span> <span style="--w:3">day.</span></h1>
+    <p class="lead">An Android calendar that merges Google, Outlook, Exchange, iCloud and calendar links into one agenda, briefs you on every meeting, and keeps your notes and AI on your phone.</p>
+    <div class="wcta">
+      <a class="btn fab" id="dl" href="../../releases/latest/download/plait.apk">Download for Android</a>
+      <a class="btn soft" href="trailer.html">Watch the trailer</a>
     </div>
   </div>
-  <div class="stage" aria-label="A working sample agenda">
-    <div class="reveal"><div>
-      <div class="agenda" data-ui id="agenda">
-        <div class="ttl">Tuesday, 21 October</div>
-        <div class="sub">A sample day. Tap an account to switch it off and on.</div>
-        <div class="chips" role="group" aria-label="Accounts">
-          <button class="chip gc" aria-pressed="true" data-src="gc"><i></i>Google</button>
-          <button class="chip oc" aria-pressed="true" data-src="oc"><i></i>Outlook</button>
-          <button class="chip ic" aria-pressed="true" data-src="ic"><i></i>iCloud</button>
-          <button class="chip lc" aria-pressed="true" data-src="lc"><i></i>Calendar link</button>
-        </div>
-        <ul class="rows">
-          <li class="row oc" data-src="oc"><time>9:00 AM</time><i class="bar"></i><div><b>Team stand-up</b><span>Outlook · 15 min</span></div><span class="join">Join</span></li>
-          <li class="row gc" data-src="gc"><time>10:30 AM</time><i class="bar"></i><div><b>Design review: new onboarding</b><span>Google · 1 hour</span></div><span class="join">Join</span></li>
-          <li class="row ic" data-src="ic"><time>12:00 PM</time><i class="bar"></i><div><b>Lunch with Omar</b><span>iCloud · 1 hour</span></div></li>
-          <li class="row oc" data-src="oc"><time>1:30 PM</time><i class="bar"></i><div><b>Budget check-in</b><span>Outlook · 30 min</span></div><span class="join">Join</span></li>
-          <li class="row gc" data-src="gc"><time>3:00 PM</time><i class="bar"></i><div><b>Customer call</b><span>Google · 45 min</span></div><span class="join">Join</span></li>
-          <li class="row ic" data-src="ic"><time>4:30 PM</time><i class="bar"></i><div><b>School pick-up</b><span>iCloud · 20 min</span></div></li>
-          <li class="row lc" data-src="lc"><time>6:00 PM</time><i class="bar"></i><div><b>Five-a-side football</b><span>Calendar link · 1 hour</span></div></li>
-          <li class="row ic" data-src="ic"><time>8:00 PM</time><i class="bar"></i><div><b>Dinner at Layla's</b><span>iCloud · 2 hours</span></div></li>
-        </ul>
-        <div class="count" id="count" aria-live="polite">8 meetings from 4 calendars, in one day.</div>
+
+  <div class="stage">
+    <div class="seg" role="group" aria-label="Preview the day">
+      <button aria-pressed="true" data-m="0">Morning<i></i></button>
+      <button aria-pressed="false" data-m="1">Midday<i></i></button>
+      <button aria-pressed="false" data-m="2">Evening<i></i></button>
+    </div>
+    <div class="phone">
+      <div class="scr">
+        <img class="on" src="screenshots/01-home-morning.jpg" alt="The Plait morning card: five meetings today">
+        <img src="screenshots/02-home-midday.jpg" alt="The Plait midday card: what is done and what is left">
+        <img src="screenshots/03-home-evening-dark.jpg" alt="The Plait evening card in dark mode: time spent in meetings">
       </div>
-    </div></div>
+      <div class="chip k1" aria-hidden="true"><i></i><div><b>Design review</b><small>Google · 10:30</small></div></div>
+      <div class="chip k2" aria-hidden="true"><i></i><div><b>Team stand-up</b><small>Outlook · 9:00</small></div></div>
+      <div class="chip k3" aria-hidden="true"><i></i><div><b>Lunch with Omar</b><small>iCloud · 12:00</small></div></div>
+      <div class="chip k4" aria-hidden="true"><i></i><div><b>Five-a-side</b><small>Calendar link · 6:00</small></div></div>
+    </div>
   </div>
+  <span class="scrollhint" aria-hidden="true"></span>
 </header>
 
-<section id="features">
-  <h2 data-rise>One day, built from every account.</h2>
-  <p class="lead" data-rise style="--i:1">Everything happens on the phone. No Plait account, no Plait server.</p>
-  <div class="cells">
-    <article class="cell" data-rise><div class="txt"><h3>Every calendar, merged</h3><p>Reads the calendars Android already syncs (Google, Outlook and Exchange, Samsung, iCloud through CalDAV), calendar links (<code>.ics</code>) with repeating meetings expanded, and Google Calendar directly. Switch accounts and calendars on or off.</p></div>
-      <div class="frag" data-ui><div class="line">Google<span class="sw"></span></div><div class="line">Outlook and Exchange<span class="sw"></span></div><div class="line">Samsung<span class="sw"></span></div><div class="line">iCloud (CalDAV)<span class="sw"></span></div><div class="line">Football link (.ics)<span class="sw"></span></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>A home that follows the day</h3><p>Morning, Midday and Evening cards. The morning card shows what's ahead, midday shows what's done and what's left, and the evening card shows time spent in meetings, which meetings still need notes, and a look at tomorrow with free focus time.</p></div>
-      <img class="shot" src="screenshots/01-home-morning.jpg" alt="The morning card on the home screen, with the day's meetings" loading="lazy"></article>
-    <article class="cell" data-rise><div class="txt"><h3>Meeting pages</h3><p>Guests and their answers, <b>About this meeting</b> in a short paragraph from the invite (or a careful one-line guess from the title), a summary of your notes, and one-tap <b>Join</b> for Teams, Meet, Zoom and Webex, including links hidden behind Outlook Safe Links.</p></div>
-      <img class="shot" src="screenshots/04-meeting.jpg" alt="A meeting page with guests and a short About paragraph" loading="lazy"></article>
-    <article class="cell" data-rise><div class="txt"><h3>Manage meetings</h3><p>For meetings you organise: edit details, reschedule, cancel one occurrence or delete the series. For meetings someone else organised: reply Going, Maybe or Decline. Works for phone calendars and Google, and guests are notified.</p></div>
-      <div class="frag" data-ui><div class="t">Design review: new onboarding</div><div class="m">Organised by Jonas Weber</div><div class="seg"><span class="on">Going</span><span>Maybe</span><span>Decline</span></div><span class="tag">Edit</span><span class="tag">Reschedule</span><span class="tag">Cancel this one</span></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Notes four ways</h3><p><b>Voice</b> with a live transcript while you record, even with the screen off. <b>Write</b>. <b>Photo</b>, read into copyable text, Arabic included. <b>List</b>, a checklist for agendas and follow-ups.</p></div>
-      <img class="shot" src="screenshots/07-notes.jpg" alt="The notes library with voice, written, photo and list notes" loading="lazy"></article>
-    <article class="cell" data-rise><div class="txt"><h3>Series remember</h3><p>Notes, photos and lists from one meeting carry forward to the next meeting with the same name, with the decisions from last time and the follow-ups still open.</p></div>
-      <div class="frag" data-ui><div class="t">Last time</div><div class="m">Decided: ship the new onboarding in two steps.</div><div class="line"><span><i class="box"></i>Send Omar the draft</span></div><div class="line"><span><i class="box k"></i><span class="done">Book the review room</span></span></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Search that understands</h3><p>Searches meetings, transcripts, written notes, photo text and emails, in English and Arabic. With an AI chosen, Plait expands your question into related words and names, then answers from your notes and shows its sources.</p></div>
-      <div class="frag" data-ui><div class="field">budget decision with Northwind</div><div class="res"><div class="t">Budget check-in</div><div class="m">Voice note · "we agreed to hold the budget"</div></div><div class="res"><div class="t">Customer call</div><div class="m">Written note · Northwind</div></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Prep and follow-ups</h3><p>A 30-second plan before each meeting: the goal, what to remember and what to raise. Plait suggests tasks from your voice and photo notes and reminds you of the ones you add. Follow-ups can be marked done or booked into a free slot.</p></div>
-      <div class="frag" data-ui><div class="t">Before the design review</div><div class="line"><span><i class="box"></i>Raise the two-step idea</span></div><div class="line"><span><i class="box"></i>Bring the draft numbers</span></div><div class="line"><span><i class="box k"></i><span class="done">Read Omar's notes</span></span></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Alerts with Join</h3><p>A reminder before each meeting says what it is for and has a Join button. It also shows on a paired Wear OS watch, and an evening nudge lists the meetings that still have no notes.</p></div>
-      <div class="frag" data-ui><div class="m">Plait · in 10 min</div><div class="t">Design review: new onboarding</div><div class="m">Decide how the first run is split.</div><span class="tag sel" style="margin-top:8px">Join</span><span class="tag">Open</span></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Share and sync</h3><p>Share a meeting as a PDF, Markdown or text, or send your notes to a teammate. Sync between your phones through a folder you already use (Drive, Dropbox, Nextcloud, Syncthing), encrypted on the phone.</p></div>
-      <div class="frag" data-ui><span class="tag sel">PDF</span><span class="tag">Markdown</span><span class="tag">Text</span><div class="line" style="margin-top:6px"><span>Sync folder</span><span class="m">Drive · encrypted</span></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Quick add and free times</h3><p>Type a sentence with who, when, how long and where, and the new-meeting form fills itself in. <b>Find a time</b> lists the free gaps across your calendars for the length you need.</p></div>
-      <div class="frag" data-ui><div class="field">Lunch with Omar Friday 1pm for an hour</div><div class="line"><span>When</span><span class="m">Fri, 1:00 PM</span></div><div class="line"><span>Length</span><span class="m">1 hour</span></div><div class="line"><span>With</span><span class="m">Omar</span></div></div></article>
-    <article class="cell" data-rise><div class="txt"><h3>Backups you hold the key to</h3><p>Export everything as one file, optionally sealed with a passphrase, and import it on a new phone. Importing only adds what's missing, and never replaces or deletes anything.</p></div>
-      <div class="frag" data-ui><div class="t">plait-backup</div><div class="m">Sealed with a passphrase · 1 MB chunks</div><div class="line" style="margin-top:6px"><span>Import adds only what's missing</span></div></div></article>
+<section id="features" style="padding-top:clamp(60px,8vw,120px)">
+  <div class="demo">
+    <div>
+      <h2 data-rise>One day, built from every account.</h2>
+      <p class="lead" data-rise style="--i:1">Everything happens on the phone. No Plait account, no Plait server. Tap an account to switch it off and on, and watch the day re-braid.</p>
+    </div>
+    <div class="agenda" data-rise>
+      <div class="ttl">Tuesday, 21 October</div>
+      <div class="sub">A sample day from four calendars.</div>
+      <div class="chips" role="group" aria-label="Accounts">
+        <button class="acc gc" aria-pressed="true" data-src="gc"><i></i>Google</button>
+        <button class="acc oc" aria-pressed="true" data-src="oc"><i></i>Outlook</button>
+        <button class="acc ic" aria-pressed="true" data-src="ic"><i></i>iCloud</button>
+        <button class="acc lc" aria-pressed="true" data-src="lc"><i></i>Calendar link</button>
+      </div>
+      <ul class="rows" id="agenda">
+        <li class="row oc" data-src="oc"><time>9:00 AM</time><i class="bar"></i><div><b>Team stand-up</b><span>Outlook · 15 min</span></div><span class="join">Join</span></li>
+        <li class="row gc" data-src="gc"><time>10:30 AM</time><i class="bar"></i><div><b>Design review: new onboarding</b><span>Google · 1 hour</span></div><span class="join">Join</span></li>
+        <li class="row ic" data-src="ic"><time>12:00 PM</time><i class="bar"></i><div><b>Lunch with Omar</b><span>iCloud · 1 hour</span></div></li>
+        <li class="row oc" data-src="oc"><time>1:30 PM</time><i class="bar"></i><div><b>Budget check-in</b><span>Outlook · 30 min</span></div><span class="join">Join</span></li>
+        <li class="row gc" data-src="gc"><time>3:00 PM</time><i class="bar"></i><div><b>Customer call</b><span>Google · 45 min</span></div><span class="join">Join</span></li>
+        <li class="row ic" data-src="ic"><time>4:30 PM</time><i class="bar"></i><div><b>School pick-up</b><span>iCloud · 20 min</span></div></li>
+        <li class="row lc" data-src="lc"><time>6:00 PM</time><i class="bar"></i><div><b>Five-a-side football</b><span>Calendar link · 1 hour</span></div></li>
+        <li class="row ic" data-src="ic"><time>8:00 PM</time><i class="bar"></i><div><b>Dinner at Layla's</b><span>iCloud · 2 hours</span></div></li>
+      </ul>
+      <div class="count" id="count" aria-live="polite">8 meetings from 4 calendars, in one day.</div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <article class="tile tall t1" data-rise><h3>A home that follows the day</h3><p>Morning, Midday and Evening cards. See what's ahead, what's done, then your time in meetings, which ones still need notes, and a look at tomorrow.</p><img class="shot" src="screenshots/01-home-morning.jpg" alt="The morning card on the home screen" loading="lazy"></article>
+    <article class="tile t2" data-rise><h3>Every calendar, merged</h3><p>Reads what Android already syncs (Google, Outlook and Exchange, Samsung, iCloud through CalDAV), calendar links (<code>.ics</code>) with repeating meetings expanded, and Google Calendar directly.</p><div class="pills"><span class="pill sel">Google</span><span class="pill sel">Outlook</span><span class="pill">Samsung</span><span class="pill sel">iCloud</span><span class="pill">.ics</span></div></article>
+    <article class="tile tall t4" data-rise style="--i:1"><h3>Meeting pages</h3><p>Guests and their answers, <b>About this meeting</b> in a short paragraph, a summary of your notes, and one-tap <b>Join</b> for Teams, Meet, Zoom and Webex, even behind Outlook Safe Links.</p><img class="shot" src="screenshots/04-meeting.jpg" alt="A meeting page with guests and a short About paragraph" loading="lazy"></article>
+    <article class="tile t3" data-rise><h3>Manage meetings</h3><p>Edit, reschedule, cancel one occurrence or delete the series. For other people's meetings, reply Going, Maybe or Decline. Guests are notified.</p><div class="pills"><span class="pill sel">Going</span><span class="pill">Maybe</span><span class="pill">Decline</span></div></article>
+    <article class="tile t5" data-rise><h3>Series remember</h3><p>Notes, photos and lists carry forward to the next meeting with the same name, with last time's decisions and the follow-ups still open.</p></article>
+    <article class="tile tall t6" data-rise><h3>Notes four ways</h3><p><b>Voice</b> with a live transcript, even with the screen off. <b>Write</b>. <b>Photo</b>, read into copyable text, Arabic included. <b>List</b>, a checklist for agendas and follow-ups.</p><img class="shot" src="screenshots/07-notes.jpg" alt="The notes library" loading="lazy"></article>
+    <article class="tile t2" data-rise><h3>Search that understands</h3><p>Meetings, transcripts, notes, photo text and emails, in English and Arabic. With an AI chosen, Plait answers from your notes and shows its sources.</p></article>
+    <article class="tile t1" data-rise><h3>Prep and follow-ups</h3><p>A 30-second plan before each meeting: the goal, what to remember, what to raise. Tasks suggested from your voice and photo notes.</p></article>
+    <article class="tile t4" data-rise><h3>Alerts with Join</h3><p>A reminder says what the meeting is for and has a Join button. It shows on a paired Wear OS watch, and an evening nudge lists meetings with no notes.</p></article>
+    <article class="tile t3" data-rise><h3>Share and sync</h3><p>Share as PDF, Markdown or text. Sync between phones through a folder you already use (Drive, Dropbox, Nextcloud, Syncthing), encrypted on the phone.</p></article>
+    <article class="tile t5" data-rise><h3>Quick add and free times</h3><p>Type "Lunch with Omar Friday 1pm for an hour" and the form fills itself. <b>Find a time</b> lists the free gaps across your calendars.</p></article>
+    <article class="tile t6" data-rise><h3>Backups you hold the key to</h3><p>Export everything as one file, optionally sealed with a passphrase. Importing only adds what's missing, never replaces or deletes.</p></article>
   </div>
 </section>
 
-<div class="band">
-  <a href="trailer.html" aria-label="Watch the launch trailer"><video class="trailer" src="plait-trailer.mp4" poster="trailer-poster.jpg" autoplay muted loop playsinline preload="metadata"></video></a>
-  <a class="cap" href="trailer.html">Watch the trailer full screen</a>
+<div class="film" data-rise>
+  <a href="trailer.html" aria-label="Watch the launch trailer"><video src="plait-trailer.mp4" poster="trailer-poster.jpg" autoplay muted loop playsinline preload="metadata"></video></a>
+  <a class="cap" href="trailer.html">Watch the trailer</a>
 </div>
 
 <section id="widget">
-  <div class="split">
+  <div class="demo">
     <div>
       <h2 data-rise>Your day brief, in four sizes.</h2>
-      <p class="lead" data-rise style="--i:1">Resize the widget and the layout adapts. It shows the same day brief as the morning card, with the meetings handed over by the app, so it matches Home for every calendar.</p>
+      <p class="lead" data-rise style="--i:1">Resize the widget and the layout adapts. It shows the same brief as the morning card, so it matches Home for every calendar.</p>
     </div>
-    <div class="widgets" data-ui aria-label="The widget in four sizes" data-rise>
+    <div class="widgets" data-rise aria-label="The widget in four sizes">
       <div class="wd w1"><b>5</b>meetings today · next 10:30 AM</div>
       <div class="wd w2"><b>5</b>meetings<br>Next: Design review</div>
-      <div class="wd w3" style="min-height:0"><b>10:30 AM</b>Design review: new onboarding · in 42 min<br><span class="jn">Join</span></div>
-      <div class="wd w4"><b>Today</b><div class="r"><span>9:00 AM Team stand-up</span></div><div class="r"><span>10:30 AM Design review</span></div><div class="r"><span>12:00 PM Lunch with Omar</span></div><div class="r"><span>1:30 PM Budget check-in</span></div><div class="r"><span>3:00 PM Customer call</span></div></div>
+      <div class="wd w3"><b>10:30 AM</b>Design review: new onboarding · in 42 min<br><span class="jn">Join</span></div>
+      <div class="wd w4"><b>Today</b><div class="r">9:00 AM Team stand-up</div><div class="r">10:30 AM Design review</div><div class="r">12:00 PM Lunch with Omar</div><div class="r">1:30 PM Budget check-in</div><div class="r">3:00 PM Customer call</div></div>
     </div>
   </div>
 </section>
 
 <section id="ai">
   <h2 data-rise>AI on your phone, held to rules.</h2>
-  <p class="lead" data-rise style="--i:1">Choose the engine in Settings. Models download once (even with the app in the background), show their size first, are never downloaded twice, and can be deleted to get the space back. Nothing is sent to a cloud AI.</p>
-  <div class="split" style="margin-top:56px">
-    <div>
-      <h3 style="font-size:var(--lead);margin-bottom:16px" data-rise>Engines</h3>
-      <div class="panelrows" data-rise>
-        <div class="tile"><b>Gemini Nano</b><span>ML Kit GenAI on supported phones</span></div>
-        <div class="tile"><b>Qwen3 0.6B / 1.7B</b><span>LiteRT-LM, 347 MB / 977 MB</span></div>
-        <div class="tile"><b>Gemma 4 E2B</b><span>LiteRT-LM, the best, 8 GB phones</span></div>
-        <div class="tile"><b>Qwen 2.5 0.5B / 1.5B</b><span>MediaPipe, any phone</span></div>
-        <div class="tile"><b>Whisper Tiny / Base / Small</b><span>sherpa-onnx, Arabic included</span></div>
-        <div class="tile"><b>Meaning search</b><span>6 MB text embedder</span></div>
-        <div class="tile"><b>Rules</b><span>always there, no model</span></div>
-      </div>
-      <p class="small" style="margin-top:16px;max-width:52ch">Automatic writing (day summary, prep, About) waits until the screen has settled, then runs on the smallest installed model, so a big model never slows the app.</p>
-      <img class="shot-ai" src="screenshots/08-ai.jpg" alt="The AI on this phone settings screen" loading="lazy">
+  <p class="lead" data-rise style="--i:1">Choose the engine in Settings. Models download once, show their size first, are never downloaded twice, and can be deleted to get the space back. Nothing is sent to a cloud AI.</p>
+  <div class="split">
+    <div class="panel" data-rise>
+      <h3>Engines</h3>
+      <div class="eng"><b>Gemini Nano</b><span>ML Kit GenAI on supported phones</span></div>
+      <div class="eng"><b>Qwen3 0.6B / 1.7B</b><span>LiteRT-LM, 347 MB / 977 MB</span></div>
+      <div class="eng"><b>Gemma 4 E2B</b><span>LiteRT-LM, the best, 8 GB phones</span></div>
+      <div class="eng"><b>Qwen 2.5 0.5B / 1.5B</b><span>MediaPipe, any phone</span></div>
+      <div class="eng"><b>Whisper Tiny / Base / Small</b><span>sherpa-onnx, Arabic included</span></div>
+      <div class="eng"><b>Meaning search</b><span>6 MB text embedder</span></div>
+      <div class="eng"><b>Rules</b><span>always there, no model</span></div>
+      <p style="margin-top:16px;font-size:14.5px;color:var(--muted)">Automatic writing waits until the screen has settled, then runs on the smallest installed model, so a big one never slows the app.</p>
     </div>
-    <div>
-      <h3 style="font-size:var(--lead);margin-bottom:16px" data-rise>The harness every answer passes</h3>
-      <ol class="harness" data-rise>
+    <div class="panel" data-rise style="--i:1">
+      <h3>The harness every answer passes</h3>
+      <ol class="harness">
         <li><b>Clean input.</b> HTML, style sheets, scripts, links, dial-ins and codes are removed in code first.</li>
-        <li><b>Rules apart from material.</b> Instructions go in the system message; the invite is fenced off as material, never instructions.</li>
+        <li><b>Rules apart from material.</b> Instructions go in the system message; the invite is fenced off as material.</li>
         <li><b>Low temperature.</b> 0.2, so the model keeps to the likeliest words.</li>
-        <li><b>Fixed JSON shape.</b> A short paragraph, a one-line guess or a list of tasks. A broken answer gets one retry.</li>
+        <li><b>Fixed JSON shape.</b> A broken answer gets one retry.</li>
         <li><b>Checked in code.</b> Word limits, no code or links, and no name or number that isn't in the source.</li>
         <li><b>Rules as the fallback.</b> If nothing passes, plain rules take over.</li>
       </ol>
@@ -345,18 +379,19 @@ video.trailer{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;backgrou
   </div>
 </section>
 
-<section class="show" id="looks">
-  <h2 id="looksH">Looks like <span id="word">Glass</span>.</h2>
-  <p id="looksP">One switch in Settings rebuilds the whole app in the other style. Both follow light and dark mode, with pure black for OLED screens and a reduce-animations option.</p>
-  <div class="ctl" role="group" aria-label="Choose the look">
-    <button aria-pressed="true" data-look="glass">Glass</button><button aria-pressed="false" data-look="material">Material</button>
+<div class="looks" id="looks" data-rise>
+  <div>
+    <h2 id="looksH">Looks like <span id="word">Glass</span>.</h2>
+    <p class="lead" id="looksP"></p>
+    <div class="toggle" role="group" aria-label="Choose the look"><button aria-pressed="true" data-look="glass">Glass</button><button aria-pressed="false" data-look="material">Material</button></div>
   </div>
-</section>
+  <div class="pic"><img src="screenshots/01-home-morning.jpg" alt="Home in the Glass look" loading="lazy"><img src="screenshots/06-calendar.jpg" alt="The month calendar" loading="lazy"></div>
+</div>
 
 <section id="built">
   <h2 data-rise>Native Android, all the way down.</h2>
   <p class="lead" data-rise style="--i:1">Kotlin and Jetpack Compose, release-built with ahead-of-time profiles, covered by 299 unit tests.</p>
-  <div class="tbl"><table>
+  <div class="card tbl" data-rise><table>
     <tr><th>Layer</th><th>Technology</th></tr>
     <tr><td>Language and UI</td><td>Kotlin 2.4, Jetpack Compose, Material 3 1.5 (expressive components), Navigation Compose<small>Android 8.0 (API 26) to Android 16 (API 36)</small></td></tr>
     <tr><td>Glass</td><td>Kyant Backdrop: backdrop blur and lens refraction</td></tr>
@@ -373,54 +408,56 @@ video.trailer{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;backgrou
 
 <section id="privacy">
   <h2 data-rise>Your calendar is nobody's business.</h2>
+  <p class="lead" data-rise style="--i:1;max-width:60ch">No account, no analytics, no ads, no server of its own. Recordings, notes, photos and models stay in the app's storage. The network is used only for calendar links, Google Calendar if you connect it, model downloads you start, the sync folder you choose, and a check for new versions on GitHub (at most twice a day, nothing about you is sent, and it can be switched off).</p>
   <div class="priv">
-    <div>
-      <p class="lead" data-rise style="max-width:50ch">No account, no analytics, no ads, no server of its own. Recordings, notes, photos and models stay in the app's storage. The network is used only for calendar links, Google Calendar if you connect it, model downloads you start, the sync folder you choose, and a check for new versions of Plait on GitHub (at most twice a day, nothing about you is sent, and it can be switched off).</p>
-      <div class="total" data-rise aria-label="Zero servers, accounts or ads">0</div>
-      <p class="lead" style="margin-top:14px">Plait servers, accounts and ads.</p>
-    </div>
-    <div class="slip" data-rise>
-      <h3>What Plait asks for</h3>
-      <div class="r"><b>READ_CALENDAR, WRITE_CALENDAR</b><span>Showing your calendars; saving new meetings, edits, reschedules, cancellations and replies</span></div>
-      <div class="r"><b>RECORD_AUDIO, FOREGROUND_SERVICE_MICROPHONE</b><span>Voice notes, including while the screen is off. Only your own microphone is recorded</span></div>
-      <div class="r"><b>POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM</b><span>Meeting alerts with Join, and the evening notes reminder</span></div>
-      <div class="r"><b>RECEIVE_BOOT_COMPLETED</b><span>Putting the alerts back after the phone restarts</span></div>
-      <div class="r"><b>INTERNET</b><span>Calendar links, Google Calendar, model downloads, sync and update checks, nothing else</span></div>
-      <div class="r"><b>FOREGROUND_SERVICE_DATA_SYNC, WAKE_LOCK</b><span>Keeping a model or update download going when you leave the app</span></div>
-      <div class="r"><b>REQUEST_INSTALL_PACKAGES</b><span>Installing Plait's own updates, after you allow it once</span></div>
-      <div class="r"><b>Contacts and photos</b><span>Through Android's own pickers. Plait sees only the contact or picture you pick</span></div>
+    <div class="zero" data-rise><div class="n" aria-label="Zero">0</div><p>Plait servers, accounts and ads.</p></div>
+    <div class="card perm" data-rise style="--i:1">
+      <div><b>READ_CALENDAR, WRITE_CALENDAR</b><span>Showing your calendars; saving new meetings, edits, reschedules, cancellations and replies</span></div>
+      <div><b>RECORD_AUDIO, FOREGROUND_SERVICE_MICROPHONE</b><span>Voice notes, including while the screen is off. Only your own microphone is recorded</span></div>
+      <div><b>POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM</b><span>Meeting alerts with Join, and the evening notes reminder</span></div>
+      <div><b>RECEIVE_BOOT_COMPLETED</b><span>Putting the alerts back after the phone restarts</span></div>
+      <div><b>INTERNET</b><span>Calendar links, Google Calendar, model downloads, sync and update checks, nothing else</span></div>
+      <div><b>FOREGROUND_SERVICE_DATA_SYNC, WAKE_LOCK</b><span>Keeping a model or update download going when you leave the app</span></div>
+      <div><b>REQUEST_INSTALL_PACKAGES</b><span>Installing Plait's own updates, after you allow it once</span></div>
+      <div><b>Contacts and photos</b><span>Through Android's own pickers. Plait sees only the contact or picture you pick</span></div>
     </div>
   </div>
 </section>
 
 <section id="install">
   <h2 data-rise>Up and running in a minute.</h2>
-  <div class="calls">
-    <div data-rise><p class="s">First, download plait.apk from the <a href="../../releases/latest" id="rel">latest release</a> on your Android phone (Android 8 or newer).</p>
-      <div class="call"><code>plait.apk</code> for 64-bit phones. On an older 32-bit phone, take <code>plait-armv7.apk</code>.</div></div>
-    <div data-rise><p class="s">Then open it. If Android asks, allow your browser or file manager to install apps.</p>
-      <div class="call">Settings → Allow from this source</div></div>
-    <div data-rise><p class="s">Tap Use my phone's calendars and allow access. Every account on the phone appears straight away.</p>
-      <div class="resp shotr" data-ui><img src="screenshots/01-home-morning.jpg" alt="The home screen once the calendars are connected" loading="lazy"></div></div>
-    <div data-rise><p class="s">Optional: add calendar links or Google in Settings, and pick an AI model under Settings → AI.</p></div>
+  <div class="steps">
+    <div class="step t1" data-rise><span class="n">1</span><p>Download plait.apk from the <a href="../../releases/latest" id="rel">latest release</a> on your Android phone (Android 8 or newer).</p><small><code>plait.apk</code> for 64-bit phones, <code>plait-armv7.apk</code> for older 32-bit ones.</small></div>
+    <div class="step t2" data-rise style="--i:1"><span class="n">2</span><p>Open it. If Android asks, allow your browser or file manager to install apps.</p><small>Settings → Allow from this source</small></div>
+    <div class="step t3" data-rise style="--i:2"><span class="n">3</span><p>Tap Use my phone's calendars and allow access. Every account on the phone appears straight away.</p></div>
+    <div class="step t4" data-rise style="--i:3"><span class="n">4</span><p>Optional: add calendar links or Google in Settings, and pick an AI model under Settings → AI.</p></div>
   </div>
 </section>
 
 <section class="close">
   <p class="big" data-rise>Braid your calendars into one day.</p>
   <div class="row2" data-rise style="--i:1">
-    <a class="btn brass" id="dl2" href="../../releases/latest/download/plait.apk">Download the APK</a>
-    <a class="btn" id="iss" href="../../issues">Open an issue</a>
-    <a class="follow" href="https://x.com/3shmaaa"><img src="follow-on-x.svg" alt="Follow @3shmaaa on X"></a>
+    <a class="btn fab" id="dl2" href="../../releases/latest/download/plait.apk">Download the APK</a>
+    <a class="btn soft" id="iss" href="../../issues" style="background:var(--card)">Open an issue</a>
+    <a class="btn soft" href="https://x.com/3shmaaa" style="background:var(--card)">Follow @3shmaaa</a>
   </div>
-  <p class="small" style="margin-top:20px;max-width:56ch">Plait is made by one person. Following on X is the best way to say thanks and to hear about new features first. Bug reports and ideas are welcome in the issues.</p>
+  <p class="small" data-rise>Plait is made by one person. Following on X is the best way to say thanks and to hear about new features first. Bug reports and ideas are welcome in the issues.</p>
 </section>
 
 <footer>
   <span>Plait · made for people with too many calendars.</span>
-  <div class="mid"><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="#install">Install</a></div>
-  <span class="end">Font: Clash Grotesk and AR One Sans (SIL OFL).</span>
+  <span><a id="src" href="../..">Source on GitHub</a> · Font: AR One Sans (SIL OFL)</span>
 </footer>
+
+<nav class="dockwrap" aria-label="Sections">
+  <div class="dock">
+    <a href="#top" class="on" data-s="top"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="4"/><path d="M8 2.8v3.4M16 2.8v3.4M3.5 10h17"/></svg><span>Home</span></a>
+    <a href="#features" data-s="features"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg><span>Features</span></a>
+    <a href="#privacy" data-s="privacy"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Privacy</span></a>
+    <a href="#install" data-s="install"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg><span>Install</span></a>
+  </div>
+  <a class="fabbtn" id="dl3" href="../../releases/latest/download/plait.apk" aria-label="Download Plait for Android"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></a>
+</nav>
 
 <script>
 // Pages lives at <owner>.github.io/<repo>/; release, source and issue links point at github.com/<owner>/<repo>.
@@ -429,17 +466,28 @@ video.trailer{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;backgrou
   if (!host.endsWith('github.io') || !path.length) return;
   const repo = 'https://github.com/' + host.split('.')[0] + '/' + path[0];
   const set = (id, href) => { const el = document.getElementById(id); if (el) el.href = href; };
-  set('dl', repo + '/releases/latest/download/plait.apk');
-  set('dl2', repo + '/releases/latest/download/plait.apk');
-  set('rel', repo + '/releases/latest');
-  set('src', repo);
-  set('iss', repo + '/issues');
+  ['dl0','dl','dl2','dl3'].forEach(i => set(i, repo + '/releases/latest/download/plait.apk'));
+  set('rel', repo + '/releases/latest'); set('src', repo); set('iss', repo + '/issues');
 })();
 
-// The hero agenda: switch accounts on and off and the day re-braids.
+// Welcome screen: Morning, Midday, Evening play in turn and recolour the sky.
 (() => {
-  const rows = [...document.querySelectorAll('#agenda .row')], chips = [...document.querySelectorAll('#agenda .chip')];
-  const count = document.getElementById('count');
+  const w = document.querySelector('.welcome'), btns = [...w.querySelectorAll('.seg button')], imgs = [...w.querySelectorAll('.phone img')];
+  const DUR = 4600; let cur = 0, timer;
+  const go = n => {
+    cur = n; w.dataset.mode = n;
+    btns.forEach((b, i) => b.setAttribute('aria-pressed', String(i === n)));
+    imgs.forEach((im, i) => im.classList.toggle('on', i === n));
+  };
+  const play = () => { clearTimeout(timer); timer = setTimeout(() => { go((cur + 1) % 3); play(); }, DUR); };
+  w.style.setProperty('--dur', DUR + 'ms');
+  btns.forEach((b, i) => b.addEventListener('click', () => { go(i); w.classList.add('paused'); clearTimeout(timer); }));
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(play, 1800); else w.classList.add('paused');
+})();
+
+// The sample agenda: switch accounts on and off and the day re-braids.
+(() => {
+  const rows = [...document.querySelectorAll('#agenda .row')], chips = [...document.querySelectorAll('.acc')], count = document.getElementById('count');
   const update = () => {
     const on = new Set(chips.filter(c => c.getAttribute('aria-pressed') === 'true').map(c => c.dataset.src));
     let n = 0;
@@ -450,29 +498,37 @@ video.trailer{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;backgrou
   chips.forEach(c => c.addEventListener('click', () => { c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); update(); }));
 })();
 
-// The blown-up control: operating it swaps the field and one word.
+// Glass or Material: one switch recolours the card and swaps the phones.
 (() => {
   const sec = document.getElementById('looks'), word = document.getElementById('word'), p = document.getElementById('looksP');
   const text = {
     glass: 'Blurred, tinted glass lit at the edge, using real backdrop refraction. Off by default, one tap to turn on.',
     material: 'Your Material You colours, shape-morphing buttons, spring motion, and the expressive navigation bar and floating action menu.'
   };
-  const base = p.textContent;
+  const tail = ' Both follow light and dark mode, with pure black for OLED screens and a reduce-animations option.';
+  p.textContent = text.glass + tail;
   sec.querySelectorAll('[data-look]').forEach(b => b.addEventListener('click', () => {
     sec.querySelectorAll('[data-look]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    sec.classList.toggle('alt', b.dataset.look === 'material');
+    sec.classList.toggle('material', b.dataset.look === 'material');
     word.textContent = b.dataset.look === 'glass' ? 'Glass' : 'Material';
-    p.textContent = text[b.dataset.look] + ' ' + base;
+    p.textContent = text[b.dataset.look] + tail;
   }));
 })();
 
-// Entrances: the parts of each section rise in turn, once.
+// Dock follows the section in view; entrances rise once.
 (() => {
-  const root = document.documentElement;
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
+  const links = [...document.querySelectorAll('.dock a')];
+  const ids = links.map(a => a.dataset.s);
+  const secs = ids.map(i => document.getElementById(i));
+  const mark = () => {
+    const y = scrollY + innerHeight * .4; let k = 0;
+    secs.forEach((s, i) => { if (s && s.offsetTop <= y) k = i; });
+    links.forEach((a, i) => a.classList.toggle('on', i === k));
+  };
+  addEventListener('scroll', mark, { passive: true }); mark();
   const items = document.querySelectorAll('[data-rise]');
   if (!('IntersectionObserver' in window)) { items.forEach(e => e.classList.add('in')); return; }
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .1, rootMargin: '0px 0px -5% 0px' });
   items.forEach((e, k) => { if (!e.style.getPropertyValue('--i')) e.style.setProperty('--i', k % 3); io.observe(e); });
 })();
 </script>
