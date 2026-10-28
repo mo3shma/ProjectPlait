@@ -54,15 +54,19 @@ import app.plait.ui.ButtonStyle
 import app.plait.ui.PlaitButton
 import app.plait.ui.theme.PlaitType
 import kotlinx.coroutines.launch
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import androidx.compose.ui.res.stringResource
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle
-import java.util.Locale
 
 // --- pure helpers ---------------------------------------------------------------------------------
 
-private fun dayName(d: LocalDate) = d.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+private fun dayName(d: LocalDate) = d.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale.locale)
 
 internal fun dayOf(nowMs: Long, zone: ZoneId): LocalDate = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
 
@@ -71,12 +75,12 @@ internal fun weekKey(days: List<LocalDate>): String = days.firstOrNull()?.toStri
 
 /** (value, label) tiles of the recap; a tile whose value does not exist is left out. */
 internal fun weekTiles(s: WeekStats): List<Pair<String, String>> = listOfNotNull(
-    s.meetings.toString() to "meetings",
-    WeekAnalytics.span(s.minutes) to "in meetings",
-    s.busiest?.let { dayName(it.date) to "busiest day · " + WeekAnalytics.span(it.minutes) },
-    if (s.finishedMeetings > 0) "${s.notedMeetings} of ${s.finishedMeetings}" to "meetings noted" else null,
-    if (s.tasksDone + s.tasksOpen > 0) "${s.tasksDone} done" to "tasks · ${s.tasksOpen} open" else null,
-    s.longest?.let { WeekAnalytics.span((it.endMs - it.startMs) / 60_000) to "longest · " + it.title },
+    s.meetings.toString() to Txt.s(R.string.home_week_tile_meetings),
+    WeekAnalytics.span(s.minutes) to Txt.s(R.string.home_week_tile_in_meetings),
+    s.busiest?.let { dayName(it.date) to Txt.s(R.string.home_week_tile_busiest_day, WeekAnalytics.span(it.minutes)) },
+    if (s.finishedMeetings > 0) Txt.s(R.string.common_n_of_m, s.notedMeetings, s.finishedMeetings) to Txt.s(R.string.home_week_tile_noted) else null,
+    if (s.tasksDone + s.tasksOpen > 0) Txt.s(R.string.home_week_tile_done_value, s.tasksDone) to Txt.s(R.string.home_week_tile_tasks_open, s.tasksOpen) else null,
+    s.longest?.let { WeekAnalytics.span((it.endMs - it.startMs) / 60_000) to Txt.s(R.string.home_tile_longest, Bidi.isolate(it.title)) },
 )
 
 /** Bar heights in dp for the strip: proportional to minutes, at least [minDp] for a day with meetings, 0 for none (drawn as a dot). */
@@ -85,13 +89,15 @@ internal fun barHeights(days: List<WeekDay>, maxDp: Float, minDp: Float = 6f): L
     return days.map { if (it.meetings == 0) 0f else maxOf(minDp, maxDp * it.minutes / top) }
 }
 
-internal fun weekdayInitial(d: LocalDate): String = d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
+// Arabic short day names are the full names, too wide for a bar's column: one letter there.
+internal fun weekdayInitial(d: LocalDate): String =
+    d.dayOfWeek.getDisplayName(if (AppLocale.isRtl) TextStyle.NARROW else TextStyle.SHORT, AppLocale.locale)
 
 /** "3 meetings · first 9:00 AM Design review", or "Clear". */
 internal fun previewDayLine(d: DayPreview, zone: ZoneId): String {
     val first = d.first
-    if (d.meetings == 0 || first == null) return "Clear"
-    return "${d.meetings} meeting${if (d.meetings == 1) "" else "s"} · first ${WeekBriefs.clock(first.startMs, zone)} ${first.title.trim()}"
+    if (d.meetings == 0 || first == null) return Txt.s(R.string.home_week_day_clear)
+    return Txt.plural(R.plurals.home_week_day_line, d.meetings, d.meetings, Bidi.isolate(WeekBriefs.clock(first.startMs, zone)), Bidi.isolate(first.title.trim()))
 }
 
 // --- shared bits ----------------------------------------------------------------------------------
@@ -111,12 +117,12 @@ private fun rememberAiReady(): Boolean {
 private fun WrittenBy(by: String, canRefresh: Boolean, busy: Boolean, onRefresh: () -> Unit) {
     val ink = LocalCardInk.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Written by $by", style = PlaitType.caption, color = ink.copy(alpha = 0.7f), modifier = Modifier.weight(1f, fill = false))
+        Text(stringResource(R.string.home_written_by, Bidi.isolate(by)), style = PlaitType.caption, color = ink.copy(alpha = 0.7f), modifier = Modifier.weight(1f, fill = false))
         if (canRefresh && !busy) Box(
             // clickable consumes the tap, so the card's press-to-open does not fire.
             Modifier.size(32.dp).clip(CircleShape).background(ink.copy(alpha = 0.12f)).clickable(role = Role.Button, onClick = onRefresh),
             contentAlignment = Alignment.Center,
-        ) { Icon(Icons.Filled.Refresh, "Write this again", tint = ink, modifier = Modifier.size(18.dp)) }
+        ) { Icon(Icons.Filled.Refresh, stringResource(R.string.home_write_again_desc), tint = ink, modifier = Modifier.size(18.dp)) }
     }
 }
 
@@ -152,8 +158,8 @@ internal fun WeekRecapBlock(nowMs: Long, zone: ZoneId) {
     LaunchedEffect(factsKey) { brief = WeekBriefs.recap(context, stats, firstName) }
     val aiReady = rememberAiReady()
 
-    SectionLabel("Your work week")
-    Headline("Week done.")
+    SectionLabel(stringResource(R.string.home_week_your_work_week))
+    Headline(stringResource(R.string.home_week_done))
     Body(brief.text)
     brief.by?.let { by ->
         WrittenBy(by, aiReady, busy) {
@@ -187,7 +193,7 @@ internal fun WeekRecapBlock(nowMs: Long, zone: ZoneId) {
             }
         }
     }
-    SectionLabel("Today")
+    SectionLabel(stringResource(R.string.common_today))
 }
 
 // --- B: next-week offer ---------------------------------------------------------------------------
@@ -201,7 +207,7 @@ internal fun NextWeekOffer(nowMs: Long, zone: ZoneId, meetingsToday: Int) {
     val days = remember(today, start) { WorkWeek.nextWorkWeek(today, start) }
     val key = weekKey(days)
     if (key !in openedWeeks) {
-        PlaitButton("Brief me on next week", { openedWeeks.add(key) }, style = ButtonStyle.Ink, size = ButtonSize.Small, icon = Icons.Filled.AutoAwesome)
+        PlaitButton(stringResource(R.string.home_week_brief_next), { openedWeeks.add(key) }, style = ButtonStyle.Ink, size = ButtonSize.Small, icon = Icons.Filled.AutoAwesome)
         return
     }
     NextWeekBrief(days, nowMs, zone)

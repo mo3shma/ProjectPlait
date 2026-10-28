@@ -20,6 +20,8 @@ import app.plait.data.brief.BriefBuilder
 import app.plait.data.context.ContextAnalyzer
 import app.plait.data.context.ContextStore
 import app.plait.data.memo.MemoStore
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Txt
 import app.plait.widget.NextMeetingWidget
 import org.json.JSONArray
 import org.json.JSONObject
@@ -113,11 +115,12 @@ object Reminders {
         if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi) else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
     }
 
+    /** Named in the app's language when first made; Android keeps that name, so a later language change does not rename it. */
     fun ensureChannel(context: Context) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (nm.getNotificationChannel(CHANNEL) == null) {
-            nm.createNotificationChannel(NotificationChannel(CHANNEL, "Meetings and notes", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Heads-up before a meeting, and a reminder to write up meetings without notes."
+            nm.createNotificationChannel(NotificationChannel(CHANNEL, Txt.s(R.string.alert_channel_meetings), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = Txt.s(R.string.alert_channel_meetings_desc)
             })
         }
     }
@@ -134,9 +137,9 @@ object Reminders {
         val start = i.getLongExtra("start", 0L)
         val min = if (start > 0) LiveLogic.minutesLeft(System.currentTimeMillis(), start) else i.getIntExtra("min", 10)
         val end = i.getLongExtra("end", 0L)
-        val n = NotificationCompat.Builder(context, CHANNEL)
+        val n = NotificationCompat.Builder(AppLocale.wrap(context), CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle((if (min > 0) "In $min min: " else "Starting now: ") + i.getStringExtra("title"))
+            .setContentTitle(LiveLogic.meetingTitle(min, i.getStringExtra("title").orEmpty()))
             .setContentText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString(" · "))
             .setStyle(NotificationCompat.BigTextStyle().bigText(listOf(i.getStringExtra("when"), i.getStringExtra("line")).filter { !it.isNullOrBlank() }.joinToString("\n")))
             .setCategory(NotificationCompat.CATEGORY_EVENT).setAutoCancel(true)
@@ -145,7 +148,7 @@ object Reminders {
                 i.getStringExtra("join")?.let { url ->
                     val view = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     val join = NotificationCompat.Action.Builder(
-                        0, "Join", PendingIntent.getActivity(context, id.hashCode() + 1, view, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
+                        0, Txt.s(R.string.common_join), PendingIntent.getActivity(context, id.hashCode() + 1, view, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
                     ).build()
                     b.addAction(join)
                     // On a paired watch the same alert shows up with a Join button.
@@ -154,7 +157,7 @@ object Reminders {
                 // Both snoozes fit beside Join (three actions). Each puts the alert back, never after the meeting ends.
                 if (end <= 0 || System.currentTimeMillis() + 5 * 60_000L < end) {
                     listOf(5, 10).forEach { m ->
-                        b.addAction(0, "Snooze $m min", PendingIntent.getBroadcast(
+                        b.addAction(0, Txt.plural(R.plurals.alert_snooze, m), PendingIntent.getBroadcast(
                             context, id.hashCode() + m, Intent(context, ReminderReceiver::class.java).setAction(ACTION_SNOOZE).putExtras(i).putExtra("mins", m),
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         ))
@@ -224,9 +227,8 @@ object Reminders {
         val missing = done.filter { it.id !in noted && kinds[it.id] != app.plait.data.brief.MeetingKind.Personal && kinds[it.id] != app.plait.data.brief.MeetingKind.Focus }
         if (missing.isEmpty()) return
         ensureChannel(context)
-        val text = if (missing.size == 1) "${missing.first().title} has no notes yet." else "${missing.size} meetings have no notes yet, like ${missing.first().title}."
-        val n = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notification).setContentTitle("Add notes while it's fresh").setContentText(text)
+        val n = NotificationCompat.Builder(AppLocale.wrap(context), CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification).setContentTitle(Txt.s(R.string.alert_nudge_title)).setContentText(LiveLogic.nudgeText(missing.size, missing.first().title))
             .setAutoCancel(true).setContentIntent(open(context, missing.first().id, 2, NUDGE_CODE + 1)).build()
         runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NUDGE_CODE, n) }
     }

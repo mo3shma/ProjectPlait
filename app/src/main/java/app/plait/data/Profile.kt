@@ -2,6 +2,8 @@ package app.plait.data
 
 import android.content.Context
 import android.os.Build
+import app.plait.R
+import app.plait.i18n.Txt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,7 +19,7 @@ object Profile {
         loaded = true
         val p = context.getSharedPreferences("plait", Context.MODE_PRIVATE)
         name = p.getString("profile_name", "").orEmpty()
-        device = p.getString("device_label", null) ?: (Build.MODEL ?: "This phone")
+        device = p.getString("device_label", null) ?: (Build.MODEL ?: Txt.s(R.string.settings_this_phone))
     }
 
     fun setName(context: Context, value: String) {
@@ -26,7 +28,7 @@ object Profile {
     }
 
     fun setDevice(context: Context, value: String) {
-        device = value.trim().take(40).ifBlank { Build.MODEL ?: "This phone" }
+        device = value.trim().take(40).ifBlank { Build.MODEL ?: Txt.s(R.string.settings_this_phone) }
         context.getSharedPreferences("plait", Context.MODE_PRIVATE).edit().putString("device_label", device).apply()
     }
 

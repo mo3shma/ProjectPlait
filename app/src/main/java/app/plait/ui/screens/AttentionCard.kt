@@ -42,17 +42,22 @@ import app.plait.ui.ButtonStyle
 import app.plait.ui.HomeState
 import app.plait.ui.PlaitButton
 import app.plait.ui.theme.PlaitType
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 
 private const val MaxRows = 8
 
 /** "From <meeting> · 3 days ago", "Free note · today", "Suggested from <meeting>". Overdue-ness lives only in the wording. */
 internal fun attentionCaption(item: AttentionItem, nowMs: Long): String {
-    val title = item.eventTitle.trim()
+    val title = Bidi.isolate(item.eventTitle.trim())
     val ago = AttentionTasks.ago(item.sinceMs, nowMs)
     return when {
-        item.kind == AttentionItem.Kind.Suggestion -> if (title.isBlank()) "Suggested · $ago" else "Suggested from $title"
-        title.isBlank() -> "Free note · $ago"
-        else -> "From $title · $ago"
+        item.kind == AttentionItem.Kind.Suggestion -> if (title.isBlank()) Txt.s(R.string.home_att_suggested_ago, ago) else Txt.s(R.string.home_att_suggested_from, title)
+        title.isBlank() -> Txt.s(R.string.home_att_free_note, ago)
+        else -> Txt.s(R.string.home_att_from, title, ago)
     }
 }
 
@@ -83,7 +88,7 @@ internal fun AttentionContent(phase: Phase, nowMs: Long, onOpenEvent: (String) -
         Box(Modifier.size(28.dp).clip(CircleShape).background(ink.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
             Icon(Icons.Filled.TaskAlt, null, tint = ink, modifier = Modifier.size(18.dp))
         }
-        Text("Needs your attention", style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.home_att_title), style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         if (items.isNotEmpty()) Box(Modifier.clip(CircleShape).background(ink.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 4.dp)) {
             Text("${view.count}", style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = ink)
         }
@@ -91,14 +96,14 @@ internal fun AttentionContent(phase: Phase, nowMs: Long, onOpenEvent: (String) -
     if (items.isEmpty()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.CheckCircle, null, tint = ink.copy(alpha = 0.8f), modifier = Modifier.size(24.dp))
-            Text("Nothing needs you right now.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
+            Text(stringResource(R.string.home_att_empty), style = PlaitType.body, color = ink.copy(alpha = 0.8f))
         }
         QuoteBlock(phase, FeedCardKind.Tasks)
     } else {
         view.rows.forEach { item ->
             androidx.compose.runtime.key(item.id) { AttentionRow(item, nowMs, ink, onOpenEvent) }
         }
-        if (view.more > 0) Text("+${view.more} more", style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
+        if (view.more > 0) Text(stringResource(R.string.home_n_more, view.more), style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
     }
 }
 
@@ -107,20 +112,21 @@ private fun AttentionRow(item: AttentionItem, nowMs: Long, ink: Color, onOpenEve
     val context = LocalContext.current
     // Open lines that are not urgent are the backlog: listed, but quieter.
     val quiet = item.kind == AttentionItem.Kind.Open && !item.urgent
+    val markDone = stringResource(R.string.home_att_mark_done, Bidi.isolate(item.text))
     Row(Modifier.fillMaxWidth().alpha(if (quiet) 0.7f else 1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         if (item.kind == AttentionItem.Kind.Open) {
             // A 40.dp touch area around the 28.dp ring.
             Box(
                 Modifier.size(40.dp).clip(CircleShape)
                     .clickable(role = Role.Button) { AttentionTasks.tick(context, item) }
-                    .semantics { contentDescription = "Mark done: ${item.text}" },
+                    .semantics { contentDescription = markDone },
                 contentAlignment = Alignment.Center,
             ) { Box(Modifier.size(28.dp).border(2.dp, ink.copy(alpha = 0.55f), CircleShape)) }
         }
         Column(
             Modifier.weight(1f).then(if (item.eventId.isBlank()) Modifier else Modifier.clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button) { onOpenEvent(item.eventId) }),
         ) {
-            Text(item.text, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.SemiBold), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(item.text, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.SemiBold).userText(), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val due = item.dueMs
             if (item.urgent && due != null) {
                 val overdue = due < nowMs
@@ -134,8 +140,8 @@ private fun AttentionRow(item: AttentionItem, nowMs: Long, ink: Color, onOpenEve
             Text(attentionCaption(item, nowMs), style = PlaitType.caption, color = ink.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (item.kind == AttentionItem.Kind.Suggestion) {
-            PlaitButton("Add", { AttentionTasks.add(context, item) }, style = ButtonStyle.Ink, size = ButtonSize.Small)
-            PlaitButton("Dismiss", { AttentionTasks.dismiss(context, item) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+            PlaitButton(stringResource(R.string.common_add), { AttentionTasks.add(context, item) }, style = ButtonStyle.Ink, size = ButtonSize.Small)
+            PlaitButton(stringResource(R.string.common_dismiss), { AttentionTasks.dismiss(context, item) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
         }
     }
 }

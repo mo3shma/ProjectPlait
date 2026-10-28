@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_language_title">اللغة</string>
+    <string name="settings_language_note">يتبع Plait لغة الهاتف ما لم تُختر لغة هنا.</string>
+    <string name="settings_language_system">لغة النظام</string>
+
+    <!-- ===== Settings: calendar access and the header ===== -->
+    <string name="settings_calendar_access_needed">يحتاج Plait إلى الوصول إلى التقويم لعرض الأحداث. يمكن السماح بذلك من الإعدادات.</string>
+    <string name="settings_google_access_denied">لم يُمنح الوصول إلى التقويم.</string>
+    <string name="settings_add_account_failed">تعذّر فتح إعدادات الحسابات في الهاتف.</string>
+    <plurals name="settings_events">
+        <item quantity="zero">لا أحداث</item>
+        <item quantity="one">حدث واحد</item>
+        <item quantity="two">حدثان</item>
+        <item quantity="few">%d أحداث</item>
+        <item quantity="many">%d حدثًا</item>
+        <item quantity="other">%d حدث</item>
+    </plurals>
+    <plurals name="settings_calendars">
+        <item quantity="zero">لا تقاويم</item>
+        <item quantity="one">تقويم واحد</item>
+        <item quantity="two">تقويمان</item>
+        <item quantity="few">%d تقاويم</item>
+        <item quantity="many">%d تقويمًا</item>
+        <item quantity="other">%d تقويم</item>
+    </plurals>
+    <string name="settings_connected_summary">%1$s من %2$s</string>
+    <string name="settings_connected_summary_syncing">%1$s من %2$s · جارٍ المزامنة…</string>
+    <string name="settings_nothing_connected">لا شيء متصل بعد. يمكن اختيار طريقة من الأسفل.</string>
+    <string name="settings_access_title_read">السماح بالوصول إلى التقويم</string>
+    <string name="settings_access_title_write">السماح بالحفظ في التقويم</string>
+    <string name="settings_access_body">يقرأ Plait التقاويم الموجودة على هذا الهاتف، ويحفظ الاجتماعات المُنشأة فيه في التقويم المختار. لا يمر شيء عبر أي خادم لـ Plait.</string>
+    <string name="settings_access_button_read">السماح بالوصول</string>
+    <string name="settings_access_button_write">السماح بالحفظ</string>
+    <string name="settings_source_phone">الهاتف</string>
+
+    <!-- ===== Settings: accounts ===== -->
+    <string name="settings_accounts_title">الحسابات المعروضة</string>
+    <string name="settings_accounts_none">لم يُعثر على حسابات بعد</string>
+    <string name="settings_accounts_needs_access">يلزم الوصول إلى التقويم</string>
+    <string name="settings_accounts_shown">%1$d من %2$d معروضة</string>
+    <string name="settings_accounts_note_chosen">لا تظهر في Plait إلا الحسابات المفعّلة، وتبقى البقية خارج جدول الأعمال.</string>
+    <string name="settings_accounts_note_all">يُعرض كل ما على هذا الهاتف. يمكن إيقاف الحسابات غير المرغوب فيها هنا.</string>
+    <string name="settings_show_item">إظهار %1$s</string>
+    <string name="settings_calendars_hide">إخفاء التقاويم</string>
+    <string name="settings_calendars_choose">اختيار التقاويم</string>
+    <string name="settings_save_here_chosen">"✓  تُحفظ الاجتماعات الجديدة هنا"</string>
+    <string name="settings_save_here">حفظ الاجتماعات الجديدة هنا</string>
+    <string name="settings_read_only">للقراءة فقط</string>
+    <string name="settings_no_calendars">لم يُعثر على تقاويم على هذا الهاتف بعد. يمكن إضافة حساب من الأسفل.</string>
+
+    <!-- ===== Settings: add an account ===== -->
+    <string name="settings_add_title">إضافة حساب</string>
+    <string name="settings_add_note">تُضاف الحسابات من Android، فلا يرى Plait أي كلمة مرور. وتظهر تقاويمها هنا تلقائيًا.</string>
+    <string name="settings_add_google">إضافة حساب Google</string>
+    <string name="settings_add_outlook">إضافة Outlook أو Microsoft 365 أو Exchange</string>
+    <string name="settings_add_help">لحساب Outlook: يمكن تثبيت تطبيق Outlook وتسجيل الدخول فيه، أو اختيار Exchange من القائمة التي يعرضها Android. ولحساب iCloud: يمكن استخدام رابط تقويم من الأسفل (لا يوفر iCloud تسجيل دخول يدعمه Android).</string>
+
+    <!-- ===== Settings: import a calendar ===== -->
+    <string name="settings_import_title">استيراد تقويم</string>
+    <string name="settings_import_summary">برابط أو من ملف</string>
+    <string name="settings_import_note">الرابط يحدّث نفسه تلقائيًا، أما الملف فنسخة لمرة واحدة.</string>
+    <string name="settings_import_link_hint">لصق رابط تقويم (https:// أو webcal://)</string>
+    <string name="settings_import_adding">جارٍ الإضافة…</string>
+    <string name="settings_import_file">استيراد ملف ICS</string>
+    <string name="settings_import_file_unreadable">تعذّرت قراءة هذا الملف.</string>
+    <string name="settings_import_file_done">تم استيراد %1$s.</string>
+    <string name="settings_import_file_on_phone">ملف على هذا الهاتف</string>
+    <string name="settings_import_help">في Outlook: ‏Outlook على الويب ← الإعدادات ← التقويم ← التقاويم المشتركة ← نشر ← نسخ رابط ICS. وفي iCloud: تطبيق التقويم ← مشاركة ← تقويم عام. وفي Google: إعدادات التقويم ← دمج التقويم ← العنوان السري بتنسيق iCal. ويمكن لأي شخص لديه رابط منشور قراءة ذلك التقويم.</string>
+
+    <!-- ===== Settings: where new meetings are saved ===== -->
+    <string name="settings_send_title">مكان حفظ الاجتماعات الجديدة</string>
+    <string name="settings_send_not_chosen">لم يُختر بعد</string>
+    <string name="settings_send_note">ما يُنشأ في Plait يُحفظ في المكان نفسه مع كل شيء آخر.</string>
+    <string name="settings_send_dest">تُحفظ الاجتماعات الجديدة في %1$s (%2$s). ويزامنها Android مع ذلك الحساب، فتظهر في %3$s وتصل الدعوات إلى الضيوف.</string>
+    <string name="settings_send_your_calendar_app">تطبيق التقويم</string>
+    <string name="settings_send_no_writable">لا يوجد بعد تقويم على هذا الهاتف يقبل اجتماعات جديدة. يمكن إضافة حساب في الأعلى، أو إبقاؤها على هذا الهاتف فقط.</string>
+    <string name="settings_send_allow_first">يلزم السماح بالوصول إلى التقويم أولًا.</string>
+    <string name="settings_send_create_local">إنشاء تقويم على هذا الهاتف فقط</string>
+    <string name="settings_send_create_failed">تعذّر إنشاء تقويم على هذا الهاتف.</string>
+    <string name="settings_send_notes_title">إضافة ملاحظاتي إلى الحدث</string>
+    <string name="settings_send_notes_body">بعد كل ملاحظة صوتية، يُكتب الملخص والمتابعات في وصف حدث التقويم.</string>
+    <string name="settings_send_notes_switch">إضافة الملاحظات إلى أحداث التقويم</string>
+
+    <!-- ===== Settings: AI ===== -->
+    <string name="settings_ai_title">الذكاء الاصطناعي على الهاتف</string>
+    <string name="settings_ai_downloaded_model">نموذج مُنزَّل</string>
+    <string name="settings_ai_rules_only">القواعد فقط</string>
+    <string name="settings_ai_summary">الكتابة: %1$s · الصوت: %2$s</string>
+    <string name="settings_ai_voice_none">لا شيء بعد</string>
+    <string name="settings_ai_badge">المقترح: Qwen3 0.6B + Whisper Turbo</string>
+    <string name="settings_ai_light_title">نموذج أخف للكتابة التلقائية</string>
+    <string name="settings_ai_light_body">تستخدم ملخصات اليوم والتحضير وقسم «حول» أصغر نموذج مُنزَّل، حتى لا يُبطئ نموذج كبير الهاتف. أما الأسئلة والملخصات المطلوبة فتستخدم النموذج المختار.</string>
+
+    <!-- ===== Settings: reminders ===== -->
+    <string name="settings_reminders_title">التذكيرات والأداة</string>
+    <plurals name="settings_reminders_lead">
+        <item quantity="zero">قبل %d دقيقة</item>
+        <item quantity="one">قبل دقيقة واحدة</item>
+        <item quantity="two">قبل دقيقتين</item>
+        <item quantity="few">قبل %d دقائق</item>
+        <item quantity="many">قبل %d دقيقة</item>
+        <item quantity="other">قبل %d دقيقة</item>
+    </plurals>
+    <string name="settings_reminders_summary_nudge">%1$s · تذكير مسائي</string>
+    <string name="settings_reminders_note">تصدر التنبيهات عن منبّه الهاتف، فتعمل حتى عند إغلاق Plait.</string>
+    <string name="settings_reminders_before_title">قبل كل اجتماع</string>
+    <string name="settings_reminders_before_body">تنبيه مسبق مع سطر عن غرض الاجتماع، وزر للانضمام.</string>
+    <string name="settings_reminders_before_switch">التذكير قبل الاجتماعات</string>
+    <string name="settings_reminders_nudge_title">تذكير مسائي بالملاحظات</string>
+    <string name="settings_reminders_nudge_body">عند الساعة %1$s، إذا كانت الاجتماعات المنتهية بلا ملاحظات.</string>
+    <string name="settings_reminders_widget">الأداة: بالضغط مطولًا على الشاشة الرئيسية، ثم اختيار «الأدوات» ثم Plait. تتوفر بحجمين، 4×2 و2×2، وتعرض الاجتماع التالي مع زر للانضمام.</string>
+
+    <!-- ===== Settings: work week ===== -->
+    <string name="settings_week_title">أسبوع العمل</string>
+    <string name="settings_week_note">يلخّص موجز المساء في آخر يوم من أسبوع العمل الأسبوعَ كله، وفي أيام العطلة الخالية من الاجتماعات يعرض Plait نظرة على الأسبوع القادم.</string>
+    <string name="settings_week_first_day">أول يوم عمل</string>
+    <string name="settings_week_label">يبدأ يوم %1$s، والعمل من %2$s إلى %3$s</string>
+
+    <!-- ===== Settings: appearance ===== -->
+    <string name="settings_appearance_title">المظهر</string>
+    <string name="settings_appearance_no_glass">بلا تأثيرات زجاجية</string>
+    <string name="settings_appearance_calm">هادئ</string>
+    <string name="settings_amoled_title">أسود خالص في الوضع الداكن</string>
+    <string name="settings_amoled_body">خلفية سوداء تمامًا لشاشات OLED: تباين أعمق، وتنطفئ وحدات البكسل لتوفير البطارية.</string>
+    <string name="settings_style_title">النمط</string>
+    <string name="settings_style_body">نمط Liquid Glass شفاف ويكسر ما خلفه، ونمط Material 3 Expressive مُصمت ومتدرّج الألوان وأكثر حيوية.</string>
+    <string name="settings_style_restart_note">يلزم إعادة تشغيل Plait لإكمال تحويل التطبيق كله إلى هذا النمط.</string>
+    <string name="settings_restart_now">إعادة التشغيل الآن</string>
+    <string name="settings_glass_title">التأثيرات الزجاجية</string>
+    <string name="settings_glass_body">تمويه وانكسار. يمكن إيقافها للحصول على أسطح بسيطة أخف على الهواتف المتوسطة.</string>
+    <string name="settings_calm_title">تقليل الحركة</string>
+    <string name="settings_calm_body">بلا سماء متحركة ولا ارتداد. تبقى الصفحات تنزلق قليلًا ليتضح مكان الانتقال.</string>
+    <string name="settings_restart_title">إعادة التشغيل للتطبيق</string>
+    <string name="settings_restart_body">يبني Plait الواجهة كلها بنمط واحد، لذا يلزم إعادة تشغيله للتحويل إلى %1$s.</string>
+
+    <!-- ===== Settings: you and backups ===== -->
+    <string name="settings_you_title">الملف الشخصي والنسخ الاحتياطي</string>
+    <string name="settings_you_summary">الاسم، النسخ الاحتياطي، الاستيراد</string>
+    <string name="settings_you_note">يُستخدم الاسم في التحيات. وتنقل النسخة الاحتياطية الملاحظات والإعدادات إلى هاتف آخر.</string>
+    <string name="settings_you_name">الاسم</string>
+    <string name="settings_you_name_hint">بأي اسم يناديك Plait؟</string>
+    <string name="settings_you_device">هذا الهاتف: %1$s</string>
+    <string name="settings_backup_media_title">تضمين التسجيلات والصور</string>
+    <string name="settings_backup_media_body">يكبر حجم الملف، لكن الصوت والصور تُنقل معه.</string>
+    <string name="settings_backup_pass_title">عبارة المرور (اختيارية)</string>
+    <string name="settings_backup_pass_hint">تقفل الملف. تُترك فارغة لعدم القفل.</string>
+    <string name="settings_backup_pass_body">مع عبارة المرور يُشفَّر الملف (AES-256). ولا يمكن لأحد، ولا لنا، استعادته عند نسيانها.</string>
+    <string name="settings_backup_export">تصدير نسخة احتياطية</string>
+    <string name="settings_backup_markdown">الملاحظات بتنسيق Markdown للحاسوب</string>
+    <string name="settings_backup_import">استيراد نسخة احتياطية</string>
+    <string name="settings_backup_retry">إعادة المحاولة بعبارة المرور هذه</string>
+    <string name="settings_backup_import_note">الاستيراد يضيف فقط ما ليس على هذا الهاتف، ولا يُستبدل شيء هنا. ومن دون عبارة مرور لا يكون الملف مشفّرًا، لذا يجب الحفاظ على خصوصيته.</string>
+    <string name="settings_backup_unreadable">تعذّرت قراءة هذه النسخة الاحتياطية.</string>
+    <string name="settings_backup_save_failed">تعذّر حفظ النسخة الاحتياطية.</string>
+    <string name="settings_markdown_save_failed">تعذّر حفظ الملفات.</string>
+    <plurals name="settings_markdown_saved">
+        <item quantity="zero">تم حفظ %d اجتماع كملفات Markdown تُقرأ على أي حاسوب.</item>
+        <item quantity="one">تم حفظ اجتماع واحد كملفات Markdown تُقرأ على أي حاسوب.</item>
+        <item quantity="two">تم حفظ اجتماعين كملفات Markdown تُقرأ على أي حاسوب.</item>
+        <item quantity="few">تم حفظ %d اجتماعات كملفات Markdown تُقرأ على أي حاسوب.</item>
+        <item quantity="many">تم حفظ %d اجتماعًا كملفات Markdown تُقرأ على أي حاسوب.</item>
+        <item quantity="other">تم حفظ %d اجتماع كملفات Markdown تُقرأ على أي حاسوب.</item>
+    </plurals>
+    <string name="settings_backup_added">تمت إضافة %1$s.</string>
+    <string name="settings_backup_added_nothing">اكتمل الاستيراد. لا جديد للإضافة.</string>
+    <string name="settings_backup_saved">تم حفظ نسخة احتياطية تضم %1$s.</string>
+    <string name="settings_backup_saved_nothing">تم حفظ النسخة الاحتياطية. لا جديد للإضافة.</string>
+    <string name="settings_list_separator">"، "</string>
+    <plurals name="settings_backup_voice_notes">
+        <item quantity="zero">%d ملاحظة صوتية</item>
+        <item quantity="one">ملاحظة صوتية واحدة</item>
+        <item quantity="two">ملاحظتان صوتيتان</item>
+        <item quantity="few">%d ملاحظات صوتية</item>
+        <item quantity="many">%d ملاحظة صوتية</item>
+        <item quantity="other">%d ملاحظة صوتية</item>
+    </plurals>
+    <plurals name="settings_backup_memos">
+        <item quantity="zero">%d ملاحظة مكتوبة أو مصوّرة</item>
+        <item quantity="one">ملاحظة مكتوبة أو مصوّرة واحدة</item>
+        <item quantity="two">ملاحظتان مكتوبتان أو مصوّرتان</item>
+        <item quantity="few">%d ملاحظات مكتوبة أو مصوّرة</item>
+        <item quantity="many">%d ملاحظة مكتوبة أو مصوّرة</item>
+        <item quantity="other">%d ملاحظة مكتوبة أو مصوّرة</item>
+    </plurals>
+    <plurals name="settings_backup_emails">
+        <item quantity="zero">%d رسالة بريد</item>
+        <item quantity="one">رسالة بريد واحدة</item>
+        <item quantity="two">رسالتا بريد</item>
+        <item quantity="few">%d رسائل بريد</item>
+        <item quantity="many">%d رسالة بريد</item>
+        <item quantity="other">%d رسالة بريد</item>
+    </plurals>
+    <plurals name="settings_backup_feeds">
+        <item quantity="zero">%d رابط تقويم</item>
+        <item quantity="one">رابط تقويم واحد</item>
+        <item quantity="two">رابطا تقويم</item>
+        <item quantity="few">%d روابط تقويم</item>
+        <item quantity="many">%d رابط تقويم</item>
+        <item quantity="other">%d رابط تقويم</item>
+    </plurals>
+
+    <!-- ===== Settings: sync ===== -->
+    <string name="settings_sync_title">المزامنة بين الهواتف</string>
+    <string name="settings_sync_summary_status">مفعّلة · %1$s</string>
+    <string name="settings_sync_note">لا يوجد خادم لـ Plait. يمكن اختيار مجلد يزامنه بين الهواتف تطبيق سحابي مستخدَم بالفعل، مثل Google Drive أو Dropbox أو Nextcloud أو Syncthing. ولا يضع Plait فيه إلا ملفات مشفّرة.</string>
+    <string name="settings_sync_on">المزامنة جارية</string>
+    <string name="settings_sync_with">المزامنة جارية مع «%1$s»</string>
+    <string name="settings_sync_media_body">ملفات أكبر، لكن الصوت والصور تنتقل أيضًا. وإلا فلا يُزامَن إلا النص.</string>
+    <string name="settings_sync_media_switch">مزامنة التسجيلات والصور</string>
+    <string name="settings_sync_now">المزامنة الآن</string>
+    <string name="settings_sync_stop">إيقاف المزامنة</string>
+    <string name="settings_sync_when">يزامن Plait عند فتحه وبعد حفظ أي ملاحظة. وحذف أي شيء على هاتف يحذفه من الهواتف الأخرى.</string>
+    <string name="settings_sync_setup">يلزم الإعداد على كل هاتف بالمجلد نفسه وعبارة المرور نفسها. تشفّر عبارة المرور الملفات، وعند نسيانها يتعذّر فتحها.</string>
+    <string name="settings_sync_choose_folder">اختيار مجلد المزامنة</string>
+    <string name="settings_sync_folder_chosen">تم اختيار المجلد ✓</string>
+    <string name="settings_sync_pass_hint">عبارة مرور المزامنة</string>
+    <string name="settings_sync_start">بدء المزامنة</string>
+    <string name="settings_sync_pass_short">يلزم 6 أحرف على الأقل.</string>
+
+    <!-- ===== Settings: diagnostics ===== -->
+    <string name="settings_diag_title">فحص هذا الهاتف</string>
+    <string name="settings_diag_summary">فحص ذاتي، السجل، معدل الإطارات</string>
+    <string name="settings_diag_note">للاختبار على جهاز حقيقي. يبقى كل شيء على الهاتف ما لم تتم مشاركته.</string>
+    <string name="settings_diag_run">تشغيل الفحص الذاتي</string>
+    <string name="settings_diag_hide_log">إخفاء السجل</string>
+    <string name="settings_diag_show_log">عرض السجل</string>
+    <string name="settings_diag_hide_frames">إخفاء إحصاءات الإطارات</string>
+    <string name="settings_diag_show_frames">عرض إحصاءات الإطارات</string>
+    <string name="settings_diag_empty_log">لا شيء في السجل بعد.</string>
+    <string name="settings_diag_share_log">مشاركة السجل</string>
+
+    <!-- ===== Settings: updates ===== -->
+    <string name="settings_updates_title">التحديثات والمساعدة</string>
+    <string name="settings_updates_note">يبحث Plait في GitHub عن إصدار جديد في كل مرة يُفتح فيها، ويثبّته عند الموافقة. ولا يرسل البحث أي معلومات شخصية.</string>
+    <string name="settings_update_latest">هذا أحدث إصدار.</string>
+    <string name="settings_update_ready">الإصدار %1$s من Plait جاهز للتثبيت.</string>
+    <string name="settings_update_downloading">جارٍ تنزيل Plait ‏%1$s…</string>
+    <string name="settings_update_waiting">بانتظار إذن التثبيت.</string>
+    <string name="settings_update_installing">جارٍ التثبيت…</string>
+    <string name="settings_update_idle">يمكن النقر على «التحقق من التحديثات» للبحث عن إصدار جديد.</string>
+    <string name="settings_update_button">تحديث</string>
+    <string name="settings_update_check">التحقق من التحديثات</string>
+    <string name="settings_update_whats_new">ما الجديد</string>
+    <string name="settings_update_tour">جولة تعريفية</string>
+    <string name="settings_update_auto_title">التحقق من التحديثات تلقائيًا</string>
+    <string name="settings_update_auto_body">عند فتح Plait. عند الإيقاف يكون التحقق يدويًا.</string>
+    <string name="settings_update_no_notes">ملاحظات هذا الإصدار غير موجودة في هذه النسخة.</string>
+
+    <!-- ===== Settings: advanced ===== -->
+    <string name="settings_adv_title">خيارات متقدمة</string>
+    <string name="settings_adv_google">القراءة من Google مباشرة</string>
+    <string name="settings_adv_note">فقط عند إعداد Google Cloud ذاتيًا (راجع ملف README). الخطوات السابقة لا تحتاج إلى أي من هذا.</string>
+    <string name="settings_adv_body">يشمل روابط Meet. للقراءة فقط.</string>
+    <string name="settings_this_phone">هذا الهاتف</string>
+
+    <!-- ===== Settings: AI models (AiHub) ===== -->
+    <string name="settings_ai_intro">يمكن اختيار ما يكتب الملخصات وما يحوّل الصوت إلى نص. يعمل كل شيء على الهاتف ولا يُرفع أي شيء. ويحدث التنزيل مرة واحدة فقط عند النقر عليه.</string>
+    <string name="settings_ai_defaults">الإعدادات الافتراضية</string>
+    <string name="settings_ai_writing">الكتابة</string>
+    <string name="settings_ai_writing_covers">الملخصات، التحضير، المتابعات، الإجابات، موجز الصباح</string>
+    <string name="settings_ai_voice_notes">الملاحظات الصوتية</string>
+    <string name="settings_ai_none_yet">لا شيء بعد</string>
+    <string name="settings_ai_voice_covers">نصوص كل ما يُسجَّل</string>
+    <string name="settings_ai_search_meaning">الكلمات والمعنى</string>
+    <string name="settings_ai_search_words">الكلمات فقط</string>
+    <string name="settings_ai_search_covers">العثور على الملاحظات والرسائل والاجتماعات</string>
+    <string name="settings_ai_defaults_note">عند اختيار نموذج من الأسفل أو تنزيله، يصبح الافتراضي لكل ما سبق. ويمكن تغييره في أي وقت.</string>
+    <string name="settings_ai_existing_title">هل يوجد نموذج بالفعل؟</string>
+    <string name="settings_ai_existing_body">لا ينزّل Plait أبدًا نموذجًا يمكنه العثور عليه. يكفي توجيهه إلى ملفات نُزّلت سابقًا لينسخها بدلًا من جلبها مجددًا.</string>
+    <string name="settings_ai_looking">جارٍ البحث…</string>
+    <string name="settings_ai_choose_folder">اختيار مجلد</string>
+    <string name="settings_ai_choose_files">اختيار ملفات</string>
+    <string name="settings_ai_check_phone">فحص هذا الهاتف</string>
+    <string name="settings_ai_drop_folder">أو نسخ الملفات عبر USB إلى: %1$s</string>
+    <string name="settings_ai_where_folder">في ذلك المجلد</string>
+    <string name="settings_ai_where_files">بين تلك الملفات</string>
+    <string name="settings_ai_where_phone">على هذا الهاتف</string>
+    <plurals name="settings_ai_found">
+        <item quantity="zero">عُثر على %1$d ملف %2$s وأُضيفت دون تنزيل: %3$s.</item>
+        <item quantity="one">عُثر على ملف واحد %2$s وأُضيف دون تنزيل: %3$s.</item>
+        <item quantity="two">عُثر على ملفين %2$s وأُضيفا دون تنزيل: %3$s.</item>
+        <item quantity="few">عُثر على %1$d ملفات %2$s وأُضيفت دون تنزيل: %3$s.</item>
+        <item quantity="many">عُثر على %1$d ملفًا %2$s وأُضيفت دون تنزيل: %3$s.</item>
+        <item quantity="other">عُثر على %1$d ملف %2$s وأُضيفت دون تنزيل: %3$s.</item>
+    </plurals>
+    <plurals name="settings_ai_found_ready">
+        <item quantity="zero">عُثر على %1$d ملف %2$s وأُضيفت دون تنزيل: %3$s. الجاهز: %4$s.</item>
+        <item quantity="one">عُثر على ملف واحد %2$s وأُضيف دون تنزيل: %3$s. الجاهز: %4$s.</item>
+        <item quantity="two">عُثر على ملفين %2$s وأُضيفا دون تنزيل: %3$s. الجاهز: %4$s.</item>
+        <item quantity="few">عُثر على %1$d ملفات %2$s وأُضيفت دون تنزيل: %3$s. الجاهز: %4$s.</item>
+        <item quantity="many">عُثر على %1$d ملفًا %2$s وأُضيفت دون تنزيل: %3$s. الجاهز: %4$s.</item>
+        <item quantity="other">عُثر على %1$d ملف %2$s وأُضيفت دون تنزيل: %3$s. الجاهز: %4$s.</item>
+    </plurals>
+    <string name="settings_ai_nothing_new">لا جديد %1$s. المكتمل على هذا الهاتف: %2$s.</string>
+    <string name="settings_ai_no_files">لا ملفات نماذج %1$s. يجب أن تطابق أسماء الملفات وأحجامها التنزيلات تمامًا.</string>
+    <string name="settings_list_separator_semi">"؛ "</string>
+    <string name="settings_ai_text_title">الملخصات والإجابات</string>
+    <string name="settings_ai_using_now">المستخدم الآن</string>
+    <string name="settings_ai_auto_body">Gemini Nano إن توفر على الهاتف، ثم نموذج مُنزَّل، ثم قواعد Plait الخاصة.</string>
+    <string name="settings_ai_nano_badge">مدمج في Android</string>
+    <string name="settings_ai_nano_body">نموذج Google المرفق مع بعض الهواتف الحديثة. مجاني وخاص، ولا يحتاج إلى تنزيل داخل Plait.</string>
+    <string name="settings_ai_nano_meta">يحدد Android الحجم ولا يُطلع التطبيقات عليه.</string>
+    <string name="settings_ai_ready">جاهز على هذا الهاتف</string>
+    <string name="settings_ai_nano_not_fetched">يمكن للهاتف تشغيله، لكن Android لم ينزّله بعد</string>
+    <string name="settings_ai_nano_download">التنزيل عبر Android</string>
+    <string name="settings_ai_downloading">جارٍ التنزيل…</string>
+    <string name="settings_ai_downloaded_mb">تم تنزيل ⁨%1$d MB⁩</string>
+    <string name="settings_ai_download_failed_retry">فشل التنزيل. يمكن النقر لإعادة المحاولة.</string>
+    <string name="settings_ai_unavailable">غير متاح على هذا الهاتف</string>
+    <string name="settings_ai_rules_title">قواعد Plait الخاصة فقط</string>
+    <string name="settings_ai_rules_body">بلا نموذج ذكاء اصطناعي. يستخرج Plait التواريخ والقرارات والمخاطر والمتابعات بقواعد ثابتة. سريع وخفيف، لكنه لا يكتب جملًا.</string>
+    <string name="settings_ai_speech_body">التسجيل يسجّل فقط. وعند الإيقاف، يكتب نموذج Whisper النص من الصوت المحفوظ، ثم يلخّصه نموذج الكتابة ويقترح مهامًا. ويعمل بلغات كثيرة. ومن دونه تُحفظ التسجيلات صوتًا فقط.</string>
+    <string name="settings_ai_no_transcription">بلا تحويل إلى نص</string>
+    <string name="settings_ai_no_transcription_body">لم يُختر شيء. يستخدم Plait نموذج Whisper إن كان مثبّتًا، وإلا يُحفظ التسجيل صوتًا.</string>
+    <string name="settings_ai_speech_language">لغة الملاحظات الصوتية</string>
+    <string name="settings_ai_search_body">البحث بالكلمات يعمل دائمًا. وهذا النموذج الاختياري يجد الملاحظات بالمعنى أيضًا.</string>
+    <string name="settings_ai_storage_used">النماذج على هذا الهاتف: %1$s. حذف أي منها يعيد المساحة.</string>
+    <string name="settings_ai_storage_none">لا نماذج مُنزَّلة.</string>
+    <string name="settings_ai_metered">الاتصال الحالي ببيانات الجوال. التنزيلات الكبيرة أفضل عبر Wi-Fi.</string>
+    <string name="settings_ai_ram">يعمل بأفضل أداء مع ذاكرة ⁨%1$s GB⁩ أو أكثر.</string>
+    <string name="settings_ai_license">الترخيص: %1$s.</string>
+    <string name="settings_ai_downloaded">مُنزَّل</string>
+    <string name="settings_ai_delete_frees">حذف (يحرّر %1$s)</string>
+    <string name="settings_ai_progress">%1$s من %2$s · %3$d%%</string>
+    <string name="settings_ai_keep_open">يلزم إبقاء Plait مفتوحًا. ويستأنف من هنا عند الانقطاع.</string>
+    <string name="settings_ai_download_failed">فشل التنزيل</string>
+    <string name="settings_ai_download_metered">تنزيل %1$s عبر بيانات الجوال</string>
+    <string name="settings_ai_download_size">تنزيل · %1$s</string>
+    <string name="settings_ai_metered_size">الاتصال الحالي ببيانات الجوال. Wi-Fi أفضل لهذا الحجم.</string>
+    <string name="settings_ai_included">مضمَّن</string>
+    <string name="settings_ai_nothing_to_download">لا شيء للتنزيل</string>
+
+    <!-- ===== Update card, what's new, first-run tour ===== -->
+    <string name="sheet_news_title">ما الجديد في %1$s</string>
+    <string name="sheet_news_got_it">حسنًا</string>
+    <string name="sheet_update_ready">الإصدار %1$s من Plait جاهز</string>
+    <string name="sheet_update_have">الإصدار الحالي %1$s.</string>
+    <string name="sheet_update_have_size">الإصدار الحالي %1$s. حجم التنزيل %2$s.</string>
+    <string name="sheet_update_downloading">جارٍ التنزيل… %1$s من %2$s. يستمر التنزيل حتى عند مغادرة Plait.</string>
+    <string name="sheet_update_hide">إخفاء</string>
+    <string name="sheet_update_permission">يطلب Android مرة واحدة السماح لـ Plait بتثبيت تحديثاته. يلزم تفعيل «السماح من هذا المصدر» ثم العودة.</string>
+    <string name="sheet_update_allow">السماح بالتحديثات</string>
+    <string name="sheet_update_installing">جارٍ التثبيت… سيطلب Android التأكيد.</string>
+    <string name="sheet_update_now">التحديث الآن</string>
+    <string name="sheet_tour_skip">تخطي</string>
+    <string name="sheet_tour_use_calendars">استخدام تقاويم الهاتف</string>
+    <string name="sheet_tour_1_title">كل التقاويم في يوم واحد</string>
+    <string name="sheet_tour_1_text">تقاويم Google وOutlook وExchange وiCloud وروابط التقاويم في جدول أعمال واحد. ويمكن إيقاف أي حساب أو تقويم في أي وقت.</string>
+    <string name="sheet_tour_2_title">بطاقة لكل جزء من اليوم</string>
+    <string name="sheet_tour_2_text">يعرض الصباح ما هو قادم، والظهيرة ما أُنجز وما تبقى، والمساء كيف مضى اليوم وما زال يحتاج إلى ملاحظات. ويمكن التنقل بينها بالسحب.</string>
+    <string name="sheet_tour_3_title">كل ما يخص الاجتماع</string>
+    <string name="sheet_tour_3_text">من سيحضر وردودهم، وموضوع الاجتماع، والانضمام بنقرة واحدة، وزر لتعديل الدعوة أو تغيير موعدها أو الرد عليها.</string>
+    <string name="sheet_tour_4_title">الملاحظات بأربع طرق</string>
+    <string name="sheet_tour_4_text">ملاحظات صوتية تُكتب أثناء الكلام، وملاحظات مكتوبة، وصور تُقرأ نصًا، وقوائم مهام. ويقترح Plait منها مهامًا ويذكّر بها.</string>
+    <string name="sheet_tour_5_title">ذكاء اصطناعي يبقى على الهاتف</string>
+    <string name="sheet_tour_5_text">يمكن اختيار نموذج من الإعدادات ← الذكاء الاصطناعي على الهاتف. تعمل الملخصات والتحضير والبحث على الهاتف. لا يُرسل شيء إلى أي خادم، ولا حاجة إلى حساب.</string>
+    <string name="sheet_tour_6_title">لنبدأ يومك</string>
+    <string name="sheet_tour_6_text">يقرأ Plait التقاويم الموجودة على هذا الهاتف. ويمكن إضافة المزيد، أو روابط تقاويم، من الإعدادات لاحقًا.</string>
+
+    <!-- ===== Update and sync messages ===== -->
+    <string name="settings_update_unreachable">تعذّر الوصول إلى GitHub. يلزم التحقق من الاتصال وإعادة المحاولة.</string>
+    <string name="settings_update_stopped">توقف التنزيل. يمكن النقر على «تحديث» للمتابعة.</string>
+    <string name="settings_update_start_failed">تعذّر بدء التثبيت.</string>
+    <string name="settings_update_conflict">تعذّر على Android تثبيت هذا التحديث فوق Plait الحالي. يمكن تنزيله من GitHub بدلًا من ذلك.</string>
+    <string name="settings_update_not_installed">تعذّر تثبيت التحديث.</string>
+    <string name="settings_update_not_installed_why">تعذّر تثبيت التحديث (%1$s).</string>
+    <string name="settings_sync_not_set_up">المزامنة غير مُعدّة.</string>
+    <string name="settings_sync_folder_unavailable">مجلد المزامنة غير متاح.</string>
+    <string name="settings_sync_wrong_pass">تعذّر فتح ملف هاتف آخر. يجب أن تكون عبارة المرور واحدة على كل الهواتف.</string>
+    <string name="settings_sync_status">آخر مزامنة %1$s</string>
+    <string name="settings_sync_status_changes">آخر مزامنة %1$s · %2$d جديد، %3$d محذوف</string>
+    <string name="settings_sync_failed">فشلت المزامنة.</string>
+    <string name="settings_sync_cant_open">تعذّر فتح %1$s.</string>
+    <string name="settings_sync_unprotected">الملف %1$s غير محمي، لذا تم تخطيه.</string>
+    <string name="settings_sync_cant_create">تعذّر إنشاء ملف المزامنة.</string>
+    <string name="settings_sync_cant_write">تعذّرت الكتابة في ملف المزامنة.</string>
+
+    <!-- ===== Calendar messages ===== -->
+    <string name="settings_cal_not_linked">غير مرتبطة باجتماع</string>
+    <string name="settings_cal_shared_notes">ملاحظات مُشارَكة</string>
+    <string name="settings_cal_read_failed">تعذّرت قراءة تقاويم الهاتف.</string>
+    <string name="settings_cal_google_signed_out">انتهت جلسة Google. يمكن النقر على المزامنة لتسجيل الدخول مجددًا.</string>
+    <string name="settings_cal_google_api_off">الوصول إلى Google Calendar متوقف لهذا التطبيق. يلزم تفعيل Calendar API في Google Cloud.</string>
+    <string name="settings_cal_google_unreachable">تعذّر الوصول إلى Google. تُعرض آخر الأحداث المُزامَنة.</string>
+    <string name="settings_cal_bad_link">لا يبدو هذا رابط تقويم. يجب أن يبدأ بـ https:// أو webcal://.</string>
+    <string name="settings_cal_already_added">هذا التقويم مُضاف بالفعل.</string>
+    <string name="settings_cal_link_unreachable">تعذّر الوصول إلى هذا الرابط. يلزم التحقق منه ومن الاتصال.</string>
+    <string name="settings_cal_not_ics">هذا الملف ليس ملف تقويم (ICS).</string>
+    <string name="settings_cal_import_empty">تم الاستيراد، لكن لا أحداث في الأشهر الستة القادمة.</string>
+    <string name="settings_cal_not_feed">هذا الرابط ليس موجز تقويم.</string>
+    <plurals name="settings_cal_links_failed">
+        <item quantity="zero">تعذّر تحديث %d رابط تقويم. تُعرض آخر نسخة.</item>
+        <item quantity="one">تعذّر تحديث رابط تقويم واحد. تُعرض آخر نسخة.</item>
+        <item quantity="two">تعذّر تحديث رابطَي تقويم. تُعرض آخر نسخة.</item>
+        <item quantity="few">تعذّر تحديث %d روابط تقويم. تُعرض آخر نسخة.</item>
+        <item quantity="many">تعذّر تحديث %d رابط تقويم. تُعرض آخر نسخة.</item>
+        <item quantity="other">تعذّر تحديث %d رابط تقويم. تُعرض آخر نسخة.</item>
+    </plurals>
+
+    <!-- ===== Manage a meeting (menu, confirm, edit) ===== -->
+    <string name="sheet_manage_failed">تعذّر التغيير. يمكن المحاولة من تطبيق التقويم.</string>
+    <string name="sheet_manage_no_permission">لم يُمنح إذن تغيير الاجتماع.</string>
+    <string name="sheet_manage_told">تم. أُبلغ الضيوف.</string>
+    <string name="sheet_manage_moved">تم النقل. أُبلغ الضيوف.</string>
+    <string name="sheet_manage_saved">تم الحفظ. أُبلغ الضيوف.</string>
+    <string name="sheet_manage_edit">تعديل التفاصيل</string>
+    <string name="sheet_manage_reschedule_one">تغيير موعد هذا الاجتماع فقط</string>
+    <string name="sheet_manage_reschedule">تغيير الموعد</string>
+    <string name="sheet_manage_cancel_one">إلغاء هذا الاجتماع فقط</string>
+    <string name="sheet_manage_cancel_one_q">إلغاء هذا الاجتماع في موعده؟ تبقى بقية السلسلة.</string>
+    <string name="sheet_manage_delete_series">حذف السلسلة كلها</string>
+    <string name="sheet_manage_delete_series_q">حذف كل اجتماعات هذه السلسلة؟ سيصل الضيوفَ إشعار بالإلغاء.</string>
+    <string name="sheet_manage_cancel_meeting">إلغاء الاجتماع</string>
+    <string name="sheet_manage_cancel_q">إلغاء هذا الاجتماع؟ سيصل الضيوفَ إشعار بالإلغاء.</string>
+    <string name="sheet_manage_delete_q">حذف هذا الاجتماع؟</string>
+    <string name="sheet_rsvp_answer_going">الرد: سأحضر</string>
+    <string name="sheet_rsvp_answer_maybe">الرد: ربما</string>
+    <string name="sheet_rsvp_answer_decline">الرد: اعتذار</string>
+    <string name="sheet_rsvp_done_going">تم الرد بالحضور. أُبلغ المنظِّم.</string>
+    <string name="sheet_rsvp_done_maybe">تم الرد بـ«ربما». أُبلغ المنظِّم.</string>
+    <string name="sheet_rsvp_done_decline">تم الرد بالاعتذار. أُبلغ المنظِّم.</string>
+    <string name="sheet_manage_open_calendar">فتح في تطبيق التقويم</string>
+    <string name="sheet_manage_title">إدارة الاجتماع</string>
+    <string name="sheet_manage_your_answer">ردّك</string>
+    <string name="sheet_meet_failed">%1$s تم الحفظ دون رابط Meet.</string>
+    <string name="sheet_confirm_title">هل أنت متأكد؟</string>
+    <string name="sheet_edit_title">تعديل الاجتماع</string>
+    <string name="sheet_edit_place">المكان</string>
+    <string name="sheet_edit_description">الوصف</string>
+    <string name="sheet_edit_call_link">رابط المكالمة</string>
+    <string name="sheet_edit_keep">إبقاء %1$s</string>
+    <string name="sheet_edit_none">بلا رابط</string>
+    <string name="sheet_edit_add_link">إضافة رابط</string>
+    <string name="sheet_edit_link_hint">رابط Teams أو Zoom أو Webex ‏(https)</string>
+    <string name="sheet_edit_link_of">رابط %1$s</string>
+    <string name="sheet_edit_link_other">رابط. لا يظهر زر الانضمام إلا لروابط Meet وZoom وTeams وWebex.</string>
+
+    <!-- ===== New meeting sheet ===== -->
+    <string name="sheet_new_title">اجتماع جديد</string>
+    <string name="sheet_new_no_calendar">لا يوجد تقويم للحفظ فيه. يمكن فتح الإعدادات لإضافة حساب.</string>
+    <string name="sheet_new_saved_to">تم الحفظ في %1$s</string>
+    <string name="sheet_new_meet_not_approved">لم تتم الموافقة على تعديل التقويم، فلا يوجد رابط Meet. تم الحفظ دونه.</string>
+    <string name="sheet_new_meet_phone">%1$s تم الحفظ في تقويم الهاتف دون رابط Meet.</string>
+    <string name="sheet_new_google_unreachable">تعذّر الوصول إلى Google.</string>
+    <string name="sheet_new_meet_pending">تم الحفظ. لا يزال Google يُنشئ رابط Meet، ويظهر زر الانضمام بعد المزامنة التالية.</string>
+    <string name="sheet_new_saved_meet">تم الحفظ مع رابط Google Meet</string>
+    <string name="sheet_new_quick_hint">اكتبه في سطر: غداء مع sam@acme.com الجمعة 1 م لمدة ساعة</string>
+    <string name="sheet_new_fill">ملء النموذج</string>
+    <string name="sheet_new_earlier">قبل 15 دقيقة</string>
+    <string name="sheet_new_later">بعد 15 دقيقة</string>
+    <plurals name="sheet_new_minutes">
+        <item quantity="zero">%d دقيقة</item>
+        <item quantity="one">دقيقة واحدة</item>
+        <item quantity="two">دقيقتان</item>
+        <item quantity="few">%d دقائق</item>
+        <item quantity="many">%d دقيقة</item>
+        <item quantity="other">%d دقيقة</item>
+    </plurals>
+    <plurals name="sheet_new_hours">
+        <item quantity="zero">%d ساعة</item>
+        <item quantity="one">ساعة</item>
+        <item quantity="two">ساعتان</item>
+        <item quantity="few">%d ساعات</item>
+        <item quantity="many">%d ساعة</item>
+        <item quantity="other">%d ساعة</item>
+    </plurals>
+    <string name="sheet_new_hour_and_half">ساعة ونصف</string>
+    <string name="sheet_new_hide_free">إخفاء الأوقات المتاحة</string>
+    <string name="sheet_new_find_time">البحث عن وقت</string>
+    <plurals name="sheet_new_free_for">
+        <item quantity="zero">متاح لمدة %d دقيقة، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+        <item quantity="one">متاح لمدة دقيقة واحدة، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+        <item quantity="two">متاح لمدة دقيقتين، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+        <item quantity="few">متاح لمدة %d دقائق، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+        <item quantity="many">متاح لمدة %d دقيقة، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+        <item quantity="other">متاح لمدة %d دقيقة، من 9 ص إلى 5 م في أيام العمل، حسب تقاويمك.</item>
+    </plurals>
+    <string name="sheet_new_next_7">خلال 7 أيام</string>
+    <string name="sheet_new_next_14">خلال 14 يومًا</string>
+    <string name="sheet_new_no_free">لا وقت متاحًا بهذه المدة في هذه الفترة.</string>
+    <string name="sheet_new_send_options">إرسال هذه الخيارات</string>
+    <string name="sheet_new_send_options_chooser">إرسال خيارات الوقت</string>
+    <string name="sheet_new_guests_hint">الضيوف (عناوين البريد)</string>
+    <string name="sheet_new_link_hint">رابط Teams أو Zoom أو Webex ‏(https://)</string>
+    <string name="sheet_new_meet_needs_google">يمكن إنشاء Google Meet لتقويم Google متصل من الإعدادات.</string>
+    <string name="sheet_new_meet_made_on_save">يُنشئ Google الرابط عند حفظ الاجتماع.</string>
+    <string name="sheet_new_place_hint">المكان أو رابط المكالمة</string>
+    <string name="sheet_new_saved_to_label">يُحفظ في</string>
+    <string name="sheet_new_local_only">تقويم على هذا الهاتف فقط</string>
+    <string name="sheet_new_allow_to_choose">يلزم السماح بالوصول إلى التقويم للاختيار</string>
+    <string name="sheet_new_syncs_to">يزامنه Android مع %1$s، ويتلقى الضيوف دعوة.</string>
+    <string name="sheet_new_stays_local">يبقى على هذا الهاتف حتى تُضاف حسابات.</string>
+    <string name="sheet_new_change_hub">التغيير من الإعدادات</string>
+    <string name="sheet_new_allow_saving">السماح بالحفظ في التقويم</string>
+    <string name="sheet_new_saving">جارٍ الحفظ…</string>
+    <string name="sheet_new_save">حفظ الاجتماع</string>
+</resources>

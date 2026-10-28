@@ -2,6 +2,19 @@
 
 What changed in each version of Plait, newest first.
 
+## 0.31.0: Plait speaks Arabic
+
+- **Plait now speaks Arabic.** Every screen, menu, setting, notification and widget is available in Arabic, laid out right to left. Buttons, tabs, arrows, swipes and the calendar all flip to match.
+- **Choose your language.** Open Settings → Language and pick System default, English or العربية. Plait also appears in Android's own per-app language settings.
+- **Your day, in Arabic.** The day brief, meeting summaries, prep, follow-ups, reminders and shared documents are written in Arabic, with Western digits (0-9) for dates, times and counts.
+- **On-device AI writes in Arabic.** Summaries and answers come in Modern Standard Arabic. Smaller models may use the standard text more often than they do in English.
+- **Quick add understands Arabic.** Type things like "غدًا الساعة 3 م مع sam@acme.com لمدة ساعة" and the new-meeting form fills itself in.
+- **Search handles Arabic better.** It finds words with attached prefixes, different letter forms and Arabic digits.
+- **Arabic and English mix cleanly.** Notes, names and meeting titles in either language read in the right direction, even inside the same sentence.
+- **Find a time follows your work week.** If your week runs Sunday to Thursday, free times no longer land on Fridays.
+- **Meetings show up as soon as you open Plait.** Your calendars no longer take a minute to appear after the app starts, and a rare crash on launch is fixed.
+- **Times stay on one line.** A time such as "10:00 ص" no longer splits across two lines.
+
 ## 0.30.0: calmer alerts, a smoother Home, no more call recording
 
 - **Call recording is gone.** It only ever heard your own microphone, so it caught nothing during calls. The "Record this call" menu item and the Record chooser on a meeting are removed. Record on a meeting now starts a voice note straight away.

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arabic twin of values/strings_alerts_share.xml. Names, titles and times are put in with Bidi.isolate by the code;
+     the literal "https://" sits in an LTR isolate (U+2066 ... U+2069) so its slashes and the full stop keep their place. -->
+<resources>
+    <string name="alert_channel_meetings">الاجتماعات والملاحظات</string>
+    <string name="alert_channel_meetings_desc">تنبيه قبل الاجتماع، وتذكير بتدوين ملاحظات الاجتماعات التي لا ملاحظات لها.</string>
+    <string name="alert_channel_live">تنبيهات مباشرة</string>
+    <string name="alert_channel_live_desc">تنبيه هادئ قبل موعد المهمة.</string>
+    <plurals name="alert_meeting_in">
+        <item quantity="zero">بعد %1$d دقيقة: %2$s</item>
+        <item quantity="one">بعد دقيقة: %2$s</item>
+        <item quantity="two">بعد دقيقتين: %2$s</item>
+        <item quantity="few">بعد %1$d دقائق: %2$s</item>
+        <item quantity="many">بعد %1$d دقيقة: %2$s</item>
+        <item quantity="other">بعد %1$d دقيقة: %2$s</item>
+    </plurals>
+    <string name="alert_meeting_now">يبدأ الآن: %1$s</string>
+    <plurals name="alert_snooze">
+        <item quantity="zero">تأجيل %d دقيقة</item>
+        <item quantity="one">تأجيل دقيقة</item>
+        <item quantity="two">تأجيل دقيقتين</item>
+        <item quantity="few">تأجيل %d دقائق</item>
+        <item quantity="many">تأجيل %d دقيقة</item>
+        <item quantity="other">تأجيل %d دقيقة</item>
+    </plurals>
+    <string name="alert_nudge_title">وقت مناسب لتدوين الملاحظات والتفاصيل حاضرة</string>
+    <string name="alert_nudge_one">لا ملاحظات بعد لاجتماع %1$s.</string>
+    <plurals name="alert_nudge_many">
+        <item quantity="zero">%1$d اجتماع بلا ملاحظات بعد، منها %2$s.</item>
+        <item quantity="one">اجتماع واحد بلا ملاحظات بعد: %2$s.</item>
+        <item quantity="two">اجتماعان بلا ملاحظات بعد، منهما %2$s.</item>
+        <item quantity="few">%1$d اجتماعات بلا ملاحظات بعد، منها %2$s.</item>
+        <item quantity="many">%1$d اجتماعًا بلا ملاحظات بعد، منها %2$s.</item>
+        <item quantity="other">%1$d اجتماع بلا ملاحظات بعد، منها %2$s.</item>
+    </plurals>
+    <string name="alert_task_due">موعدها %1$s</string>
+    <string name="alert_task_due_from">موعدها %1$s · متابعة من اجتماع %2$s</string>
+    <string name="alert_task_today">اليوم %1$s</string>
+    <string name="alert_task_tomorrow">غدًا %1$s</string>
+
+    <string name="wdg_clear_day">يوم خالٍ</string>
+    <string name="wdg_next_full">التالي: %1$s %2$s</string>
+    <string name="wdg_next">التالي: %1$s</string>
+    <string name="wdg_nothing_coming">لا مواعيد قادمة</string>
+    <string name="wdg_online">عبر الإنترنت</string>
+    <string name="wdg_then">ثم %1$s %2$s</string>
+    <string name="wdg_more">+%1$d أخرى</string>
+    <string name="wdg_last_today">الأخير اليوم</string>
+    <string name="wdg_until">حتى %1$s</string>
+    <string name="wdg_preview_day_short">الخميس 22</string>
+    <string name="wdg_preview_day">الخميس 22 أكتوبر</string>
+    <string name="wdg_preview_count">3 اجتماعات</string>
+    <string name="wdg_preview_time">1:30 م</string>
+    <string name="wdg_preview_range">1:30 – 2:30 م</string>
+    <string name="wdg_preview_title">مراجعة التصميم</string>
+    <string name="wdg_preview_then">ثم مراجعة التصميم 12:00 م</string>
+    <string name="wdg_preview_more">+2 أخرى</string>
+    <string name="wdg_preview_next">التالي: الاثنين 9:00 ص</string>
+
+    <string name="share_format_text">نص</string>
+    <string name="share_with">الحضور: %1$s</string>
+    <string name="share_list_sep">"، "</string>
+    <string name="share_why">سبب الاجتماع</string>
+    <string name="share_prep">التحضير</string>
+    <string name="share_voice_note">ملاحظة صوتية · %1$s</string>
+    <string name="share_transcript">التفريغ النصي:</string>
+    <string name="share_emails">رسائل البريد</string>
+    <string name="share_followups">المتابعات</string>
+    <string name="share_no_subject">(بلا موضوع)</string>
+    <string name="share_all_day">طوال اليوم</string>
+    <string name="share_when">%1$s، %2$s</string>
+    <string name="share_chooser">مشاركة %1$s</string>
+    <string name="share_index_title">ملاحظات Plait</string>
+    <string name="share_write_failed">تعذّرت الكتابة في هذا الموقع.</string>
+    <string name="share_team_subject">ملاحظات: %1$s</string>
+    <string name="share_team_send">إرسال الملاحظات</string>
+
+    <string name="gcal_auth_no_token">لم يُرجع Google رمز الدخول.</string>
+    <string name="gcal_auth_failed">تعذّر تسجيل الدخول إلى Google.</string>
+    <string name="gcal_auth_not_set_up">تسجيل الدخول عبر Google غير مُعدّ لهذا الإصدار بعد. يلزم تسجيل اسم حزمة التطبيق وبصمة SHA-1 في Google Cloud.</string>
+    <string name="gcal_auth_offline">تعذّر الاتصال بخدمة Google.</string>
+    <string name="gcal_auth_cancelled">أُلغي تسجيل الدخول.</string>
+    <string name="gcal_auth_failed_code">تعذّر تسجيل الدخول إلى Google (الرمز %1$d).</string>
+    <string name="gcal_http_error">أعاد Google Calendar الرمز %1$d.</string>
+    <string name="gcal_meet_refused">رفض Google إنشاء رابط Meet. ربما لا يسمح الحساب بذلك، أو لم تتم الموافقة على تعديل التقويم.</string>
+    <string name="gcal_meet_unsupported">لا يستطيع Google إضافة رابط Meet إلى هذا التقويم.</string>
+    <string name="gcal_meet_offline">تعذّر الوصول إلى Google لإنشاء رابط Meet.</string>
+    <string name="gcal_meet_error">تعذّر على Google إنشاء رابط Meet (الخطأ %1$d).</string>
+    <string name="gcal_no_title">(بلا عنوان)</string>
+    <string name="gcal_video_call">مكالمة فيديو</string>
+    <string name="gcal_dur_min">%1$d د</string>
+    <string name="gcal_dur_hours">%1$d س</string>
+    <string name="gcal_dur_hours_min">%1$d س %2$d د</string>
+
+    <string name="devcal_need_permission">يحتاج Plait إلى إذن لتعديل تقويمك.</string>
+    <string name="devcal_refused">رفض التقويم الاجتماع الجديد.</string>
+    <string name="devcal_your_calendar">تقويمك</string>
+    <string name="devcal_local_name">Plait (هذا الهاتف فقط)</string>
+    <string name="devcal_allow_first">يلزم أولًا السماح بالحفظ في التقويم (من المركز أعلى الشاشة).</string>
+    <string name="devcal_no_calendar">لا يوجد تقويم للحفظ فيه. يمكن إضافة حساب من المركز.</string>
+    <string name="devcal_saved_to">حُفظ في %1$s</string>
+    <string name="devcal_need_title">يلزم عنوان للاجتماع.</string>
+    <string name="devcal_need_length">يلزم تحديد مدة للاجتماع.</string>
+    <string name="devcal_bad_guest">أحد عناوين الضيوف لا يبدو صحيحًا.</string>
+
+    <string name="link_paste">يُرجى لصق رابط المكالمة.</string>
+    <string name="link_spaces">لا يمكن أن يحتوي الرابط على مسافات.</string>
+    <string name="link_insecure">يلزم رابط آمن يبدأ بـ &#x2066;https://&#x2069;.</string>
+    <string name="link_https">يجب أن يبدأ الرابط بـ &#x2066;https://&#x2069;.</string>
+    <string name="link_not_link">لا يبدو هذا رابطًا.</string>
+    <string name="link_join_line">رابط الانضمام: %1$s</string>
+
+    <string name="zone_line">%1$s %2$s · %3$s بتوقيتك</string>
+</resources>

@@ -1,7 +1,10 @@
 package app.plait.data.prep
 
+import app.plait.R
 import app.plait.data.CalEvent
 import app.plait.data.TimeFmt
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import app.plait.data.brief.MeetingBrief
 import java.time.ZoneId
 
@@ -41,7 +44,9 @@ object Prep {
             if (i.openFollowups.isNotEmpty()) appendLine("Still open from before: " + i.openFollowups.joinToString("; "))
             if (i.emailLines.isNotEmpty()) appendLine("From attached emails: " + i.emailLines.joinToString("; "))
         }
-        val head = "You help someone prepare for a meeting in 30 seconds. Use only the facts below. Do not invent names, dates or numbers.\n\n"
+        // In Arabic the answer is written in Arabic (the harness's rule) but keeps the English labels [parse] reads.
+        val head = app.plait.ai.AiHarness.withLanguage("You help someone prepare for a meeting in 30 seconds. Use only the facts below. Do not invent names, dates or numbers." +
+            if (app.plait.i18n.AppLocale.isRtl) "\n- Keep the labels Goal:, Remember: and Ask: in English, exactly as shown." else "") + "\n\n"
         val tail = "\nAnswer in exactly this format and nothing else:\nGoal: one sentence on what a good outcome is.\nRemember:\n- up to 3 short bullets\nAsk:\n- up to 3 short questions to raise"
         val room = (maxChars - head.length - tail.length).coerceAtLeast(500)
         return head + facts.take(room) + tail
@@ -78,12 +83,12 @@ object Prep {
     fun rules(i: PrepInput): PrepSections {
         val goal = if (!i.brief.aboutIsGuess) i.brief.about else null
         val remember = ArrayList<String>()
-        i.lastSummary?.let { remember.add("Last time: $it") }
+        i.lastSummary?.let { remember.add(Txt.s(R.string.gen_prep_last_time, Bidi.isolate(it))) }
         i.emailLines.firstOrNull()?.let { remember.add(it) }
-        if (i.brief.agenda.isNotEmpty() && remember.size < 3) remember.add("Agenda: " + i.brief.agenda.take(3).joinToString(", "))
+        if (i.brief.agenda.isNotEmpty() && remember.size < 3) remember.add(Txt.s(R.string.gen_prep_agenda, i.brief.agenda.take(3).joinToString(Txt.s(R.string.gen_list_sep), transform = Bidi::isolate)))
         val ask = ArrayList<String>()
-        i.openFollowups.take(3).forEach { ask.add("Is this done: $it") }
-        if (ask.isEmpty() && i.brief.aboutIsGuess) ask.add("What is the goal of this meeting?")
+        i.openFollowups.take(3).forEach { ask.add(Txt.s(R.string.gen_prep_is_done, Bidi.isolate(it))) }
+        if (ask.isEmpty() && i.brief.aboutIsGuess) ask.add(Txt.s(R.string.gen_prep_goal_question))
         return PrepSections(goal, remember.take(3), ask.take(3))
     }
 }

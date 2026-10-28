@@ -1,5 +1,7 @@
 package app.plait.data.google
 
+import app.plait.R
+import app.plait.i18n.Txt
 import app.plait.data.CalEvent
 import java.net.HttpURLConnection
 import java.net.URL
@@ -42,7 +44,7 @@ class GoogleCalendarClient(private val accessToken: String) {
             val code = conn.responseCode
             if (code !in 200..299) {
                 val body = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                throw GoogleApiException(code, "Google Calendar returned $code. ${body.take(200)}")
+                throw GoogleApiException(code, Txt.s(R.string.gcal_http_error, code) + " " + body.take(200))
             }
             return conn.inputStream.bufferedReader().use { it.readText() }
         } finally {

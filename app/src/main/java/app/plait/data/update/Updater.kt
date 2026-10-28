@@ -11,6 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.plait.ai.ModelDownloadService
 import app.plait.diag.Diag
+import app.plait.R
+import app.plait.i18n.Txt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -75,7 +77,7 @@ object Updater {
                 if (info != null && isNewer(info.version, currentVersion(app))) UpdateState.Available(info) else UpdateState.UpToDate
             } catch (e: Exception) {
                 Diag.log("UPDATE", "check: ${e.message}")
-                UpdateState.Failed("Couldn't reach GitHub. Check your connection and try again.")
+                UpdateState.Failed(Txt.s(R.string.settings_update_unreachable))
             }
         }
     }
@@ -132,7 +134,7 @@ object Updater {
                 state = UpdateState.Available(info); throw e
             } catch (e: Exception) {
                 Diag.log("UPDATE", "download: ${e.message}")
-                state = UpdateState.Failed("The download stopped. Tap Update to carry on.", info)
+                state = UpdateState.Failed(Txt.s(R.string.settings_update_stopped), info)
             }
         }
     }
@@ -212,7 +214,7 @@ object Updater {
     /** After the user allowed Plait to install apps. */
     fun resumeInstall(context: Context) {
         val s = state as? UpdateState.NeedsPermission ?: return
-        scope.launch { runCatching { install(context, s.info, s.file) }.onFailure { state = UpdateState.Failed("Couldn't start the install.", s.info) } }
+        scope.launch { runCatching { install(context, s.info, s.file) }.onFailure { state = UpdateState.Failed(Txt.s(R.string.settings_update_start_failed), s.info) } }
     }
 
     internal fun onStatus(context: Context, intent: Intent) {
@@ -231,8 +233,8 @@ object Updater {
                 Diag.log("UPDATE", "install: $status $msg")
                 state = UpdateState.Failed(
                     if (status == PackageInstaller.STATUS_FAILURE_CONFLICT || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE)
-                        "Android couldn't install this update over your Plait. Download it from GitHub instead."
-                    else "The update couldn't be installed${msg?.let { " ($it)" } ?: ""}.",
+                        Txt.s(R.string.settings_update_conflict)
+                    else msg?.let { Txt.s(R.string.settings_update_not_installed_why, it) } ?: Txt.s(R.string.settings_update_not_installed),
                     info,
                 )
             }

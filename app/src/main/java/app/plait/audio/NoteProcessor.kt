@@ -1,6 +1,8 @@
 package app.plait.audio
 
 import android.content.Context
+import app.plait.R
+import app.plait.i18n.Txt
 import androidx.compose.runtime.mutableStateMapOf
 import app.plait.ai.Ai
 import app.plait.ai.AiPrefs
@@ -55,7 +57,7 @@ object NoteProcessor {
             try {
                 current = improveTranscript(app, store, current, speech) ?: current
                 current = summarise(app, store, current) ?: current
-                working[note.id] = "Looking for tasks…"
+                working[note.id] = Txt.s(R.string.note_proc_tasks)
                 syncToCalendar(app, current)
                 SyncEngine.requestAsync(app, force = true)
                 TaskSuggester.suggestAsync(app, current.id, current.eventId, current.lines.joinToString(" ") { it.text })
@@ -79,7 +81,7 @@ object NoteProcessor {
         val store = MemoStore.get(app)
         val memo = store.items.firstOrNull { it.id == id } ?: return false
         if (!MemoAi.worthAnalysing(memo) || id in working) return false
-        working[id] = "Reading the note…"
+        working[id] = Txt.s(R.string.note_proc_reading)
         try {
             AiPrefs.load(app)
             val status = Ai.status(app)
@@ -87,17 +89,17 @@ object NoteProcessor {
             if (!MemoAi.needsSummary(memo, if (manual) engine else null)) return false
             val text = memo.text.trim()
             val hash = MemoAi.hash(text)
-            working[id] = "Writing the summary…"
+            working[id] = Txt.s(R.string.note_proc_summary)
             val title = Calendars.find(memo.eventId)?.title.orEmpty()
             val ai = if (status.ready) runCatching { NoteSummary.writeText(app, title, text) }.getOrNull() else null
             val summary = ai ?: MemoAi.rulesSummary(text)
             // Stored on the latest copy, and only if the text is still the one analysed: a newer edit wins.
             val latest = store.items.firstOrNull { it.id == id } ?: return false
             if (summary != null && MemoAi.hash(latest.text) == hash) {
-                store.update(latest.copy(ai = summary, aiBy = if (ai != null) status.label else "Plait rules", aiHash = hash, aiEngine = engine))
+                store.update(latest.copy(ai = summary, aiBy = if (ai != null) status.label else Txt.s(R.string.note_proc_rules), aiHash = hash, aiEngine = engine))
                 SyncEngine.requestAsync(app, force = true)
             }
-            working[id] = "Looking for tasks…"
+            working[id] = Txt.s(R.string.note_proc_tasks)
             TaskSuggester.suggestAsync(app, id, memo.eventId, text)
             return true
         } finally {
@@ -107,10 +109,10 @@ object NoteProcessor {
 
     /** Re-reads the recording with Whisper. Returns the updated note, or null if nothing changed. */
     suspend fun improveTranscript(context: Context, store: NoteStore, note: SavedNote, speech: ModelSpec): SavedNote? {
-        working[note.id] = "Transcribing…"
+        working[note.id] = Txt.s(R.string.note_proc_transcribing)
         val wav = store.audioFile(note)
         if (!wav.exists()) return null
-        val lines = WhisperTranscriber.transcribe(context, wav, speech, AiPrefs.speechLang) { p -> working[note.id] = "Transcribing… ${(p * 100).toInt()}%" }
+        val lines = WhisperTranscriber.transcribe(context, wav, speech, AiPrefs.speechLang) { p -> working[note.id] = Txt.s(R.string.note_proc_transcribing_pct, (p * 100).toInt()) }
         if (lines.isNullOrEmpty()) return null
         val updated = note.copy(lines = lines, ai = null, aiBy = null)
         store.update(updated)
@@ -123,7 +125,7 @@ object NoteProcessor {
         if (note.lines.size < 2) return null
         val status = Ai.status(context)
         if (!status.ready) return null
-        working[note.id] = "Writing the summary…"
+        working[note.id] = Txt.s(R.string.note_proc_summary)
         // The whole transcript is read (in parts when it is long), and every line of the summary is checked against it.
         val text = app.plait.ai.NoteSummary.write(context, note) ?: return null
         val updated = note.copy(ai = text, aiBy = status.label)

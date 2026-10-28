@@ -3,6 +3,7 @@ package app.plait.share
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import app.plait.R
 import app.plait.data.CalEvent
 import app.plait.data.NoteStore
 import app.plait.data.Profile
@@ -13,6 +14,8 @@ import app.plait.data.backup.BundleMeta
 import app.plait.data.context.ContextStore
 import app.plait.data.crypto.Crypt
 import app.plait.data.memo.MemoStore
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.io.File
 
 /**
@@ -41,7 +44,7 @@ object TeamShare {
     fun send(context: Context, ev: CalEvent, file: File) {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
         val i = Intent(Intent.ACTION_SEND).setType("application/octet-stream").putExtra(Intent.EXTRA_STREAM, uri)
-            .putExtra(Intent.EXTRA_SUBJECT, "Notes: ${ev.title}").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        context.startActivity(Intent.createChooser(i, "Send notes").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            .putExtra(Intent.EXTRA_SUBJECT, Txt.s(R.string.share_team_subject, Bidi.isolate(ev.title))).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        context.startActivity(Intent.createChooser(i, Txt.s(R.string.share_team_send)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }

@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Meeting page, notes, checklists, transcripts, search and the recorder. Owner: meeting_notes area. Arabic twin in values-ar. -->
+<resources>
+    <!-- Meeting page tabs -->
+    <!-- Tab title: the short overview of a meeting. -->
+    <string name="meet_tab_brief">Brief</string>
+    <!-- Tab title: the written-out words of the voice notes. -->
+    <string name="meet_tab_transcript">Transcript</string>
+    <!-- Screen-reader label of the back button on a meeting page. -->
+    <string name="meet_back_to_today">Back to today</string>
+    <string name="meet_manage_meeting">Manage meeting</string>
+    <!-- Button; %1$s is a video-call service such as Zoom or Teams. -->
+    <string name="meet_join_provider">Join %1$s</string>
+    <string name="meet_no_app_for_link">No app can open this link</string>
+    <!-- Button that starts a voice recording. -->
+    <string name="meet_record">Record</string>
+
+    <!-- Meeting cards -->
+    <!-- "+3 more": items not shown in a short list. -->
+    <string name="meet_more">+%1$d more</string>
+    <string name="meet_why_meeting">Why you\'re meeting</string>
+    <string name="meet_from_emails">From your emails</string>
+    <string name="meet_happening_now">Happening now</string>
+    <string name="meet_up_next">Up next</string>
+    <!-- Screen-reader label of a video-camera icon on a meeting card. -->
+    <string name="meet_has_call_link">Has a call link</string>
+    <!-- Countdown chip, e.g. "in 25 min"; %1$s is the time left. -->
+    <string name="meet_in_countdown">in %1$s</string>
+    <string name="meet_voice_note_stamp">Voice note · %1$s</string>
+    <string name="meet_photo_stamp">Photo · %1$s</string>
+    <string name="meet_note_stamp">Note · %1$s</string>
+    <string name="meet_notes_summary">Notes summary</string>
+    <string name="meet_no_notes_linked">No notes are linked to this meeting yet.</string>
+    <string name="meet_no_notes_linked_long">No notes are linked to this meeting yet. Record, write, photograph or start a list from the Notes tab.</string>
+    <plurals name="meet_notes_linked">
+        <item quantity="one">%d note linked</item>
+        <item quantity="other">%d notes linked</item>
+    </plurals>
+    <string name="meet_tap_read_all">Tap to read all</string>
+    <string name="meet_no_email_app">No email app found</string>
+    <!-- Toast after adding a guest; %1$s is the person's name or email. -->
+    <string name="meet_added_guest">Added %1$s. Your calendar app sends the invitation when it syncs.</string>
+    <!-- Subject of an invitation email; %1$s is the meeting title. -->
+    <string name="meet_invitation_subject">Invitation: %1$s</string>
+    <!-- Body of an invitation email; %1$s is the meeting details. -->
+    <string name="meet_invitation_body">Join me:\n\n%1$s</string>
+    <string name="meet_guests">Guests</string>
+    <string name="meet_guests_count">Guests · %1$d</string>
+    <string name="meet_reply_invite">Reply to the invite email</string>
+    <string name="meet_reply_organizer">Reply to organizer</string>
+    <string name="meet_email_everyone">Email everyone</string>
+    <string name="meet_add_people">Add people</string>
+    <string name="meet_share_link">Share link</string>
+    <string name="meet_share_meeting">Share meeting</string>
+    <string name="meet_no_guests">The calendar didn\'t list any guests for this event. They only show up when the invite includes them.</string>
+    <string name="meet_guests_more">+%1$d more · tap to see everyone</string>
+    <!-- The phone's owner in a guest list. -->
+    <string name="meet_guest_you">You</string>
+    <!-- A guest the invite gave neither a name nor an email address. -->
+    <string name="meet_guest_unnamed">Guest</string>
+    <!-- The phone's owner in a guest list; %1$s is their name. -->
+    <string name="meet_guest_name_you">%1$s (you)</string>
+    <string name="meet_organizer">Organizer</string>
+    <!-- A guest whose attendance is optional. -->
+    <string name="meet_optional">Optional</string>
+    <!-- A guest's answer to the invite. -->
+    <string name="meet_rsvp_going">Going</string>
+    <string name="meet_rsvp_declined">Declined</string>
+    <string name="meet_rsvp_maybe">Maybe</string>
+    <!-- A guest who has not answered the invite yet. -->
+    <string name="meet_rsvp_waiting">Waiting</string>
+
+    <!-- About this meeting -->
+    <!-- A guess from the meeting title; %1$s is the title. -->
+    <string name="meet_about_rule_guess">Likely about %1$s.</string>
+    <string name="meet_about_title">About this meeting</string>
+    <string name="meet_up_to_date">Already up to date</string>
+    <string name="meet_write_again">Write this again</string>
+    <string name="meet_guess_from_title">No details in the invite. A guess from the title:</string>
+    <string name="meet_thinking_title">Thinking about the title…</string>
+    <string name="meet_reading">Reading…</string>
+    <string name="meet_guess_dialog">A guess from the title, since the invite has no details.</string>
+    <string name="meet_write_about">Write about this meeting</string>
+
+    <!-- Email context -->
+    <string name="meet_ctx_to_settle_title">To settle in the meeting</string>
+    <string name="meet_ctx_emails">Emails</string>
+    <string name="meet_ctx_privacy">Stays on this phone. Plait never reads your mailbox. It only sees what you share or paste.</string>
+    <string name="meet_ctx_add_title">Add context from your email</string>
+    <string name="meet_ctx_add_body">Share an email thread with this meeting and Plait shows how it relates, what was decided, who asked for what, and what\'s still open.</string>
+    <string name="meet_ctx_from_mail_app">From your mail app</string>
+    <string name="meet_ctx_from_mail_body">Select the text of an email, tap Share, and choose Plait. A saved .eml file works too. Plait will suggest the right meeting.</string>
+    <string name="meet_ctx_paste_button">Paste email or notes</string>
+    <string name="meet_ctx_try_example">Try an example</string>
+    <string name="meet_ctx_paste_title">Paste an email or notes</string>
+    <string name="meet_ctx_subject_hint">Subject (optional)</string>
+    <string name="meet_ctx_paste_hint">Paste the email here. A whole thread is fine.</string>
+    <string name="meet_ctx_from_clipboard">From clipboard</string>
+    <string name="meet_ctx_nothing_to_paste">Nothing to paste</string>
+    <string name="meet_ctx_what_email_says">What your email says</string>
+    <string name="meet_ctx_weak">This barely mentions the meeting\'s topics or people. It may belong to a different meeting.</string>
+    <string name="meet_ctx_found_by">Found by looking at your email against the meeting\'s title, agenda, guests and date.</string>
+    <plurals name="meet_ctx_emails_combined">
+        <item quantity="one">%d email combined.</item>
+        <item quantity="other">%d emails combined.</item>
+    </plurals>
+    <string name="meet_ctx_highlights">Highlights</string>
+    <string name="meet_ctx_add_another">Add another email or note</string>
+    <!-- Verb on a row that opens the paste box. -->
+    <string name="meet_ctx_paste">Paste</string>
+    <string name="meet_ctx_no_subject">(No subject)</string>
+    <!-- Where an email came from: the built-in sample. -->
+    <string name="meet_ctx_example">example</string>
+    <!-- Fallback sender of one message in an email thread. -->
+    <string name="meet_ctx_message">Message</string>
+    <string name="meet_ctx_hide">Hide</string>
+    <!-- Button that expands an email to read it. -->
+    <string name="meet_ctx_read">Read</string>
+    <string name="meet_ctx_ask_ai">Ask your phone\'s AI</string>
+    <string name="meet_ctx_key_points">Key points</string>
+    <string name="meet_ctx_to_settle">To settle</string>
+    <!-- %1$s is the AI engine\'s name. -->
+    <string name="meet_ctx_thinking_with">Thinking with %1$s…</string>
+    <string name="meet_ctx_explain">Explain how this relates to the meeting</string>
+    <string name="meet_ctx_ask_again">Ask again</string>
+    <string name="meet_ctx_nothing_back">Nothing came back. Try again in a moment.</string>
+
+    <!-- Notes -->
+    <string name="note_empty_meeting">No notes for this meeting yet. Record, write, photograph or start a list above.</string>
+    <string name="note_earlier_in_series">From earlier in this series</string>
+    <string name="note_edit_transcript">Edit transcript</string>
+    <string name="note_edit_text">Edit text</string>
+    <string name="note_edit_note">Edit note</string>
+    <string name="note_edit_items">Edit items</string>
+    <!-- Snackbar after a note was deleted, next to Undo. -->
+    <string name="note_deleted">Deleted note</string>
+    <string name="note_recording_elsewhere">The recording is on another phone. The transcript and summary came across.</string>
+    <string name="note_play">Play voice note</string>
+    <string name="note_pause">Pause voice note</string>
+    <string name="note_back_10">Back 10 seconds</string>
+    <string name="note_forward_10">Forward 10 seconds</string>
+    <!-- %1$s is a date and time. -->
+    <string name="note_recorded_at">Recorded %1$s</string>
+    <!-- %1$s is the person who shared the note, %2$s a date and time. -->
+    <string name="note_from_recorded_at">From %1$s · Recorded %2$s</string>
+    <!-- %1$s is the person who shared the note, %2$s a date and time. -->
+    <string name="note_from_stamp">From %1$s · %2$s</string>
+    <!-- Button; %1$s is a language name. -->
+    <string name="note_transcribe_again">Transcribe again · %1$s</string>
+    <!-- Button; %1$s is a language name. -->
+    <string name="note_improve_transcript">Improve transcript · %1$s</string>
+    <string name="note_decisions">Decisions</string>
+    <string name="note_follow_ups">Follow-ups</string>
+    <string name="note_writing">Writing…</string>
+    <string name="note_write_again">Write again</string>
+    <string name="note_summarising">Summarising…</string>
+    <!-- Button: write a summary of the note. -->
+    <string name="note_summarise">Summarise</string>
+    <string name="note_summarise_again">Summarise again</string>
+    <string name="note_no_speech_in_note">No speech was detected in this note.</string>
+    <string name="note_no_speech">No speech was detected.</string>
+    <string name="note_no_speech_short">No speech detected</string>
+    <string name="note_partly_unclear">Partly unclear. Play the note to check.</string>
+    <string name="note_transcripts_empty">Transcripts appear here after you record a voice note.</string>
+    <string name="note_all_done">All done</string>
+    <string name="note_all_done_dot">All done.</string>
+    <!-- Search result kinds (a label before the result's title). -->
+    <string name="note_search_kind_email">Email</string>
+    <string name="note_search_kind_followup">Follow-up</string>
+    <!-- Chips: which alphabet to read a photo's text in. -->
+    <string name="note_ocr_auto">Auto</string>
+    <string name="note_ocr_latin">English / Latin</string>
+    <string name="note_ocr_arabic">Arabic</string>
+    <!-- Name shown for a checklist the user did not title. -->
+    <string name="note_list_untitled">Checklist</string>
+    <!-- Checklist progress: %1$d items ticked of %2$d. -->
+    <string name="note_list_progress">%1$d of %2$d done</string>
+    <!-- In an export, after a checklist item: %1$s is a date and time ("Sun 25 Oct, 5:00 PM"). -->
+    <string name="note_list_due">due %1$s</string>
+    <string name="note_no_text_in_picture">No text was found in the picture.</string>
+    <string name="note_no_text_this_picture">No text was found in this picture.</string>
+
+    <!-- Notes library -->
+    <!-- Kind of note, on a badge and a filter tab. -->
+    <string name="note_kind_voice">Voice</string>
+    <!-- Kind of note: written text. -->
+    <string name="note_kind_text">Text</string>
+    <!-- Kind of note: a checklist. -->
+    <string name="note_kind_list">List</string>
+    <!-- Filter tab: every kind of note. -->
+    <string name="note_filter_all">All</string>
+    <!-- Filter tab: checklists. -->
+    <string name="note_filter_lists">Lists</string>
+    <string name="note_kind_text_note">Text note</string>
+    <string name="note_kind_photo_note">Photo note</string>
+    <string name="note_kind_list_note">List note</string>
+    <string name="note_library_empty">No notes yet. Write or photograph something above, or tap + to record.</string>
+    <string name="note_library_empty_kind">No notes of this kind.</string>
+    <string name="note_link_to_meeting">Link to a meeting</string>
+    <string name="note_change_meeting">Change meeting</string>
+    <string name="note_unlink_from_meeting">Unlink from meeting</string>
+    <string name="note_unlink">Unlink</string>
+    <string name="note_open_meeting">Open meeting</string>
+    <string name="note_not_linked">Not linked to a meeting</string>
+    <string name="note_no_meetings_around">No meetings found around now. Connect a calendar to link notes.</string>
+
+    <!-- Written, photo and checklist notes -->
+    <string name="note_open_picture_failed">Couldn\'t open that picture.</string>
+    <string name="note_saved_no_text">Saved. No text was found in the picture.</string>
+    <!-- Button: write a note. -->
+    <string name="note_write">Write</string>
+    <string name="note_reading_picture">Reading the picture…</string>
+    <string name="note_reading_picture_arabic">Reading the picture. Arabic takes a few seconds.</string>
+    <string name="note_new_note">New note</string>
+    <string name="note_new_checklist">New checklist</string>
+    <string name="note_add_photo">Add a photo</string>
+    <string name="note_photo_explainer">The text in the picture is read on this phone and kept so you can copy it.</string>
+    <string name="note_take_photo">Take photo</string>
+    <!-- Button: pick a picture from the gallery. -->
+    <string name="note_choose">Choose</string>
+    <string name="note_picture_language">Language in the picture</string>
+    <string name="note_photo_for_meeting">Photo for this meeting</string>
+    <string name="note_text_in_photo">Text found in the photo</string>
+    <string name="note_copy_text">Copy text</string>
+    <string name="note_copied">Copied</string>
+    <string name="note_rename_checklist">Rename checklist</string>
+    <!-- Screen-reader state of a ticked checklist item. -->
+    <string name="note_item_done">Done</string>
+    <!-- Screen-reader state of an unticked checklist item. -->
+    <string name="note_item_not_done">Not done</string>
+    <string name="note_add_item_hint">Add an item</string>
+    <string name="note_add_item">Add item</string>
+    <string name="note_edit_checklist">Edit checklist</string>
+    <string name="note_no_tasks">No tasks yet. Add the first one below.</string>
+    <string name="note_remove_task">Remove task</string>
+    <string name="note_add_task_hint">Add a task</string>
+    <string name="note_add_task">Add task</string>
+
+    <!-- Search -->
+    <string name="note_search_hint">Search or ask: what did we decide with…</string>
+    <string name="note_search_thinking">Thinking…</string>
+    <string name="note_search_with_ai">Search with AI</string>
+    <!-- %1$s is a list of extra search words. -->
+    <string name="note_also_searched">Also searched: %1$s</string>
+    <string name="note_search_no_match">Nothing in your notes matches that.</string>
+    <string name="note_search_no_answer">No answer came back. The notes found are listed below.</string>
+    <string name="note_search_nothing">Nothing found.</string>
+    <string name="note_followups_all_done">Follow-ups · all done</string>
+    <string name="note_followups_open">Follow-ups · %1$d open</string>
+    <string name="note_followups_empty">Nothing waiting on you. New ones appear as you take notes.</string>
+    <!-- Button that books a free half hour; %1$s is the start time. -->
+    <string name="note_book_30">Book 30 min · %1$s</string>
+
+    <!-- Attach a shared email -->
+    <string name="note_attach_title">Add to a meeting</string>
+    <string name="note_attach_discard">Discard</string>
+    <string name="note_attach_shared_text">Shared text</string>
+    <plurals name="note_attach_attachments">
+        <item quantity="one">%d attachment</item>
+        <item quantity="other">%d attachments</item>
+    </plurals>
+    <string name="note_attach_no_meetings">No upcoming meetings to add this to. Connect a calendar first, then share the email again.</string>
+    <string name="note_attach_best_first">Best match first</string>
+    <string name="note_attach_pick">Pick the meeting this is about</string>
+    <!-- %1$s is a meeting title. -->
+    <string name="note_attach_added">Added to %1$s</string>
+    <string name="note_attach_stays">Stays on this phone.</string>
+    <string name="note_attach_best">Best match</string>
+
+    <!-- Recorder -->
+    <string name="note_rec_saving">Saving</string>
+    <!-- State of the recorder. -->
+    <string name="note_rec_paused">Paused</string>
+    <string name="note_rec_cant">Can\'t record</string>
+    <!-- State of the recorder. -->
+    <string name="note_rec_recording">Recording</string>
+    <plurals name="note_rec_bookmarks">
+        <item quantity="one">Recording · %d bookmark</item>
+        <item quantity="other">Recording · %d bookmarks</item>
+    </plurals>
+    <string name="note_rec_hearing">Hearing you</string>
+    <string name="note_rec_listening">Listening. The words are written after you stop.</string>
+    <string name="note_rec_need_mic">Plait needs the microphone to record.</string>
+    <string name="note_rec_mic_settings">Voice notes stay on your phone. Allow microphone access in Settings to continue.</string>
+    <string name="note_rec_close">Close recorder</string>
+    <string name="note_rec_open_settings">Open settings</string>
+    <string name="note_rec_bookmark">Add a bookmark</string>
+    <string name="note_rec_stop_save">Stop and save</string>
+    <string name="note_rec_resume">Resume recording</string>
+    <string name="note_rec_pause">Pause recording</string>
+    <string name="note_rec_failed_storage">The recording stopped: the microphone or the storage failed. What was recorded is kept; tap stop to save it.</string>
+    <string name="note_rec_mic_busy">The microphone is busy or unavailable.</string>
+    <string name="note_mic_blocked_call">Your phone blocked the microphone while the call was running. Android lets the call app keep the mic. Put the call on speaker and try again, or record with a second device, or use the call app\'s own recording.</string>
+    <string name="note_mic_blocked">Your phone blocked the microphone, so only silence was recorded. Another app may be using it, or microphone access may be turned off in quick settings.</string>
+
+    <!-- Recording notification -->
+    <string name="note_notif_channel">Voice note recording</string>
+    <string name="note_notif_title">Recording a voice note</string>
+    <string name="note_notif_tap_return">Tap to return to Plait</string>
+    <!-- Notification button. -->
+    <string name="note_notif_resume">Resume</string>
+    <!-- Notification button. -->
+    <string name="note_notif_pause">Pause</string>
+    <!-- Notification button: stop recording. -->
+    <string name="note_notif_stop">Stop</string>
+    <!-- %1$s is the meeting title. -->
+    <string name="note_notif_recording">Recording · %1$s</string>
+    <!-- %1$s is the meeting title. -->
+    <string name="note_notif_paused">Paused · %1$s</string>
+
+    <!-- Processing a note -->
+    <string name="note_proc_tasks">Looking for tasks…</string>
+    <string name="note_proc_reading">Reading the note…</string>
+    <string name="note_proc_summary">Writing the summary…</string>
+    <string name="note_proc_transcribing">Transcribing…</string>
+    <!-- %1$d is a percentage. -->
+    <string name="note_proc_transcribing_pct">Transcribing… %1$d%%</string>
+    <!-- Badge naming what wrote a summary when no AI was used. -->
+    <string name="note_proc_rules">Plait rules</string>
+
+    <!-- Suggested tasks and due dates -->
+    <string name="note_tasks_suggested">Suggested tasks</string>
+    <string name="note_tasks_found">Found in your notes. Add one to the checklist with a reminder.</string>
+    <!-- %1$s is when the reminder fires, e.g. "tomorrow 9:00 AM". -->
+    <string name="note_tasks_no_due">No due date. Reminder %1$s</string>
+    <string name="note_tasks_add_all">Add all %1$d</string>
+    <string name="note_due_none">No due date</string>
+
+    <!-- Speech and summary models -->
+    <string name="note_bv_title">Better results on voice notes</string>
+    <string name="note_bv_body">Whisper Turbo writes the transcript and Qwen3 0.6B writes the summary and finds the tasks, all on your phone.</string>
+    <!-- A model is installed. -->
+    <string name="note_bv_ready">Ready</string>
+    <string name="note_bv_downloading">Downloading… %1$d%%</string>
+    <string name="note_bv_low_mem">This phone has less memory than Turbo likes; %1$s is a safer choice.</string>
+    <string name="note_bv_carries_on">It carries on if you leave Plait.</string>
+    <!-- %1$s is a download size. -->
+    <string name="note_bv_get_both">Get both · %1$s</string>
+    <!-- %1$s is a model name, %2$s its download size. -->
+    <string name="note_bv_get_one">Get %1$s · %2$s</string>
+    <!-- %1$s and %2$s are model names, %3$s the download size. -->
+    <string name="note_bv_get_pair">Get %1$s + %2$s · %3$s</string>
+    <string name="note_su_title">This note has no transcript yet</string>
+    <!-- %1$s is a speech model name. -->
+    <string name="note_su_body">Nothing has written this recording down yet. Get %1$s: it runs on your phone, understands accents and Arabic, and writes the transcript of this note and your others, then the summary and tasks follow.</string>
+    <string name="note_su_i_speak">I mostly speak</string>
+    <string name="note_su_english">English</string>
+    <string name="note_su_arabic">Arabic</string>
+    <string name="note_su_both">Both, mixed</string>
+    <!-- %1$s is a model name, %2$d a percentage. -->
+    <string name="note_su_downloading">Downloading %1$s… %2$d%%. It carries on if you leave Plait.</string>
+    <!-- %1$s is a language name. -->
+    <string name="note_lang_label">Language: %1$s</string>
+    <!-- Title of the list of speech languages. -->
+    <string name="note_lang_speaking">I\'m speaking</string>
+    <!-- %1$s is two languages, e.g. "Arabic + English". -->
+    <string name="note_lang_mixed">%1$s (mixed)</string>
+</resources>

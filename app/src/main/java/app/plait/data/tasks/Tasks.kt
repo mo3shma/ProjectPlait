@@ -24,7 +24,12 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 
 /** When a suggested task should be done, as far as the note says. */
-enum class Due(val label: String) { None("No date"), Today("Today"), Tomorrow("Tomorrow"), ThisWeek("This week"), NextWeek("Next week") }
+enum class Due(private val res: Int) {
+    None(app.plait.R.string.gen_due_none), Today(app.plait.R.string.gen_due_today), Tomorrow(app.plait.R.string.gen_due_tomorrow),
+    ThisWeek(app.plait.R.string.gen_due_this_week), NextWeek(app.plait.R.string.gen_due_next_week);
+
+    val label: String get() = app.plait.i18n.Txt.s(res)
+}
 
 /** A task Plait suggests from a voice or photo note, waiting for the user to add or dismiss it. */
 data class TaskIdea(val id: String, val sourceId: String, val eventId: String, val text: String, val due: Due, val createdAt: Long)

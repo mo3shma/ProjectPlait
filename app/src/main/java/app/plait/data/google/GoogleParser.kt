@@ -1,5 +1,7 @@
 package app.plait.data.google
 
+import app.plait.R
+import app.plait.i18n.Txt
 import app.plait.data.CalEvent
 import app.plait.data.TimeFmt
 import app.plait.data.Guest
@@ -41,7 +43,7 @@ object GoogleParser {
             if (allDay) {
                 startMs = LocalDate.parse(start.getString("date")).atStartOfDay(zone).toInstant().toEpochMilli()
                 endMs = LocalDate.parse(end.getString("date")).atStartOfDay(zone).toInstant().toEpochMilli()
-                time = "All day"
+                time = Txt.s(R.string.common_all_day)
                 endLabel = ""
             } else {
                 val s = OffsetDateTime.parse(start.getString("dateTime"))
@@ -60,7 +62,7 @@ object GoogleParser {
                     id = "g:" + o.getString("id"),
                     time = time,
                     duration = if (allDay) "" else formatDuration((endMs - startMs) / 60_000),
-                    title = o.optString("summary").ifBlank { "(No title)" },
+                    title = o.optString("summary").ifBlank { Txt.s(R.string.gcal_no_title) },
                     source = Source.Google,
                     place = placeLabel(location, conference),
                     location = location,
@@ -133,7 +135,7 @@ object GoogleParser {
             "meet.google.com" in conference -> "Google Meet"
             "zoom" in conference -> "Zoom"
             "teams" in conference -> "Microsoft Teams"
-            else -> "Video call"
+            else -> Txt.s(R.string.gcal_video_call)
         }
         location != null -> location.substringBefore(',').trim().ifBlank { location }
         else -> "Google Calendar"
@@ -141,9 +143,9 @@ object GoogleParser {
 
     fun formatDuration(minutes: Long): String = when {
         minutes <= 0 -> ""
-        minutes < 60 -> "${minutes}m"
-        minutes % 60 == 0L -> "${minutes / 60}h"
-        else -> "${minutes / 60}h ${minutes % 60}m"
+        minutes < 60 -> Txt.s(R.string.gcal_dur_min, minutes)
+        minutes % 60 == 0L -> Txt.s(R.string.gcal_dur_hours, minutes / 60)
+        else -> Txt.s(R.string.gcal_dur_hours_min, minutes / 60, minutes % 60)
     }
 }
 

@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings (the hub) and the app's sheets and dialogs. Owner: settings_sheets. Keys start with settings_ or sheet_. -->
+<resources>
+    <!-- Settings section that picks the app's language. -->
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_note">Plait follows your phone\'s language unless you pick one here.</string>
+    <!-- Language option: use whatever language the phone is set to. -->
+    <string name="settings_language_system">System default</string>
+    <!-- Language names are written in their own language, so each is easy to find whatever the app is showing. -->
+    <string name="settings_language_english" translatable="false">English</string>
+    <string name="settings_language_arabic" translatable="false">العربية</string>
+
+    <!-- ===== Settings: calendar access and the header ===== -->
+    <string name="settings_calendar_access_needed">Plait needs calendar access to show your events. You can allow it in Settings.</string>
+    <string name="settings_google_access_denied">Calendar access wasn\'t granted.</string>
+    <string name="settings_add_account_failed">Couldn\'t open the phone\'s account settings.</string>
+    <plurals name="settings_events">
+        <item quantity="one">%d event</item>
+        <item quantity="other">%d events</item>
+    </plurals>
+    <plurals name="settings_calendars">
+        <item quantity="one">%d calendar</item>
+        <item quantity="other">%d calendars</item>
+    </plurals>
+    <!-- Settings header: "%1$s" is a count of events ("12 events"), "%2$s" a count of calendars ("3 calendars"). -->
+    <string name="settings_connected_summary">%1$s from %2$s</string>
+    <string name="settings_connected_summary_syncing">%1$s from %2$s · syncing…</string>
+    <string name="settings_nothing_connected">Nothing connected yet. Pick a way below.</string>
+    <string name="settings_access_title_read">Allow calendar access</string>
+    <string name="settings_access_title_write">Allow saving to your calendar</string>
+    <string name="settings_access_body">Plait reads the calendars already on this phone, and saves meetings you create in Plait to the one you choose. Nothing goes through a Plait server.</string>
+    <!-- Button. -->
+    <string name="settings_access_button_read">Allow access</string>
+    <!-- Button. -->
+    <string name="settings_access_button_write">Allow saving</string>
+    <!-- The calendar source "on this phone" (not Google, Outlook or iCloud). -->
+    <string name="settings_source_phone">Phone</string>
+
+    <!-- ===== Settings: accounts ===== -->
+    <string name="settings_accounts_title">Accounts to show</string>
+    <string name="settings_accounts_none">None found yet</string>
+    <string name="settings_accounts_needs_access">Needs calendar access</string>
+    <!-- Summary of the accounts row: "2 of 3 shown". -->
+    <string name="settings_accounts_shown">%1$d of %2$d shown</string>
+    <string name="settings_accounts_note_chosen">Only the accounts switched on appear in Plait. The rest stay out of your agenda.</string>
+    <string name="settings_accounts_note_all">Everything on this phone is showing. Switch off the accounts you don\'t want here.</string>
+    <!-- Screen-reader label of a switch; %1$s is an account or calendar name. -->
+    <string name="settings_show_item">Show %1$s</string>
+    <string name="settings_calendars_hide">Hide calendars</string>
+    <string name="settings_calendars_choose">Choose calendars</string>
+    <string name="settings_save_here_chosen">"✓  New meetings are saved here"</string>
+    <!-- Chip button: make this calendar the one new meetings go to. -->
+    <string name="settings_save_here">Save new meetings here</string>
+    <string name="settings_read_only">Read only</string>
+    <string name="settings_no_calendars">No calendars were found on this phone yet. Add an account below.</string>
+
+    <!-- ===== Settings: add an account ===== -->
+    <string name="settings_add_title">Add an account</string>
+    <string name="settings_add_summary" translatable="false">Google, Outlook, Exchange</string>
+    <string name="settings_add_note">Accounts are added in Android, so Plait never sees a password. Their calendars appear here by themselves.</string>
+    <string name="settings_add_google">Add a Google account</string>
+    <string name="settings_add_outlook">Add Outlook, Microsoft 365 or Exchange</string>
+    <string name="settings_add_help">For Outlook: install the Outlook app and sign in there, or choose Exchange in the list Android shows. For iCloud: use a calendar link below (iCloud has no sign-in Android can use).</string>
+
+    <!-- ===== Settings: import a calendar ===== -->
+    <string name="settings_import_title">Import a calendar</string>
+    <string name="settings_import_summary">By link or from a file</string>
+    <string name="settings_import_note">A link keeps itself up to date. A file is a one-time copy.</string>
+    <string name="settings_import_link_hint">Paste a calendar link (https:// or webcal://)</string>
+    <string name="settings_import_adding">Adding…</string>
+    <string name="settings_import_file">Import a .ics file</string>
+    <string name="settings_import_file_unreadable">Couldn\'t read that file.</string>
+    <!-- %1$s is a file name. -->
+    <string name="settings_import_file_done">Imported %1$s.</string>
+    <string name="settings_import_file_on_phone">File on this phone</string>
+    <!-- Menu paths in Outlook, iCloud and Google. The arrows point the way you read. -->
+    <string name="settings_import_help">Outlook: Outlook on the web → Settings → Calendar → Shared calendars → Publish → copy the ICS link. iCloud: Calendar app → share → Public Calendar. Google: calendar Settings → Integrate calendar → Secret address in iCal format. Anyone with a published link can read that calendar.</string>
+
+    <!-- ===== Settings: where new meetings are saved ===== -->
+    <string name="settings_send_title">Where new meetings are saved</string>
+    <string name="settings_send_not_chosen">Not chosen yet</string>
+    <string name="settings_send_note">What you create in Plait goes to the same place as everything else.</string>
+    <!-- %1$s calendar name, %2$s account, %3$s an app ("Google Calendar", "Outlook", "your calendar app"). -->
+    <string name="settings_send_dest">New meetings are saved to %1$s (%2$s). Android syncs them to that account, so they show up in %3$s and invite your guests.</string>
+    <string name="settings_send_google_calendar" translatable="false">Google Calendar</string>
+    <string name="settings_send_outlook" translatable="false">Outlook</string>
+    <string name="settings_send_icloud" translatable="false">iCloud</string>
+    <string name="settings_send_your_calendar_app">your calendar app</string>
+    <string name="settings_send_no_writable">No calendar on this phone can take new meetings yet. Add an account above, or keep them on this phone only.</string>
+    <string name="settings_send_allow_first">Allow calendar access first.</string>
+    <string name="settings_send_create_local">Create a calendar on this phone only</string>
+    <string name="settings_send_create_failed">Couldn\'t create a calendar on this phone.</string>
+    <string name="settings_send_notes_title">Add my notes to the event</string>
+    <string name="settings_send_notes_body">After a voice note, the summary and follow-ups are written into the calendar event\'s description.</string>
+    <string name="settings_send_notes_switch">Add notes to calendar events</string>
+
+    <!-- ===== Settings: AI ===== -->
+    <string name="settings_ai_title">AI on this phone</string>
+    <string name="settings_ai_gemini_nano" translatable="false">Gemini Nano</string>
+    <string name="settings_ai_downloaded_model">Downloaded model</string>
+    <string name="settings_ai_rules_only">Rules only</string>
+    <!-- Summary of the AI row; %1$s the writing model, %2$s the voice model (or "none yet"). -->
+    <string name="settings_ai_summary">Writing: %1$s · Voice: %2$s</string>
+    <string name="settings_ai_voice_none">none yet</string>
+    <string name="settings_ai_badge">Recommended: Qwen3 0.6B + Whisper Turbo</string>
+    <string name="settings_ai_light_title">Lighter model for automatic writing</string>
+    <string name="settings_ai_light_body">Day summaries, prep and About use the smallest downloaded model, so a big one does not slow the phone. Questions and summaries you ask for still use your chosen model.</string>
+
+    <!-- ===== Settings: reminders ===== -->
+    <string name="settings_reminders_title">Reminders and widget</string>
+    <plurals name="settings_reminders_lead">
+        <item quantity="one">%d min before</item>
+        <item quantity="other">%d min before</item>
+    </plurals>
+    <!-- %1$s is "10 min before". -->
+    <string name="settings_reminders_summary_nudge">%1$s · evening reminder</string>
+    <string name="settings_reminders_note">Alerts come from the phone\'s alarm clock, so they work with Plait closed.</string>
+    <string name="settings_reminders_before_title">Before each meeting</string>
+    <string name="settings_reminders_before_body">A heads-up with a line about what it is for, and a Join button.</string>
+    <string name="settings_reminders_before_switch">Reminders before meetings</string>
+    <string name="settings_reminders_nudge_title">Evening note reminder</string>
+    <!-- %1$s is a time of day, "6:00 PM". -->
+    <string name="settings_reminders_nudge_body">At %1$s, if finished meetings have no notes.</string>
+    <string name="settings_reminders_widget">Widget: press and hold the home screen, choose Widgets, then Plait. It comes in two sizes, 4×2 and 2×2, and shows the next meeting with a Join button.</string>
+
+    <!-- ===== Settings: work week ===== -->
+    <string name="settings_week_title">Work week</string>
+    <string name="settings_week_note">Your Evening brief on the last day of the work week sums up the week, and on days off with no meetings Plait offers a look at next week.</string>
+    <string name="settings_week_first_day">First work day</string>
+    <!-- %1$s full weekday name, %2$s and %3$s short weekday names: "Starts Monday, works Mon to Fri". -->
+    <string name="settings_week_label">Starts %1$s, works %2$s to %3$s</string>
+
+    <!-- ===== Settings: appearance ===== -->
+    <string name="settings_appearance_title">Appearance</string>
+    <!-- Names of the two interface styles; kept as written. -->
+    <string name="settings_style_glass" translatable="false">Liquid Glass</string>
+    <string name="settings_style_material" translatable="false">Material 3 Expressive</string>
+    <string name="settings_appearance_no_glass">no glass effects</string>
+    <!-- Reduced motion is on. -->
+    <string name="settings_appearance_calm">calm</string>
+    <string name="settings_amoled_title">Pure black in dark mode</string>
+    <string name="settings_amoled_body">True black background for OLED screens: deeper contrast, and the pixels switch off to save battery.</string>
+    <!-- Title: the interface style. -->
+    <string name="settings_style_title">Style</string>
+    <string name="settings_style_body">Liquid Glass is translucent and refracts what is behind it. Material 3 Expressive is solid, tonal and bouncier.</string>
+    <string name="settings_style_restart_note">Restart Plait to finish switching the whole app to this style.</string>
+    <string name="settings_restart_now">Restart now</string>
+    <string name="settings_glass_title">Glass effects</string>
+    <string name="settings_glass_body">Blur and refraction. Turn off for plain surfaces, which is lighter on mid-range phones.</string>
+    <string name="settings_calm_title">Reduce animations</string>
+    <string name="settings_calm_body">No looping skies, no bounce. Pages still slide a little so you can see where you went.</string>
+    <string name="settings_restart_title">Restart to apply</string>
+    <!-- %1$s is a style name. -->
+    <string name="settings_restart_body">Plait builds the whole interface in one style, so it needs to start again to switch to %1$s.</string>
+
+    <!-- ===== Settings: you and backups ===== -->
+    <string name="settings_you_title">You and backups</string>
+    <string name="settings_you_summary">Name, backup, import</string>
+    <string name="settings_you_note">Your name is used in greetings. A backup moves your notes and settings to another phone.</string>
+    <string name="settings_you_name">Your name</string>
+    <string name="settings_you_name_hint">What should Plait call you?</string>
+    <!-- %1$s is the phone's model name. -->
+    <string name="settings_you_device">This phone: %1$s</string>
+    <string name="settings_backup_media_title">Include recordings and photos</string>
+    <string name="settings_backup_media_body">Makes the file larger, but the audio and pictures come with it.</string>
+    <string name="settings_backup_pass_title">Passphrase (optional)</string>
+    <string name="settings_backup_pass_hint">Locks the file. Leave empty for none.</string>
+    <string name="settings_backup_pass_body">With a passphrase the file is encrypted (AES-256). Nobody, including us, can recover it if you forget it.</string>
+    <string name="settings_backup_export">Export backup</string>
+    <string name="settings_backup_markdown">Notes as Markdown for a computer</string>
+    <string name="settings_backup_import">Import backup</string>
+    <string name="settings_backup_retry">Try again with this passphrase</string>
+    <string name="settings_backup_import_note">Importing only adds what this phone doesn\'t have; nothing here is replaced. Without a passphrase the file isn\'t encrypted, so keep it private.</string>
+    <string name="settings_backup_unreadable">Couldn\'t read that backup.</string>
+    <string name="settings_backup_save_failed">Couldn\'t save the backup.</string>
+    <string name="settings_markdown_save_failed">Couldn\'t save the files.</string>
+    <plurals name="settings_markdown_saved">
+        <item quantity="one">Saved %d meeting as Markdown files, readable on any computer.</item>
+        <item quantity="other">Saved %d meetings as Markdown files, readable on any computer.</item>
+    </plurals>
+    <!-- After importing a backup; %1$s lists what came in: "2 voice notes, 1 email". -->
+    <string name="settings_backup_added">Added %1$s.</string>
+    <string name="settings_backup_added_nothing">Added. Nothing new to add.</string>
+    <!-- After exporting a backup; %1$s lists what went in: "2 voice notes, 1 email". -->
+    <string name="settings_backup_saved">Saved a backup with %1$s.</string>
+    <string name="settings_backup_saved_nothing">Saved a backup with. Nothing new to add.</string>
+    <!-- Separator between items of a list ("2 voice notes, 1 email"). -->
+    <string name="settings_list_separator">", "</string>
+    <plurals name="settings_backup_voice_notes">
+        <item quantity="one">%d voice note</item>
+        <item quantity="other">%d voice notes</item>
+    </plurals>
+    <plurals name="settings_backup_memos">
+        <item quantity="one">%d written or photo note</item>
+        <item quantity="other">%d written or photo notes</item>
+    </plurals>
+    <plurals name="settings_backup_emails">
+        <item quantity="one">%d email</item>
+        <item quantity="other">%d emails</item>
+    </plurals>
+    <plurals name="settings_backup_feeds">
+        <item quantity="one">%d calendar link</item>
+        <item quantity="other">%d calendar links</item>
+    </plurals>
+
+    <!-- ===== Settings: sync ===== -->
+    <string name="settings_sync_title">Sync between your phones</string>
+    <!-- Sync row summary: "On · Synced 3:30 PM". -->
+    <string name="settings_sync_summary_status">On · %1$s</string>
+    <string name="settings_sync_note">No Plait server. Pick a folder that a cloud app you already use keeps in step on your phones, such as Google Drive, Dropbox, Nextcloud or Syncthing. Plait puts only sealed files in it.</string>
+    <string name="settings_sync_on">Syncing</string>
+    <!-- %1$s is a folder name. -->
+    <string name="settings_sync_with">Syncing with “%1$s”</string>
+    <string name="settings_sync_media_body">Bigger files, but audio and pictures follow you. Otherwise only text syncs.</string>
+    <string name="settings_sync_media_switch">Sync recordings and photos</string>
+    <string name="settings_sync_now">Sync now</string>
+    <string name="settings_sync_stop">Stop syncing</string>
+    <string name="settings_sync_when">Plait syncs when it opens and after you save a note. Deleting something on one phone removes it on the others.</string>
+    <string name="settings_sync_setup">Set up on every phone with the same folder and the same passphrase. The passphrase encrypts the files; if you forget it they can\'t be opened.</string>
+    <string name="settings_sync_choose_folder">Choose the sync folder</string>
+    <string name="settings_sync_folder_chosen">Folder chosen ✓</string>
+    <string name="settings_sync_pass_hint">Sync passphrase</string>
+    <string name="settings_sync_start">Start syncing</string>
+    <string name="settings_sync_pass_short">Use at least 6 characters.</string>
+
+    <!-- ===== Settings: diagnostics ===== -->
+    <string name="settings_diag_title">Check this phone</string>
+    <string name="settings_diag_summary">Self-check, log, frame rate</string>
+    <string name="settings_diag_note">For testing on a real device. Everything stays on the phone unless you share it.</string>
+    <string name="settings_diag_run">Run self-check</string>
+    <string name="settings_diag_hide_log">Hide log</string>
+    <string name="settings_diag_show_log">Show log</string>
+    <string name="settings_diag_hide_frames">Hide frame stats</string>
+    <string name="settings_diag_show_frames">Show frame stats</string>
+    <string name="settings_diag_empty_log">Nothing logged yet.</string>
+    <string name="settings_diag_share_log">Share log</string>
+
+    <!-- ===== Settings: updates ===== -->
+    <string name="settings_updates_title">Updates and help</string>
+    <!-- %1$s is a version number. -->
+    <string name="settings_updates_version" translatable="false">Plait %1$s</string>
+    <string name="settings_updates_note">Plait checks GitHub for a new version each time it opens and installs it when you say so. The check sends nothing about you.</string>
+    <string name="settings_update_latest">You have the latest version.</string>
+    <!-- %1$s is a version number. -->
+    <string name="settings_update_ready">Plait %1$s is ready to install.</string>
+    <!-- %1$s is a version number. -->
+    <string name="settings_update_downloading">Downloading Plait %1$s…</string>
+    <string name="settings_update_waiting">Waiting for permission to install.</string>
+    <string name="settings_update_installing">Installing…</string>
+    <string name="settings_update_idle">Tap Check to look for a new version.</string>
+    <!-- Button: install the new version. -->
+    <string name="settings_update_button">Update</string>
+    <string name="settings_update_check">Check for updates</string>
+    <string name="settings_update_whats_new">What\'s new</string>
+    <string name="settings_update_tour">Take the tour</string>
+    <string name="settings_update_auto_title">Check for updates by itself</string>
+    <string name="settings_update_auto_body">When Plait opens. Off means you check by hand.</string>
+    <string name="settings_update_no_notes">The notes for this version aren\'t in this build.</string>
+
+    <!-- ===== Settings: advanced ===== -->
+    <string name="settings_adv_title">Advanced</string>
+    <string name="settings_adv_google">Read Google directly</string>
+    <string name="settings_adv_note">Only if you set up Google Cloud yourself (see the README). The steps above need none of this.</string>
+    <string name="settings_adv_body">Includes Meet links. Read only.</string>
+    <!-- Name of this device when the phone reports no model. -->
+    <string name="settings_this_phone">This phone</string>
+
+    <!-- ===== Settings: AI models (AiHub) ===== -->
+    <string name="settings_ai_intro">Pick what writes your summaries and what transcribes your voice. It all runs on the phone and nothing is uploaded. Downloads happen once, only when you tap them.</string>
+    <string name="settings_ai_defaults">Your defaults</string>
+    <!-- Label: the model that writes text. -->
+    <string name="settings_ai_writing">Writing</string>
+    <string name="settings_ai_writing_covers">Summaries, prep, follow-ups, answers, the morning brief</string>
+    <string name="settings_ai_voice_notes">Voice notes</string>
+    <string name="settings_ai_none_yet">None yet</string>
+    <string name="settings_ai_voice_covers">Transcripts of everything you record</string>
+    <string name="settings_ai_search_meaning">Words and meaning</string>
+    <string name="settings_ai_search_words">Words only</string>
+    <string name="settings_ai_search_covers">Finding notes, emails and meetings</string>
+    <string name="settings_ai_defaults_note">Pick a model below, or download one, and it becomes the default for every one of these. Change it any time.</string>
+    <string name="settings_ai_existing_title">Already have a model?</string>
+    <string name="settings_ai_existing_body">Plait never downloads a model it can already find. Point it at files you downloaded earlier and it will copy them in instead of fetching them again.</string>
+    <string name="settings_ai_looking">Looking…</string>
+    <string name="settings_ai_choose_folder">Choose a folder</string>
+    <string name="settings_ai_choose_files">Choose files</string>
+    <string name="settings_ai_check_phone">Check this phone</string>
+    <!-- %1$s is a folder path. -->
+    <string name="settings_ai_drop_folder">Or copy the files over USB into: %1$s</string>
+    <!-- Where model files were looked for; inserted as %2$s / %1$s into settings_ai_found, settings_ai_nothing_new, settings_ai_no_files. -->
+    <string name="settings_ai_where_folder">in that folder</string>
+    <string name="settings_ai_where_files">among those files</string>
+    <string name="settings_ai_where_phone">on this phone</string>
+    <!-- %1$d count, %2$s where (settings_ai_where_*), %3$s file names. -->
+    <plurals name="settings_ai_found">
+        <item quantity="one">Found %1$d file %2$s and added it without downloading: %3$s.</item>
+        <item quantity="other">Found %1$d files %2$s and added them without downloading: %3$s.</item>
+    </plurals>
+    <!-- As settings_ai_found, and %4$s lists the models now ready. -->
+    <plurals name="settings_ai_found_ready">
+        <item quantity="one">Found %1$d file %2$s and added it without downloading: %3$s. Ready: %4$s.</item>
+        <item quantity="other">Found %1$d files %2$s and added them without downloading: %3$s. Ready: %4$s.</item>
+    </plurals>
+    <!-- %1$s where (settings_ai_where_*), %2$s model names. -->
+    <string name="settings_ai_nothing_new">Nothing new %1$s. Already complete on this phone: %2$s.</string>
+    <string name="settings_ai_no_files">No model files %1$s. The file names and sizes must match the downloads exactly.</string>
+    <!-- Separator between file names in a list. -->
+    <string name="settings_list_separator_semi">"; "</string>
+    <string name="settings_ai_text_title">Summaries and answers</string>
+    <!-- Badge on the model that is in use. -->
+    <string name="settings_ai_using_now">Using now</string>
+    <string name="settings_ai_auto_body">Gemini Nano when the phone has it, then a downloaded model, then Plait\'s own rules.</string>
+    <string name="settings_ai_nano_badge">Built into Android</string>
+    <string name="settings_ai_nano_body">Google\'s model that ships with some recent phones. Free, private, and no download inside Plait.</string>
+    <string name="settings_ai_nano_meta">Size is set by Android and isn\'t reported to apps.</string>
+    <string name="settings_ai_ready">Ready on this phone</string>
+    <string name="settings_ai_nano_not_fetched">Your phone can run it but Android hasn\'t fetched it yet</string>
+    <string name="settings_ai_nano_download">Download with Android</string>
+    <string name="settings_ai_downloading">Downloading…</string>
+    <!-- %1$d is megabytes so far. -->
+    <string name="settings_ai_downloaded_mb">Downloaded %1$d MB</string>
+    <string name="settings_ai_download_failed_retry">The download failed. Tap to try again.</string>
+    <string name="settings_ai_unavailable">Not available on this phone</string>
+    <string name="settings_ai_rules_title">Plait\'s own rules only</string>
+    <string name="settings_ai_zero_mb" translatable="false">0 MB</string>
+    <string name="settings_ai_rules_body">No AI model. Plait picks out dates, decisions, risks and follow-ups with fixed rules. Fast and light, but it can\'t write sentences.</string>
+    <string name="settings_ai_speech_body">Recording only records. When you stop, a Whisper model writes the transcript from the saved audio, then your writing model summarises it and suggests tasks. It works in many languages. Without one, recordings are saved as audio only.</string>
+    <string name="settings_ai_no_transcription">No transcription</string>
+    <string name="settings_ai_no_transcription_body">Nothing chosen. Plait uses a Whisper model if one is installed; otherwise the recording is saved as audio.</string>
+    <string name="settings_ai_speech_language">Language of your voice notes</string>
+    <string name="settings_ai_search_body">Word search always works. This optional model also finds notes by meaning.</string>
+    <!-- %1$s is a size, "1.2 GB". -->
+    <string name="settings_ai_storage_used">Models on this phone: %1$s. Deleting one gives the space back.</string>
+    <string name="settings_ai_storage_none">No models downloaded.</string>
+    <string name="settings_ai_metered">You\'re on mobile data. Large downloads are better on Wi-Fi.</string>
+    <!-- %1$s is gigabytes of memory. -->
+    <string name="settings_ai_ram">Works best with %1$s GB of RAM or more.</string>
+    <!-- %1$s is a software licence name ("Apache 2.0"). -->
+    <string name="settings_ai_license">Licence: %1$s.</string>
+    <!-- Status badge: the model is on the phone. -->
+    <string name="settings_ai_downloaded">Downloaded</string>
+    <!-- %1$s is a size, "347 MB". -->
+    <string name="settings_ai_delete_frees">Delete (frees %1$s)</string>
+    <!-- Download progress: "120 MB of 347 MB · 34%". -->
+    <string name="settings_ai_progress">%1$s of %2$s · %3$d%%</string>
+    <string name="settings_ai_keep_open">Keep Plait open. It carries on from here if interrupted.</string>
+    <string name="settings_ai_download_failed">Download failed</string>
+    <!-- %1$s is a size. -->
+    <string name="settings_ai_download_metered">Download %1$s on mobile data</string>
+    <!-- Button; %1$s is a size. -->
+    <string name="settings_ai_download_size">Download · %1$s</string>
+    <string name="settings_ai_metered_size">You\'re on mobile data. Wi-Fi is better for this size.</string>
+    <!-- Badge: an optional model that is already on the phone. -->
+    <string name="settings_ai_included">Included</string>
+    <string name="settings_ai_nothing_to_download">Nothing to download</string>
+
+    <!-- ===== Update card, what's new, first-run tour ===== -->
+    <!-- %1$s is a version number. -->
+    <string name="sheet_news_title">What\'s new in %1$s</string>
+    <!-- Button that closes the what's-new card. -->
+    <string name="sheet_news_got_it">Got it</string>
+    <!-- %1$s is a version number. -->
+    <string name="sheet_update_ready">Plait %1$s is ready</string>
+    <!-- %1$s is the installed version. -->
+    <string name="sheet_update_have">"You have %1$s. "</string>
+    <!-- %1$s is the installed version, %2$s a download size ("12 MB"). -->
+    <string name="sheet_update_have_size">You have %1$s. %2$s to download.</string>
+    <!-- %1$s and %2$s are sizes: "3.1 MB of 12 MB". -->
+    <string name="sheet_update_downloading">Downloading… %1$s of %2$s. It carries on if you leave Plait.</string>
+    <!-- Button: hide the card while the download carries on. -->
+    <string name="sheet_update_hide">Hide</string>
+    <string name="sheet_update_permission">Android asks you once to let Plait install its own updates. Turn on \"Allow from this source\", then come back.</string>
+    <string name="sheet_update_allow">Allow updates</string>
+    <string name="sheet_update_installing">Installing… Android will ask you to confirm.</string>
+    <string name="sheet_update_now">Update now</string>
+    <!-- Button: leave the first-run tour. -->
+    <string name="sheet_tour_skip">Skip</string>
+    <string name="sheet_tour_use_calendars">Use my phone\'s calendars</string>
+    <string name="sheet_tour_1_title">Every calendar, one day</string>
+    <string name="sheet_tour_1_text">Google, Outlook, Exchange, iCloud and calendar links in one agenda. Switch any account or calendar off when you like.</string>
+    <string name="sheet_tour_2_title">A card for each part of the day</string>
+    <string name="sheet_tour_2_text">Morning shows what\'s ahead, Midday what\'s done and what\'s left, Evening how the day went and what still needs notes. Swipe between them.</string>
+    <string name="sheet_tour_3_title">Everything about a meeting</string>
+    <string name="sheet_tour_3_text">Who\'s coming and their answers, what it\'s about, one tap to Join, and a button to edit, reschedule or answer the invite.</string>
+    <string name="sheet_tour_4_title">Notes four ways</string>
+    <string name="sheet_tour_4_text">Voice notes written as you speak, written notes, photos read into text, and checklists. Plait suggests tasks from them and reminds you.</string>
+    <string name="sheet_tour_5_title">AI that stays on your phone</string>
+    <!-- The arrow points the way you read: Settings, then "AI on this phone". -->
+    <string name="sheet_tour_5_text">Pick a model in Settings → AI on this phone. Summaries, prep and search run on the phone. Nothing is sent to a server, and there\'s no account.</string>
+    <string name="sheet_tour_6_title">Let\'s bring your day in</string>
+    <string name="sheet_tour_6_text">Plait reads the calendars already on this phone. You can add more, or calendar links, in Settings later.</string>
+
+    <!-- ===== Update and sync messages ===== -->
+    <string name="settings_update_unreachable">Couldn\'t reach GitHub. Check your connection and try again.</string>
+    <string name="settings_update_stopped">The download stopped. Tap Update to carry on.</string>
+    <string name="settings_update_start_failed">Couldn\'t start the install.</string>
+    <string name="settings_update_conflict">Android couldn\'t install this update over your Plait. Download it from GitHub instead.</string>
+    <string name="settings_update_not_installed">The update couldn\'t be installed.</string>
+    <!-- %1$s is Android's own reason. -->
+    <string name="settings_update_not_installed_why">The update couldn\'t be installed (%1$s).</string>
+    <string name="settings_sync_not_set_up">Sync isn\'t set up.</string>
+    <string name="settings_sync_folder_unavailable">The sync folder isn\'t available.</string>
+    <string name="settings_sync_wrong_pass">Another phone\'s file couldn\'t be opened. The passphrase must be the same on every phone.</string>
+    <!-- Sync status; %1$s is a time of day. -->
+    <string name="settings_sync_status">Synced %1$s</string>
+    <!-- Sync status; %1$s time of day, %2$d items added, %3$d items removed. -->
+    <string name="settings_sync_status_changes">Synced %1$s · %2$d new, %3$d removed</string>
+    <string name="settings_sync_failed">Sync failed.</string>
+    <!-- %1$s is a file name. -->
+    <string name="settings_sync_cant_open">Couldn\'t open %1$s.</string>
+    <!-- %1$s is a file name. -->
+    <string name="settings_sync_unprotected">%1$s isn\'t protected, so it was skipped.</string>
+    <string name="settings_sync_cant_create">Couldn\'t create the sync file.</string>
+    <string name="settings_sync_cant_write">Couldn\'t write the sync file.</string>
+
+    <!-- ===== Calendar messages ===== -->
+    <!-- Subtitle of a voice note that belongs to no meeting. -->
+    <string name="settings_cal_not_linked">Not linked to a meeting</string>
+    <!-- Title of a meeting known only from notes someone shared. -->
+    <string name="settings_cal_shared_notes">Shared notes</string>
+    <string name="settings_cal_read_failed">Couldn\'t read the phone\'s calendars.</string>
+    <string name="settings_cal_google_signed_out">Google signed you out. Tap sync to sign in again.</string>
+    <string name="settings_cal_google_api_off">Google Calendar access is switched off for this app. Enable the Calendar API in Google Cloud.</string>
+    <string name="settings_cal_google_unreachable">Couldn\'t reach Google. Showing your last synced events.</string>
+    <string name="settings_cal_bad_link">That doesn\'t look like a calendar link. It should start with https:// or webcal://.</string>
+    <string name="settings_cal_already_added">That calendar is already added.</string>
+    <string name="settings_cal_link_unreachable">Couldn\'t reach that link. Check it and your connection.</string>
+    <string name="settings_cal_not_ics">That file isn\'t a calendar (.ics) file.</string>
+    <string name="settings_cal_import_empty">Imported, but no events fall in the next six months.</string>
+    <string name="settings_cal_not_feed">That link isn\'t a calendar feed.</string>
+    <plurals name="settings_cal_links_failed">
+        <item quantity="one">%d calendar link couldn\'t be refreshed. Showing the last copy.</item>
+        <item quantity="other">%d calendar links couldn\'t be refreshed. Showing the last copy.</item>
+    </plurals>
+
+    <!-- ===== Manage a meeting (menu, confirm, edit) ===== -->
+    <string name="sheet_manage_failed">Couldn\'t change it. Try from the calendar app.</string>
+    <string name="sheet_manage_no_permission">Permission to change the meeting wasn\'t given.</string>
+    <string name="sheet_manage_told">Done. Guests are told.</string>
+    <string name="sheet_manage_moved">Moved. Guests are told.</string>
+    <string name="sheet_manage_saved">Saved. Guests are told.</string>
+    <string name="sheet_manage_edit">Edit details</string>
+    <!-- Menu item: move only this occurrence of a repeating meeting. -->
+    <string name="sheet_manage_reschedule_one">Reschedule this one</string>
+    <string name="sheet_manage_reschedule">Reschedule</string>
+    <!-- Menu item: cancel only this occurrence of a repeating meeting. -->
+    <string name="sheet_manage_cancel_one">Cancel this one</string>
+    <string name="sheet_manage_cancel_one_q">Cancel this meeting on its date? The rest of the series stays.</string>
+    <string name="sheet_manage_delete_series">Delete the whole series</string>
+    <string name="sheet_manage_delete_series_q">Delete every meeting in this series? Guests get a cancellation.</string>
+    <!-- Menu item (verb): call off a meeting with guests. -->
+    <string name="sheet_manage_cancel_meeting">Cancel meeting</string>
+    <string name="sheet_manage_cancel_q">Cancel this meeting? Guests get a cancellation.</string>
+    <string name="sheet_manage_delete_q">Delete this meeting?</string>
+    <string name="sheet_rsvp_answer_going">Answer: Going</string>
+    <string name="sheet_rsvp_answer_maybe">Answer: Maybe</string>
+    <string name="sheet_rsvp_answer_decline">Answer: Decline</string>
+    <string name="sheet_rsvp_done_going">Answered Going. The organizer is told.</string>
+    <string name="sheet_rsvp_done_maybe">Answered Maybe. The organizer is told.</string>
+    <string name="sheet_rsvp_done_decline">Answered Decline. The organizer is told.</string>
+    <string name="sheet_manage_open_calendar">Open in calendar app</string>
+    <string name="sheet_manage_title">Manage meeting</string>
+    <string name="sheet_manage_your_answer">Your answer</string>
+    <!-- %1$s is Google's reason a Meet link could not be added (a full sentence). -->
+    <string name="sheet_meet_failed">%1$s Saved without a Meet link.</string>
+    <string name="sheet_confirm_title">Are you sure?</string>
+    <string name="sheet_edit_title">Edit meeting</string>
+    <!-- Field label: where the meeting happens. -->
+    <string name="sheet_edit_place">Place</string>
+    <string name="sheet_edit_description">Description</string>
+    <!-- Field label: the video call link of a meeting. -->
+    <string name="sheet_edit_call_link">Call link</string>
+    <!-- Chip: keep the existing call; %1$s is a provider ("Meet", "Zoom"). -->
+    <string name="sheet_edit_keep">Keep %1$s</string>
+    <!-- Chip: no call link. -->
+    <string name="sheet_edit_none">None</string>
+    <string name="sheet_google_meet" translatable="false">Google Meet</string>
+    <string name="sheet_edit_add_link">Add link</string>
+    <string name="sheet_edit_link_hint">Teams, Zoom or Webex link (https)</string>
+    <!-- %1$s is a provider name ("Zoom"). -->
+    <string name="sheet_edit_link_of">%1$s link</string>
+    <string name="sheet_edit_link_other">A link. Join only shows for Meet, Zoom, Teams and Webex links.</string>
+
+    <!-- ===== New meeting sheet ===== -->
+    <string name="sheet_new_title">New meeting</string>
+    <string name="sheet_new_no_calendar">No calendar to save to. Open the hub to add an account.</string>
+    <!-- Toast; %1$s is a calendar name. -->
+    <string name="sheet_new_saved_to">Saved to %1$s</string>
+    <string name="sheet_new_meet_not_approved">Calendar editing wasn\'t approved, so there is no Meet link. Saved without one.</string>
+    <!-- %1$s is a full sentence saying why Google said no. -->
+    <string name="sheet_new_meet_phone">%1$s Saved to the phone\'s calendar without a Meet link.</string>
+    <string name="sheet_new_google_unreachable">Couldn\'t reach Google.</string>
+    <string name="sheet_new_meet_pending">Saved. Google is still making the Meet link; Join appears after the next sync.</string>
+    <string name="sheet_new_saved_meet">Saved with a Google Meet link</string>
+    <!-- Hint of the one-line quick add field; the example is parsed by Plait. -->
+    <string name="sheet_new_quick_hint">Type it: lunch with sam@acme.com friday 1pm for 1h</string>
+    <string name="sheet_new_fill">Fill in the form</string>
+    <!-- Screen-reader label of the "−" button that moves the start 15 minutes earlier. -->
+    <string name="sheet_new_earlier">15 minutes earlier</string>
+    <string name="sheet_new_later">15 minutes later</string>
+    <!-- Meeting length chip. -->
+    <plurals name="sheet_new_minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d min</item>
+    </plurals>
+    <!-- Meeting length chip. -->
+    <plurals name="sheet_new_hours">
+        <item quantity="one">%d h</item>
+        <item quantity="other">%d h</item>
+    </plurals>
+    <string name="sheet_new_hour_and_half">1.5 h</string>
+    <string name="sheet_new_hide_free">Hide free times</string>
+    <string name="sheet_new_find_time">Find a time</string>
+    <plurals name="sheet_new_free_for">
+        <item quantity="one">Free for %d min, 9 AM to 5 PM on weekdays, from your calendars.</item>
+        <item quantity="other">Free for %d min, 9 AM to 5 PM on weekdays, from your calendars.</item>
+    </plurals>
+    <string name="sheet_new_next_7">Next 7 days</string>
+    <string name="sheet_new_next_14">Next 14 days</string>
+    <string name="sheet_new_no_free">No free time of that length in that range.</string>
+    <string name="sheet_new_send_options">Send these options</string>
+    <!-- Title of Android's share sheet. -->
+    <string name="sheet_new_send_options_chooser">Send time options</string>
+    <string name="sheet_new_guests_hint">Guests (email addresses)</string>
+    <string name="sheet_new_link_hint">https:// Teams, Zoom or Webex link</string>
+    <string name="sheet_new_meet_needs_google">Google Meet can be created for a Google calendar connected in the hub.</string>
+    <string name="sheet_new_meet_made_on_save">Google makes the link when the meeting is saved.</string>
+    <string name="sheet_new_place_hint">Place or call link</string>
+    <!-- Label above the calendar a new meeting goes to. -->
+    <string name="sheet_new_saved_to_label">Saved to</string>
+    <string name="sheet_new_local_only">A calendar on this phone only</string>
+    <string name="sheet_new_allow_to_choose">Allow calendar access to choose</string>
+    <!-- %1$s is Google, Outlook, iCloud or "Phone". -->
+    <string name="sheet_new_syncs_to">Android syncs it to %1$s, and guests get an invite.</string>
+    <string name="sheet_new_stays_local">It stays on this phone until you add an account.</string>
+    <string name="sheet_new_change_hub">Change in the hub</string>
+    <string name="sheet_new_allow_saving">Allow saving to calendar</string>
+    <string name="sheet_new_saving">Saving…</string>
+    <string name="sheet_new_save">Save meeting</string>
+</resources>

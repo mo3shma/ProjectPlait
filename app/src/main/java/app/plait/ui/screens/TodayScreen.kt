@@ -1,6 +1,7 @@
 package app.plait.ui.screens
 
 import app.plait.ui.plaitCard
+import app.plait.R
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,8 +34,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
@@ -70,6 +71,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,6 +94,7 @@ import app.plait.ui.pressable
 import app.plait.ui.rise
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
+import app.plait.i18n.userText
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.delay
@@ -181,7 +184,7 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             val prep = app.plait.data.prep.PrepStore.get(context)
             prep.entries.filterValues { it.by != "You" }.keys.toList().forEach { prep.clear(it) }
             HomeState.refreshTick++
-            Toast.makeText(context, "Refreshing calendars…", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, app.plait.i18n.Txt.s(R.string.home_refreshing_calendars), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -201,7 +204,8 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
             androidx.compose.animation.AnimatedContent(
                 targetState = tab,
                 transitionSpec = {
-                    val dir = if (targetState > initialState) 1 else -1
+                    // Tabs sit right to left in Arabic, so a later tab comes in from the left there.
+                    val dir = (if (targetState > initialState) 1 else -1) * (if (app.plait.i18n.AppLocale.isRtl) -1 else 1)
                     val slide = if (calm) 6 else 14
                     (androidx.compose.animation.slideInHorizontally(if (calm) androidx.compose.animation.core.tween(100) else androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 380f)) { dir * it / slide } +
                         androidx.compose.animation.fadeIn(if (calm) androidx.compose.animation.core.tween(90) else androidx.compose.animation.core.spring(stiffness = 1600f))) togetherWith
@@ -237,25 +241,28 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 Text("Plait", style = PlaitType.section.copy(fontSize = 26.sp, lineHeight = 28.sp), color = plait.text)
             }
             if (tab == 1) {
-                GlassIconButton(Icons.Filled.ChevronLeft, "Previous", { calendarState.step(-1) }, backdrop)
-                GlassIconButton(Icons.Filled.ChevronRight, "Next", { calendarState.step(1) }, backdrop)
+                GlassIconButton(Icons.AutoMirrored.Filled.NavigateBefore, stringResource(R.string.common_previous), { calendarState.step(-1) }, backdrop)
+                GlassIconButton(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.common_next), { calendarState.step(1) }, backdrop)
             } else {
                 GlassIconButton(
                     icon = Icons.Filled.Sync,
-                    description = if (Calendars.connected) "Refresh calendars" else "Connect calendars",
+                    description = stringResource(if (Calendars.connected) R.string.home_refresh_calendars else R.string.home_connect_calendars),
                     onClick = onSyncClick,
                     backdrop = backdrop,
                     spinning = Calendars.syncing,
                 )
             }
-            GlassIconButton(Icons.Filled.Settings, "Settings", onOpenHub, backdrop)
+            GlassIconButton(Icons.Filled.Settings, stringResource(R.string.common_settings), onOpenHub, backdrop)
         }
 
-        val tabs = remember {
+        val tabBrief = stringResource(R.string.home_tab_brief)
+        val tabCalendar = stringResource(R.string.home_tab_calendar)
+        val tabNotes = stringResource(R.string.home_tab_notes)
+        val tabs = remember(tabBrief, tabCalendar, tabNotes) {
             listOf(
-                GlassTab("Brief", Icons.Filled.Today),
-                GlassTab("Calendar", Icons.Filled.CalendarMonth),
-                GlassTab("Notes", Icons.Filled.Description),
+                GlassTab(tabBrief, Icons.Filled.Today),
+                GlassTab(tabCalendar, Icons.Filled.CalendarMonth),
+                GlassTab(tabNotes, Icons.Filled.Description),
             )
         }
         Box(Modifier.align(Alignment.BottomCenter).widthIn(max = 720.dp).fillMaxWidth().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 14.dp)) {
@@ -279,10 +286,10 @@ fun TodayScreen(onOpenEvent: (String) -> Unit, onOpenNotes: (String) -> Unit, on
                 expanded = menuOpen,
                 onExpandedChange = { menuOpen = it },
                 collapsedIcon = Icons.Filled.Add,
-                collapsedDescription = "Record or add",
+                collapsedDescription = stringResource(R.string.common_record_or_add),
                 actions = listOf(
-                    GlassMenuAction("Voice note", Icons.Filled.Mic) { onRecord(recordTarget) },
-                    GlassMenuAction("New meeting", Icons.Filled.EditCalendar) { showNew = true },
+                    GlassMenuAction(stringResource(R.string.common_voice_note), Icons.Filled.Mic) { onRecord(recordTarget) },
+                    GlassMenuAction(stringResource(R.string.home_menu_new_meeting), Icons.Filled.EditCalendar) { showNew = true },
                 ),
                 backdrop = backdrop,
             )
@@ -368,16 +375,16 @@ internal fun EventRow(ev: CalEvent, onClick: () -> Unit, modifier: Modifier = Mo
             if (ev.duration.isNotBlank()) Text(ev.duration, style = PlaitType.monoSmall, color = tone.ink.copy(alpha = 0.65f))
         }
         Column(Modifier.weight(1f)) {
-            Text(ev.title, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(ev.title, style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(5.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.size(8.dp).background(ev.source.color(), CircleShape))
-                Text("${ev.source.label} · ${ev.place}", style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${ev.source.label} · ${app.plait.i18n.Bidi.isolate(ev.place)}", style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (ev.callLink != null) {
             Box(Modifier.size(44.dp).background(plait.surfaceHigh, CircleShape), contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Videocam, "Has a call link", tint = plait.accent, modifier = Modifier.size(22.dp))
+                Icon(Icons.Filled.Videocam, stringResource(R.string.home_has_call_link), tint = plait.accent, modifier = Modifier.size(22.dp))
             }
         }
     }

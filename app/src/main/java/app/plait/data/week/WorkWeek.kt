@@ -9,6 +9,9 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Txt
 
 /** Five work days in a row from [startDay]; the two after are the weekend. */
 object WorkWeek {
@@ -37,7 +40,7 @@ object WorkWeek {
     fun nextWorkWeek(date: LocalDate, start: DayOfWeek = startDay): List<LocalDate> = thisWorkWeek(weekStart(date, start).plusWeeks(1), start)
 
     fun label(start: DayOfWeek = startDay): String {
-        fun name(d: DayOfWeek, style: TextStyle) = d.getDisplayName(style, Locale.ENGLISH)
-        return "Starts ${name(start, TextStyle.FULL)}, works ${name(start, TextStyle.SHORT)} to ${name(start.plus(WORK_DAYS - 1L), TextStyle.SHORT)}"
+        fun name(d: DayOfWeek, style: TextStyle) = d.getDisplayName(style, AppLocale.locale)
+        return Txt.s(R.string.settings_week_label, name(start, TextStyle.FULL), name(start, TextStyle.SHORT), name(start.plus(WORK_DAYS - 1L), TextStyle.SHORT))
     }
 }

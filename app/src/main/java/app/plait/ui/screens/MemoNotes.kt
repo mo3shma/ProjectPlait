@@ -2,6 +2,11 @@ package app.plait.ui.screens
 
 import app.plait.ui.fauxGlass
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -106,14 +111,14 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
             val target = memos.newImageFile(id)
             val saved = Ocr.saveScaled(context, uri, target)
             if (!saved) {
-                Toast.makeText(context, "Couldn't open that picture.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, Txt.s(R.string.note_open_picture_failed), Toast.LENGTH_SHORT).show()
             } else {
                 val text = Ocr.read(context, target, lang)
                 val photo = Memo(id, eventId, MemoKind.Photo, System.currentTimeMillis(), text.orEmpty(), target.name)
                 memos.add(photo)
                 if (!text.isNullOrBlank()) app.plait.audio.NoteProcessor.afterMemoSaved(context, photo)
                 app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
-                if (text.isNullOrBlank()) Toast.makeText(context, "Saved. No text was found in the picture.", Toast.LENGTH_LONG).show()
+                if (text.isNullOrBlank()) Toast.makeText(context, Txt.s(R.string.note_saved_no_text), Toast.LENGTH_LONG).show()
             }
             busy = false
         }
@@ -134,39 +139,39 @@ internal fun AddNoteCard(eventId: String, memos: MemoStore, backdrop: com.kyant.
         // Two equal pills to a row, so every one has room for its icon and its word.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
             val m = Modifier.weight(1f)
-            if (onRecord != null) Pill("Voice", Icons.Filled.Mic, m, app.plait.ui.GlassTone.Rose, onRecord)
-            Pill("Write", Icons.Filled.Edit, m, app.plait.ui.GlassTone.Lavender) { writing = true }
-            Pill("Photo", Icons.Filled.CameraAlt, m, app.plait.ui.GlassTone.Mint) { photoMenu = true }
-            Pill("List", Icons.Filled.Checklist, m, app.plait.ui.GlassTone.Peach) { listing = true }
+            if (onRecord != null) Pill(stringResource(R.string.note_kind_voice), Icons.Filled.Mic, m, app.plait.ui.GlassTone.Rose, onRecord)
+            Pill(stringResource(R.string.note_write), Icons.Filled.Edit, m, app.plait.ui.GlassTone.Lavender) { writing = true }
+            Pill(stringResource(R.string.common_photo), Icons.Filled.CameraAlt, m, app.plait.ui.GlassTone.Mint) { photoMenu = true }
+            Pill(stringResource(R.string.note_kind_list), Icons.Filled.Checklist, m, app.plait.ui.GlassTone.Peach) { listing = true }
         }
-        if (busy) Text(if (lang == OcrLang.Latin) "Reading the picture…" else "Reading the picture. Arabic takes a few seconds.", style = PlaitType.caption, color = plait.muted)
+        if (busy) Text(stringResource(if (lang == OcrLang.Latin) R.string.note_reading_picture else R.string.note_reading_picture_arabic), style = PlaitType.caption, color = plait.muted)
     }
 
-    if (writing) EditTextDialog("New note", "", onSave = { t ->
+    if (writing) EditTextDialog(stringResource(R.string.note_new_note), "", onSave = { t ->
         val note = Memo(UUID.randomUUID().toString(), eventId, MemoKind.Text, System.currentTimeMillis(), t.trim())
         memos.add(note)
         app.plait.audio.NoteProcessor.afterMemoSaved(context, note)
         app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
     }, onDismiss = { writing = false })
 
-    if (listing) ChecklistDialog("New checklist", emptyList(), onSave = { items ->
+    if (listing) ChecklistDialog(stringResource(R.string.note_new_checklist), emptyList(), onSave = { items ->
         memos.add(Memo(UUID.randomUUID().toString(), eventId, MemoKind.Checklist, System.currentTimeMillis(), app.plait.data.memo.Checklist.format(items)))
         app.plait.data.sync.SyncEngine.requestAsync(context, force = true)
     }, onDismiss = { listing = false })
 
-    if (photoMenu) DetailDialog("Add a photo", { photoMenu = false }) {
-        Text("The text in the picture is read on this phone and kept so you can copy it.", style = PlaitType.caption, color = plait.muted)
+    if (photoMenu) DetailDialog(stringResource(R.string.note_add_photo), { photoMenu = false }) {
+        Text(stringResource(R.string.note_photo_explainer), style = PlaitType.caption, color = plait.muted)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PlaitButton("Take photo", {
+            PlaitButton(stringResource(R.string.note_take_photo), {
                 photoMenu = false
                 val dir = memos.dir.also { it.mkdirs() }
                 val file = File(dir, "capture-${UUID.randomUUID()}.jpg")
                 pendingCamera = file
                 camera.launch(FileProvider.getUriForFile(context, "${context.packageName}.files", file))
             }, size = ButtonSize.Small, icon = Icons.Filled.CameraAlt, enabled = !busy)
-            PlaitButton("Choose", { photoMenu = false; gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, size = ButtonSize.Small, icon = Icons.Filled.Image, enabled = !busy)
+            PlaitButton(stringResource(R.string.note_choose), { photoMenu = false; gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, size = ButtonSize.Small, icon = Icons.Filled.Image, enabled = !busy)
         }
-        Text("Language in the picture", style = PlaitType.monoSmall, color = plait.muted)
+        Text(stringResource(R.string.note_picture_language), style = PlaitType.monoSmall, color = plait.muted)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OcrLang.entries.forEach { l -> PlaitChip(l.label, lang == l, { lang = l; HomeState.ocrLang = l }) }
         }
@@ -188,23 +193,24 @@ internal fun MemoCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(if (memo.kind == MemoKind.Photo) Icons.Filled.CameraAlt else Icons.Filled.Edit, null, tint = plait.accent, modifier = Modifier.size(18.dp))
             Text(
-                (memo.author?.let { "From $it · " } ?: "") + (if (memo.kind == MemoKind.Photo) "Photo · " else "Note · ") +
-                    app.plait.data.TimeFmt.stamp(memo.createdAt),
+                stringResource(if (memo.kind == MemoKind.Photo) R.string.meet_photo_stamp else R.string.meet_note_stamp, Bidi.isolate(app.plait.data.TimeFmt.stamp(memo.createdAt))).let { kind ->
+                    memo.author?.let { stringResource(R.string.note_from_stamp, Bidi.isolate(it), kind) } ?: kind
+                },
                 style = PlaitType.caption, color = plait.muted,
             )
         }
         thumb?.let {
-            Image(it, "Photo for this meeting", contentScale = ContentScale.FillWidth, modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).clip(RoundedCornerShape(20.dp)))
+            Image(it, stringResource(R.string.note_photo_for_meeting), contentScale = ContentScale.FillWidth, modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).clip(RoundedCornerShape(20.dp)))
         }
         if (memo.text.isNotBlank()) {
-            if (memo.kind == MemoKind.Photo) Text("Text found in the photo", style = PlaitType.monoSmall, color = plait.muted)
-            SelectionContainer { Text(memo.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.text, modifier = Modifier.fillMaxWidth()) }
+            if (memo.kind == MemoKind.Photo) Text(stringResource(R.string.note_text_in_photo), style = PlaitType.monoSmall, color = plait.muted)
+            SelectionContainer { Text(memo.text, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.fillMaxWidth()) }
         } else if (memo.kind == MemoKind.Photo) {
-            Text("No text was found in this picture.", style = PlaitType.body, color = plait.muted)
+            Text(stringResource(R.string.note_no_text_this_picture), style = PlaitType.body, color = plait.muted)
         }
         MemoSummary(memo)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (memo.text.isNotBlank()) PlaitButton("Copy text", { copy(context, memo.text) }, size = ButtonSize.Small)
+            if (memo.text.isNotBlank()) PlaitButton(stringResource(R.string.note_copy_text), { copy(context, memo.text) }, size = ButtonSize.Small)
         }
     }
 }
@@ -222,15 +228,15 @@ internal fun MemoSummary(memo: Memo) {
     }
     if (memo.ai != null) Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Summary", style = PlaitType.monoSmall, color = plait.muted)
+            Text(stringResource(R.string.common_summary), style = PlaitType.monoSmall, color = plait.muted)
             memo.aiBy?.let { app.plait.ui.PlaitBadge(it) }
             androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-            if (upToDate) Text("Already up to date", style = PlaitType.caption, color = plait.muted)
-            else if (busy == null) CircleIconButton(Icons.Filled.Refresh, "Summarise again", run, app.plait.ui.GlassTone.Lavender.deep, plait.text, size = 32.dp, iconSize = 18.dp)
+            if (upToDate) Text(stringResource(R.string.meet_up_to_date), style = PlaitType.caption, color = plait.muted)
+            else if (busy == null) CircleIconButton(Icons.Filled.Refresh, stringResource(R.string.note_summarise_again), run, app.plait.ui.GlassTone.Lavender.deep, plait.text, size = 32.dp, iconSize = 18.dp)
         }
-        Text(memo.ai, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.text, modifier = Modifier.fillMaxWidth())
+        Text(memo.ai, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.fillMaxWidth())
     } else if (busy == null && app.plait.data.memo.MemoAi.worthAnalysing(memo)) {
-        PlaitButton("Summarise", run, size = ButtonSize.Small, style = ButtonStyle.Tinted)
+        PlaitButton(stringResource(R.string.note_summarise), run, size = ButtonSize.Small, style = ButtonStyle.Tinted)
     }
     busy?.let { Text(it, style = PlaitType.caption, color = plait.muted) }
 }
@@ -238,7 +244,7 @@ internal fun MemoSummary(memo: Memo) {
 private fun copy(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     cm.setPrimaryClip(ClipData.newPlainText("Plait note", text))
-    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, Txt.s(R.string.note_copied), Toast.LENGTH_SHORT).show()
 }
 
 /** The text to put in an edit box for a note: a checklist is edited as plain lines, one item each. */
@@ -267,12 +273,12 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.Checklist, null, tint = plait.accent, modifier = Modifier.size(20.dp))
             Text(
-                app.plait.data.memo.Checklist.label(memo.title), style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text,
+                memo.title?.trim()?.takeIf { it.isNotEmpty() } ?: stringResource(R.string.common_checklist), style = PlaitType.section.copy(fontSize = 18.sp).userText(), color = plait.text,
                 maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).pressable({ renaming = true }, lift = 2.dp),
             )
-            Text("$done of ${items.size}", style = PlaitType.monoSmall, color = plait.muted)
-            CircleIconButton(Icons.Filled.Edit, "Rename checklist", { renaming = true }, plait.surfaceHigh, plait.text, size = 32.dp, iconSize = 16.dp)
+            Text(stringResource(R.string.common_n_of_m, done, items.size), style = PlaitType.monoSmall, color = plait.muted)
+            CircleIconButton(Icons.Filled.Edit, stringResource(R.string.note_rename_checklist), { renaming = true }, plait.surfaceHigh, plait.text, size = 32.dp, iconSize = 16.dp)
         }
         if (renaming) RenameDialog(memo.title.orEmpty(), onSave = { t ->
             memos.update(memo.copy(title = t.trim().ifEmpty { null }))
@@ -288,12 +294,12 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(
-                    if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, if (item.done) "Done" else "Not done",
+                    if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, stringResource(if (item.done) R.string.note_item_done else R.string.note_item_not_done),
                     tint = if (item.done) plait.accent else plait.muted, modifier = Modifier.size(24.dp),
                 )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        item.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content,
+                        item.text, modifier = Modifier.fillMaxWidth(), style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content,
                             textDecoration = if (item.done) androidx.compose.ui.text.style.TextDecoration.LineThrough else null),
                         color = if (item.done) plait.muted else plait.text,
                     )
@@ -304,18 +310,18 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BasicTextField(
                 value = draft, onValueChange = { draft = it }, singleLine = true,
-                textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
+                textStyle = PlaitType.body.copy(color = plait.text).userText(), cursorBrush = SolidColor(plait.accent),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
                 keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        if (draft.isEmpty()) Text("Add an item", style = PlaitType.body, color = plait.muted)
+                        if (draft.isEmpty()) Text(stringResource(R.string.note_add_item_hint), style = PlaitType.body, color = plait.muted)
                         inner()
                     }
                 },
             )
-            CircleIconButton(Icons.Filled.Add, "Add item", { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }, plait.accent, plait.onAccent, size = 44.dp, iconSize = 20.dp)
+            CircleIconButton(Icons.Filled.Add, stringResource(R.string.note_add_item), { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }, plait.accent, plait.onAccent, size = 44.dp, iconSize = 20.dp)
         }
     }
 }
@@ -326,7 +332,7 @@ private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: (
     var text by remember { mutableStateOf(initial) }
     app.plait.ui.PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Rename checklist", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            Text(stringResource(R.string.note_rename_checklist), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             BasicTextField(
                 value = text, onValueChange = { text = it }, singleLine = true,
                 textStyle = PlaitType.body.copy(color = plait.text, textDirection = androidx.compose.ui.text.style.TextDirection.Content), cursorBrush = SolidColor(plait.accent),
@@ -335,14 +341,14 @@ private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: (
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = { inner ->
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surface).padding(horizontal = 16.dp, vertical = 14.dp)) {
-                        if (text.isEmpty()) Text("Checklist", style = PlaitType.body, color = plait.muted)
+                        if (text.isEmpty()) Text(stringResource(R.string.common_checklist), style = PlaitType.body, color = plait.muted)
                         inner()
                     }
                 },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Save", { onSave(text); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_save), { onSave(text); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_cancel), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }
     } }
@@ -351,12 +357,12 @@ private fun RenameDialog(initial: String, onSave: (String) -> Unit, onDismiss: (
 /** Edit any written note: a checklist opens the task editor, anything else the text box. */
 @Composable
 internal fun EditMemoDialog(memo: Memo, memos: MemoStore, onDismiss: () -> Unit) {
-    if (memo.kind == MemoKind.Checklist) ChecklistDialog("Edit checklist", app.plait.data.memo.Checklist.parse(memo.text), onSave = { items ->
+    if (memo.kind == MemoKind.Checklist) ChecklistDialog(stringResource(R.string.note_edit_checklist), app.plait.data.memo.Checklist.parse(memo.text), onSave = { items ->
         memos.update(memo.copy(text = app.plait.data.memo.Checklist.format(items)))
     }, onDismiss = onDismiss)
     else {
         val context = LocalContext.current
-        EditTextDialog("Edit note", memo.text, onSave = { t ->
+        EditTextDialog(stringResource(R.string.note_edit_note), memo.text, onSave = { t ->
             val edited = memo.copy(text = t.trim())
             memos.update(edited)
             app.plait.audio.NoteProcessor.afterMemoSaved(context, edited)

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notifications, widgets, sharing and export, calendar write and sign-in messages, quick add. Owner: alerts_share area.
+     Prefixes: alert_ (notifications), wdg_ (widget text), share_ (share and export), gcal_ (Google), devcal_ (phone calendar),
+     link_ (call link input), zone_ (time zone line). Arabic twin in values-ar/strings_alerts_share.xml. -->
+<resources>
+    <!-- Notification channel name (Android settings, App notifications). -->
+    <string name="alert_channel_meetings">Meetings and notes</string>
+    <string name="alert_channel_meetings_desc">Heads-up before a meeting, and a reminder to write up meetings without notes.</string>
+    <!-- Notification channel name for quiet ongoing alerts. -->
+    <string name="alert_channel_live">Live alerts</string>
+    <string name="alert_channel_live_desc">A quiet heads-up before a task is due.</string>
+    <!-- Meeting alert title: %1$d minutes until it starts, %2$s the meeting title. -->
+    <plurals name="alert_meeting_in">
+        <item quantity="one">In %1$d min: %2$s</item>
+        <item quantity="other">In %1$d min: %2$s</item>
+    </plurals>
+    <!-- Meeting alert title when it starts now; %1$s is the meeting title. -->
+    <string name="alert_meeting_now">Starting now: %1$s</string>
+    <!-- Notification button: show the alert again in %d minutes. -->
+    <plurals name="alert_snooze">
+        <item quantity="one">Snooze %d min</item>
+        <item quantity="other">Snooze %d min</item>
+    </plurals>
+    <!-- Evening notification title: a nudge to write notes for today's meetings. -->
+    <string name="alert_nudge_title">Add notes while it\'s fresh</string>
+    <!-- %1$s is a meeting title. -->
+    <string name="alert_nudge_one">%1$s has no notes yet.</string>
+    <!-- %1$d meetings (always 2 or more), %2$s the title of one of them. -->
+    <plurals name="alert_nudge_many">
+        <item quantity="one">%1$d meeting has no notes yet, like %2$s.</item>
+        <item quantity="other">%1$d meetings have no notes yet, like %2$s.</item>
+    </plurals>
+    <!-- Task alert line; %1$s is a time like 3:00 PM. -->
+    <string name="alert_task_due">Due %1$s</string>
+    <!-- Task alert line; %1$s a time, %2$s the meeting the task came from. -->
+    <string name="alert_task_due_from">Due %1$s · Follow-up from %2$s</string>
+    <!-- When a task reminder fires; %1$s is a time. -->
+    <string name="alert_task_today">Today %1$s</string>
+    <string name="alert_task_tomorrow">Tomorrow %1$s</string>
+
+    <!-- Widget title when no meeting is left today. -->
+    <string name="wdg_clear_day">A clear day</string>
+    <!-- Widget line: %1$s day and time ("Mon 9:00 AM"), %2$s the meeting title. -->
+    <string name="wdg_next_full">Next: %1$s %2$s</string>
+    <string name="wdg_next">Next: %1$s</string>
+    <string name="wdg_nothing_coming">Nothing coming up</string>
+    <!-- Place line of a meeting that only has a call link. -->
+    <string name="wdg_online">Online</string>
+    <!-- Widget line: %1$s the following meeting's title, %2$s its start time. -->
+    <string name="wdg_then">Then %1$s %2$s</string>
+    <!-- How many more meetings follow today. -->
+    <string name="wdg_more">+%1$d more</string>
+    <string name="wdg_last_today">Last one today</string>
+    <!-- A running meeting: until its end time %1$s. -->
+    <string name="wdg_until">until %1$s</string>
+    <!-- Sample text for the widget picker preview only. -->
+    <string name="wdg_preview_day_short">Thu 22</string>
+    <string name="wdg_preview_day">Thu 22 Oct</string>
+    <string name="wdg_preview_count">3 meetings</string>
+    <string name="wdg_preview_time">1:30 PM</string>
+    <string name="wdg_preview_range">1:30 – 2:30 PM</string>
+    <string name="wdg_preview_title">Design review</string>
+    <string name="wdg_preview_then">Then Design review 12:00 PM</string>
+    <string name="wdg_preview_more">+2 more</string>
+    <string name="wdg_preview_next">Next: Mon 9:00 AM</string>
+
+    <!-- Share format button: plain text message. -->
+    <string name="share_format_text">Text</string>
+    <!-- %1$s is a list of guest names. -->
+    <string name="share_with">With: %1$s</string>
+    <!-- Separator between names in a list, with its trailing space. -->
+    <string name="share_list_sep">", "</string>
+    <!-- Export section heading. -->
+    <string name="share_why">Why we are meeting</string>
+    <!-- Export section heading. A noun (preparation). -->
+    <string name="share_prep">Prep</string>
+    <!-- Export section heading; %1$s is when it was recorded. -->
+    <string name="share_voice_note">Voice note · %1$s</string>
+    <string name="share_transcript">Transcript:</string>
+    <!-- Export section heading. -->
+    <string name="share_emails">Emails</string>
+    <!-- Export section heading: things to do after the meeting. -->
+    <string name="share_followups">Follow-ups</string>
+    <string name="share_no_subject">(no subject)</string>
+    <!-- Lower case, after a date: "Mon 19 Oct, all day". -->
+    <string name="share_all_day">all day</string>
+    <!-- %1$s a date, %2$s a time or time range. -->
+    <string name="share_when">%1$s, %2$s</string>
+    <!-- Share sheet title; %1$s is the meeting title. -->
+    <string name="share_chooser">Share %1$s</string>
+    <!-- Heading of the index file in the all-notes export. -->
+    <string name="share_index_title">Plait notes</string>
+    <string name="share_write_failed">Couldn\'t write to that location.</string>
+    <!-- Email subject when sending notes to a teammate; %1$s is the meeting title. -->
+    <string name="share_team_subject">Notes: %1$s</string>
+    <string name="share_team_send">Send notes</string>
+
+    <string name="gcal_auth_no_token">Google didn\'t return an access token.</string>
+    <string name="gcal_auth_failed">Google sign-in failed.</string>
+    <string name="gcal_auth_not_set_up">Google sign-in isn\'t set up for this build yet. Register the app\'s package name and SHA-1 in Google Cloud.</string>
+    <string name="gcal_auth_offline">No connection to Google.</string>
+    <string name="gcal_auth_cancelled">Sign-in was cancelled.</string>
+    <string name="gcal_auth_failed_code">Google sign-in failed (code %1$d).</string>
+    <!-- %1$d is an HTTP status code; the server's own message follows. -->
+    <string name="gcal_http_error">Google Calendar returned %1$d.</string>
+    <string name="gcal_meet_refused">Google refused to make a Meet link. The account may not allow it, or Calendar editing was not approved.</string>
+    <string name="gcal_meet_unsupported">Google can\'t add a Meet link to this calendar.</string>
+    <string name="gcal_meet_offline">Couldn\'t reach Google to make a Meet link.</string>
+    <string name="gcal_meet_error">Google couldn\'t make a Meet link (error %1$d).</string>
+    <!-- Title shown for a calendar event that has none. -->
+    <string name="gcal_no_title">(No title)</string>
+    <!-- Place line of an event with a call link of unknown kind. -->
+    <string name="gcal_video_call">Video call</string>
+    <!-- Short meeting lengths: minutes, hours, hours and minutes. -->
+    <string name="gcal_dur_min">%1$dm</string>
+    <string name="gcal_dur_hours">%1$dh</string>
+    <string name="gcal_dur_hours_min">%1$dh %2$dm</string>
+
+    <string name="devcal_need_permission">Plait needs permission to change your calendar.</string>
+    <string name="devcal_refused">The calendar refused the new meeting.</string>
+    <!-- Used in "Saved to your calendar". -->
+    <string name="devcal_your_calendar">your calendar</string>
+    <!-- Name of the calendar Plait makes on a phone with no account. -->
+    <string name="devcal_local_name">Plait (this phone only)</string>
+    <string name="devcal_allow_first">Allow saving to your calendar first (hub, top right).</string>
+    <string name="devcal_no_calendar">No calendar to save to. Open the hub to add an account.</string>
+    <!-- %1$s is a calendar name. -->
+    <string name="devcal_saved_to">Saved to %1$s</string>
+    <string name="devcal_need_title">Give the meeting a title.</string>
+    <string name="devcal_need_length">The meeting needs a length.</string>
+    <string name="devcal_bad_guest">One of the guest addresses doesn\'t look right.</string>
+
+    <string name="link_paste">Paste the call link.</string>
+    <string name="link_spaces">A link can\'t contain spaces.</string>
+    <string name="link_insecure">Use a secure link that starts with https://.</string>
+    <string name="link_https">The link must start with https://.</string>
+    <string name="link_not_link">That doesn\'t look like a link.</string>
+    <!-- Written into the event description; %1$s is the call link. -->
+    <string name="link_join_line">Join: %1$s</string>
+
+    <!-- %1$s time in the event's zone, %2$s that zone's city, %3$s the same moment on this phone. -->
+    <string name="zone_line">%1$s %2$s · %3$s your time</string>
+</resources>

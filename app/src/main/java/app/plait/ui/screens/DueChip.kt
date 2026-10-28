@@ -1,6 +1,9 @@
 package app.plait.ui.screens
 
 import android.content.DialogInterface
+import app.plait.R
+import app.plait.i18n.Txt
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -44,7 +47,7 @@ internal fun DueChip(dueMs: Long?, onChange: (Long?) -> Unit, modifier: Modifier
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Icon(Icons.Filled.Schedule, null, tint = ink, modifier = Modifier.size(14.dp))
-        Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: "No due date", style = PlaitType.caption.copy(fontSize = 12.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: stringResource(R.string.note_due_none), style = PlaitType.caption.copy(fontSize = 12.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -55,6 +58,6 @@ private fun pickDue(context: android.content.Context, current: Long?, onChange: 
             onChange(Calendar.getInstance().apply { set(y, m, d, h, min, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis)
         }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), android.text.format.DateFormat.is24HourFormat(context)).show()
     }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH))
-    if (current != null) date.setButton(DialogInterface.BUTTON_NEUTRAL, "Clear") { _, _ -> onChange(null) }
+    if (current != null) date.setButton(DialogInterface.BUTTON_NEUTRAL, Txt.s(R.string.common_clear)) { _, _ -> onChange(null) }
     date.show()
 }

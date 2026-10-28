@@ -197,7 +197,10 @@ fun MFabMenu(expanded: Boolean, onExpandedChange: (Boolean) -> Unit, actions: Li
         button = {
             // As tall as the bar next to it, open or closed, so their tops and bottoms line up.
             ToggleFloatingActionButton(checked = expanded, onCheckedChange = onExpandedChange, containerSize = { app.plait.ui.ControlHeights.Fab }) {
-                Icon(if (expanded) Icons.Filled.Close else Icons.Filled.Add, if (expanded) "Close menu" else "Record or add")
+                Icon(
+                    if (expanded) Icons.Filled.Close else Icons.Filled.Add,
+                    androidx.compose.ui.res.stringResource(if (expanded) app.plait.R.string.common_close_menu else app.plait.R.string.common_record_or_add),
+                )
             }
         },
     ) {

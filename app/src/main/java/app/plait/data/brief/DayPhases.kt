@@ -1,14 +1,21 @@
 package app.plait.data.brief
 
+import app.plait.R
 import app.plait.data.CalEvent
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.Instant
 import java.time.ZoneId
 
 /** The three stops of the day the home screen moves through. */
-enum class Phase(val label: String, val greeting: String) {
-    Morning("Morning", "Good morning"),
-    Afternoon("Midday", "Good afternoon"),
-    Evening("Evening", "Good evening");
+enum class Phase(private val labelRes: Int, private val greetingRes: Int) {
+    Morning(R.string.gen_phase_morning, R.string.gen_greet_morning),
+    Afternoon(R.string.gen_phase_midday, R.string.gen_greet_afternoon),
+    Evening(R.string.gen_phase_evening, R.string.gen_greet_evening);
+
+    val label: String get() = Txt.s(labelRes)
+    val greeting: String get() = Txt.s(greetingRes)
 
     companion object {
         fun at(nowMs: Long, zone: ZoneId): Phase {
@@ -82,41 +89,51 @@ object DayAnalytics {
         )
     }
 
+    /** A length of time in the app's language: "0 min", "45 min", "2 h", "1 h 30 min" (Arabic "ساعة و30 دقيقة"). */
     fun span(min: Long): String = when {
-        min <= 0 -> "0 min"
-        min < 60 -> "$min min"
-        min % 60 == 0L -> "${min / 60} h"
-        else -> "${min / 60} h ${min % 60} min"
+        min <= 0 -> mins(0)
+        min < 60 -> mins(min)
+        min % 60 == 0L -> hours(min / 60)
+        else -> Txt.s(R.string.gen_dur_h_min, hours(min / 60), mins(min % 60))
     }
+
+    /** "45 min" */
+    fun mins(m: Long): String = Txt.plural(R.plurals.gen_dur_min, m.toInt())
+
+    /** "2 h" */
+    fun hours(h: Long): String = Txt.plural(R.plurals.gen_dur_h, h.toInt())
 
     /** A plain-words recap of the day for the evening card. */
     fun recap(s: DayStats): String {
-        if (s.meetings == 0) return "No meetings today, so the whole day was yours."
+        if (s.meetings == 0) return Txt.s(R.string.gen_recap_no_meetings)
         val parts = ArrayList<String>()
-        parts.add("You spent ${span(s.minutesSoFar)} in ${s.done} meeting${if (s.done == 1) "" else "s"}.")
-        if (s.longest != null && s.meetings > 1) parts.add("The longest was ${tidyTitle(s.longest.title)} at ${span((s.longest.endMs - s.longest.startMs) / 60_000)}.")
-        if (s.externalMeetings > 0) parts.add("${s.externalMeetings} ${if (s.externalMeetings == 1) "was" else "were"} with people outside your organisation.")
-        if (s.left > 0) parts.add("${s.left} still to come.")
-        if (s.missingNotes.isNotEmpty()) parts.add("${s.missingNotes.size} ${if (s.missingNotes.size == 1) "has" else "have"} no notes yet.")
-        else if (s.done > 0) parts.add("Every finished meeting has a note.")
+        parts.add(Txt.plural(R.plurals.gen_recap_spent, s.done, span(s.minutesSoFar), s.done))
+        if (s.longest != null && s.meetings > 1) parts.add(Txt.s(R.string.gen_recap_longest, Bidi.isolate(tidyTitle(s.longest.title)), span((s.longest.endMs - s.longest.startMs) / 60_000)))
+        if (s.externalMeetings > 0) parts.add(Txt.plural(R.plurals.gen_recap_external, s.externalMeetings))
+        if (s.left > 0) parts.add(Txt.plural(R.plurals.gen_recap_still_to_come, s.left))
+        if (s.missingNotes.isNotEmpty()) parts.add(Txt.plural(R.plurals.gen_recap_no_notes, s.missingNotes.size))
+        else if (s.done > 0) parts.add(Txt.s(R.string.gen_recap_all_noted))
         return parts.joinToString(" ")
     }
 
     private val words = listOf("No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten")
-    fun word(n: Int) = words.getOrNull(n) ?: n.toString()
+
+    /** A count to put in a sentence: spelled out in English up to ten ("Three"), digits in Arabic (its plurals carry the rest). */
+    fun word(n: Int) = (if (AppLocale.isRtl) null else words.getOrNull(n)) ?: n.toString()
 
     /** One line that places the user in the day: what is running, or how long until the next thing. */
     fun sense(today: List<CalEvent>, nowMs: Long, zone: ZoneId): String {
         val timed = today.filter { !it.allDay && it.endMs > it.startMs }.sortedBy { it.startMs }
-        if (timed.isEmpty()) return "Nothing is scheduled."
+        if (timed.isEmpty()) return Txt.s(R.string.gen_sense_nothing)
         val clock = app.plait.data.TimeFmt.clock
-        fun hm(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).format(clock)
-        timed.firstOrNull { it.startMs <= nowMs && it.endMs > nowMs }?.let { return "In ${tidyTitle(it.title)} until ${hm(it.endMs)}." }
+        fun hm(ms: Long) = Bidi.isolate(Instant.ofEpochMilli(ms).atZone(zone).format(clock))
+        fun title(e: CalEvent) = Bidi.isolate(tidyTitle(e.title))
+        timed.firstOrNull { it.startMs <= nowMs && it.endMs > nowMs }?.let { return Txt.s(R.string.gen_sense_in_until, title(it), hm(it.endMs)) }
         val next = timed.firstOrNull { it.startMs > nowMs }
-            ?: return "Your last meeting ended at ${hm(timed.maxOf { it.endMs })}."
+            ?: return Txt.s(R.string.gen_sense_last_ended, hm(timed.maxOf { it.endMs }))
         val mins = (next.startMs - nowMs + 59_999) / 60_000
-        val lead = if (timed.first() === next) "First up" else "Next"
-        return "$lead: ${tidyTitle(next.title)} at ${hm(next.startMs)}, in ${span(mins)}."
+        val lead = if (timed.first() === next) R.string.gen_sense_first_up else R.string.gen_sense_next
+        return Txt.s(lead, title(next), hm(next.startMs), span(mins))
     }
 
     /** Share of an eight-hour working day taken by meetings, 0..100. */

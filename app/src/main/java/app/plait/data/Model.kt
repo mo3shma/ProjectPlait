@@ -1,6 +1,17 @@
 package app.plait.data
 
-enum class Source(val label: String) { Google("Google"), Outlook("Outlook"), ICloud("iCloud"), Other("Phone") }
+import app.plait.R
+import app.plait.i18n.Txt
+
+enum class Source(private val brand: String?) {
+    Google("Google"), Outlook("Outlook"), ICloud("iCloud"), Other(null);
+
+    /** Brands as they are written; the phone's own calendars in the app's language. */
+    val label: String get() = brand ?: Txt.s(R.string.settings_source_phone)
+
+    /** One letter for an avatar (Arabic "الهاتف" gives "ه", not the article's alef). */
+    val initial: String get() = label.removePrefix("ال").take(1)
+}
 
 data class Person(val initials: String, val name: String, val role: String, val rsvp: String, val source: Source)
 
@@ -22,7 +33,7 @@ data class Guest(
         get() = name.takeIf { it.isNotBlank() }
             ?: email?.substringBefore('@')?.split('.', '_', '-')?.filter { it.isNotBlank() }
                 ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-            ?: "Guest"
+            ?: Txt.s(R.string.meet_guest_unnamed)
 
     val initials: String
         get() = label.split(' ').filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }.ifBlank { "?" }

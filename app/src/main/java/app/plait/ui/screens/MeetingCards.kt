@@ -1,6 +1,12 @@
 package app.plait.ui.screens
 
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -39,7 +45,7 @@ import androidx.compose.runtime.setValue
 import app.plait.ui.ButtonStyle
 import app.plait.ui.ButtonSize
 import app.plait.ui.PlaitButton
-import androidx.compose.material.icons.filled.Reply
+import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -168,12 +174,12 @@ fun MeetingCard(
             Spacer(Modifier.height(if (hero) 18.dp else 10.dp))
             Text(
                 ev.title,
-                style = if (hero) PlaitType.cardTitle else PlaitType.cardTitle.copy(fontSize = 21.sp, lineHeight = 24.sp),
+                style = (if (hero) PlaitType.cardTitle else PlaitType.cardTitle.copy(fontSize = 21.sp, lineHeight = 24.sp)).userText(),
                 color = ink, maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                (if (ev.endLabel.isNotBlank()) "${ev.time} – ${ev.endLabel}" else ev.time) + "  ·  ${ev.place}",
+                (if (ev.endLabel.isNotBlank()) "${Bidi.isolate(ev.time)} – ${Bidi.isolate(ev.endLabel)}" else Bidi.isolate(ev.time)) + "  ·  ${Bidi.isolate(ev.place)}",
                 style = PlaitType.caption.copy(fontWeight = FontWeight.Medium), color = ink.copy(alpha = 0.72f),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
@@ -182,7 +188,7 @@ fun MeetingCard(
             }
 
             Spacer(Modifier.height(if (hero) 16.dp else 10.dp))
-            if (hero) Text("Why you're meeting", style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink.copy(alpha = 0.6f))
+            if (hero) Text(stringResource(R.string.meet_why_meeting), style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink.copy(alpha = 0.6f))
             Text(
                 brief.about,
                 style = PlaitType.body.copy(fontSize = if (hero) 16.sp else 14.sp, lineHeight = if (hero) 22.sp else 20.sp),
@@ -196,10 +202,10 @@ fun MeetingCard(
                 brief.agenda.take(3).forEach { item ->
                     Row(Modifier.padding(top = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.padding(top = 8.dp).size(5.dp).background(ink.copy(alpha = 0.6f), CircleShape))
-                        Text(item, style = PlaitType.body.copy(fontSize = 14.sp, lineHeight = 19.sp), color = ink.copy(alpha = 0.85f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(item, style = PlaitType.body.copy(fontSize = 14.sp, lineHeight = 19.sp).userText(), color = ink.copy(alpha = 0.85f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                if (brief.agenda.size > 3) Text("+${brief.agenda.size - 3} more", style = PlaitType.monoSmall, color = ink.copy(alpha = 0.6f), modifier = Modifier.padding(top = 3.dp, start = 13.dp))
+                if (brief.agenda.size > 3) Text(stringResource(R.string.meet_more, brief.agenda.size - 3), style = PlaitType.monoSmall, color = ink.copy(alpha = 0.6f), modifier = Modifier.padding(top = 3.dp, start = 13.dp))
             }
 
             if (contextLine != null) {
@@ -210,8 +216,8 @@ fun MeetingCard(
                 ) {
                     Icon(Icons.Filled.Email, null, tint = ink.copy(alpha = 0.75f), modifier = Modifier.padding(top = 2.dp).size(16.dp))
                     Column {
-                        Text("From your emails", style = PlaitType.monoSmall.copy(fontSize = 10.sp), color = ink.copy(alpha = 0.6f))
-                        Text(contextLine, style = PlaitType.body.copy(fontSize = 13.sp, lineHeight = 18.sp), color = ink.copy(alpha = 0.9f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(R.string.meet_from_emails), style = PlaitType.monoSmall.copy(fontSize = 10.sp), color = ink.copy(alpha = 0.6f))
+                        Text(contextLine, style = PlaitType.body.copy(fontSize = 13.sp, lineHeight = 18.sp).userText(), color = ink.copy(alpha = 0.9f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -242,7 +248,7 @@ private fun HeroTop(ev: CalEvent, brief: MeetingBrief, nowMs: Long, tone: KindTo
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(if (ev.startMs in 1..nowMs) "Happening now" else "Up next", style = PlaitType.monoLabel, color = tone.ink.copy(alpha = 0.65f))
+                Text(stringResource(if (ev.startMs in 1..nowMs) R.string.meet_happening_now else R.string.meet_up_next), style = PlaitType.monoLabel, color = tone.ink.copy(alpha = 0.65f))
                 KindPill(brief.kind, tone)
             }
             Spacer(Modifier.height(8.dp))
@@ -272,14 +278,14 @@ private fun CompactTop(ev: CalEvent, brief: MeetingBrief, tone: KindTone, hasCal
         if (ev.duration.isNotBlank()) Text(ev.duration, style = PlaitType.monoSmall, color = tone.ink.copy(alpha = 0.65f))
         brief.chips.firstOrNull()?.let { SoftChip(it, tone) }
         Spacer(Modifier.weight(1f))
-        if (hasCall) Icon(Icons.Filled.Videocam, "Has a call link", tint = tone.ink, modifier = Modifier.size(22.dp))
+        if (hasCall) Icon(Icons.Filled.Videocam, stringResource(R.string.meet_has_call_link), tint = tone.ink, modifier = Modifier.size(22.dp))
     }
 }
 
 @Composable
 private fun JoinButton(tone: KindTone, hasCall: Boolean, onJoin: () -> Unit) {
     app.plait.ui.PlaitButton(
-        if (hasCall) "Join now" else "Open", onJoin, style = app.plait.ui.ButtonStyle.Ink,
+        stringResource(if (hasCall) R.string.common_join_now else R.string.common_open), onJoin, style = app.plait.ui.ButtonStyle.Ink,
         icon = if (hasCall) Icons.Filled.Videocam else null,
     )
 }
@@ -317,14 +323,14 @@ fun BriefCard(
         Column(Modifier.padding(if (hero) 26.dp else 22.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    if (ev.allDay) "All day" else if (ev.endLabel.isNotBlank()) "${ev.time} – ${ev.endLabel}" else ev.time,
+                    if (ev.allDay) stringResource(R.string.common_all_day) else if (ev.endLabel.isNotBlank()) "${Bidi.isolate(ev.time)} – ${Bidi.isolate(ev.endLabel)}" else ev.time,
                     style = PlaitType.monoTime.copy(fontSize = 15.sp, fontWeight = FontWeight.Medium), color = ink,
                 )
                 Spacer(Modifier.weight(1f))
                 if (!ev.allDay && ev.startMs > 0 && ev.endMs > nowMs) {
                     Box(Modifier.height(28.dp).clip(CircleShape).background(ink).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            if (live) "Now" else "in " + Agenda.countdown(ev, nowMs),
+                            if (live) stringResource(R.string.common_now) else stringResource(R.string.meet_in_countdown, Bidi.isolate(Agenda.countdown(ev, nowMs))),
                             style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = tone.bg,
                         )
                     }
@@ -336,7 +342,7 @@ fun BriefCard(
             Spacer(Modifier.height(if (hero) 20.dp else 14.dp))
             Text(
                 ev.title,
-                style = if (hero) PlaitType.heroHeadline else PlaitType.cardHeadline,
+                style = (if (hero) PlaitType.heroHeadline else PlaitType.cardHeadline).userText(),
                 color = ink, maxLines = if (hero) 4 else 3, overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(12.dp))
@@ -397,14 +403,14 @@ internal fun BriefTab(ev: CalEvent, brief: MeetingBrief, onRecord: () -> Unit, n
         var open by remember { mutableStateOf(false) }
         val items = remember(notes, memos) {
             notes.map { n ->
-                ("Voice note · " + app.plait.data.TimeFmt.stamp(n.createdAt)) to (n.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary }
-                    ?: app.plait.data.brief.Summarizer.bullets(n.lines.map { it.text }, 3).joinToString(" ").ifBlank { n.silentReason ?: "No speech was detected." })
+                Txt.s(R.string.meet_voice_note_stamp, Bidi.isolate(app.plait.data.TimeFmt.stamp(n.createdAt))) to (n.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary }
+                    ?: Bidi.join(app.plait.data.brief.Summarizer.bullets(n.lines.map { it.text }, 3)).ifBlank { n.silentReason ?: Txt.s(R.string.note_no_speech) })
             } + memos.map { m ->
                 val photo = m.kind == app.plait.data.memo.MemoKind.Photo
                 if (m.kind == app.plait.data.memo.MemoKind.Checklist) {
                     app.plait.data.memo.Checklist.heading(m.title, m.text) to
-                        app.plait.data.memo.Checklist.parse(m.text).filter { !it.done }.joinToString(" · ") { it.text }.ifBlank { "All done." }
-                } else ((if (photo) "Photo · " else "Note · ") + app.plait.data.TimeFmt.stamp(m.createdAt)) to m.text.ifBlank { "No text was found in the picture." }
+                        Bidi.join(app.plait.data.memo.Checklist.parse(m.text).filter { !it.done }.map { it.text }, " · ").ifBlank { Txt.s(R.string.note_all_done_dot) }
+                } else Txt.s(if (photo) R.string.meet_photo_stamp else R.string.meet_note_stamp, Bidi.isolate(app.plait.data.TimeFmt.stamp(m.createdAt))) to m.text.ifBlank { Txt.s(R.string.note_no_text_in_picture) }
             }
         }
         Column(
@@ -412,16 +418,16 @@ internal fun BriefTab(ev: CalEvent, brief: MeetingBrief, onRecord: () -> Unit, n
                 .pressable({ open = true }, lift = 2.dp).padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Notes summary", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
-            if (count == 0) Text("No notes are linked to this meeting yet.", style = PlaitType.body, color = plait.muted)
+            Text(stringResource(R.string.meet_notes_summary), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            if (count == 0) Text(stringResource(R.string.meet_no_notes_linked), style = PlaitType.body, color = plait.muted)
             else {
-                Text(if (count == 1) "1 note linked" else "$count notes linked", style = PlaitType.monoSmall, color = plait.muted)
+                Text(pluralStringResource(R.plurals.meet_notes_linked, count, count), style = PlaitType.monoSmall, color = plait.muted)
                 items.take(2).forEach { (l, t) -> SummaryLine(l, t, maxLines = 2) }
-                if (items.size > 2 || items.any { it.second.length > 110 }) Text("Tap to read all", style = PlaitType.caption, color = plait.muted)
+                if (items.size > 2 || items.any { it.second.length > 110 }) Text(stringResource(R.string.meet_tap_read_all), style = PlaitType.caption, color = plait.muted)
             }
         }
-        if (open) DetailDialog("Notes summary", { open = false }) {
-            if (items.isEmpty()) Text("No notes are linked to this meeting yet. Record, write, photograph or start a list from the Notes tab.", style = PlaitType.body, color = plait.muted)
+        if (open) DetailDialog(stringResource(R.string.meet_notes_summary), { open = false }) {
+            if (items.isEmpty()) Text(stringResource(R.string.meet_no_notes_linked_long), style = PlaitType.body, color = plait.muted)
             items.forEach { (l, t) -> SummaryLine(l, t) }
         }
     }
@@ -439,7 +445,7 @@ internal fun sendMail(context: android.content.Context, to: List<String>, subjec
     val i = android.content.Intent(android.content.Intent.ACTION_SENDTO, android.net.Uri.parse("mailto:"))
         .putExtra(android.content.Intent.EXTRA_EMAIL, to.toTypedArray()).putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
     if (body != null) i.putExtra(android.content.Intent.EXTRA_TEXT, body)
-    runCatching { context.startActivity(i) }.onFailure { android.widget.Toast.makeText(context, "No email app found", android.widget.Toast.LENGTH_SHORT).show() }
+    runCatching { context.startActivity(i) }.onFailure { android.widget.Toast.makeText(context, Txt.s(R.string.meet_no_email_app), android.widget.Toast.LENGTH_SHORT).show() }
 }
 
 @Composable
@@ -461,8 +467,8 @@ private fun GuestsCard(ev: CalEvent, brief: MeetingBrief) {
         val (email, name) = picked
         if (app.plait.data.device.Invite.add(context, ev, email, name)) {
             app.plait.data.Calendars.refreshDevice(context)
-            android.widget.Toast.makeText(context, "Added ${name ?: email}. Your calendar app sends the invitation when it syncs.", android.widget.Toast.LENGTH_LONG).show()
-        } else sendMail(context, listOf(email), "Invitation: ${ev.title}", "Join me:\n\n" + app.plait.data.device.Invite.text(ev))
+            android.widget.Toast.makeText(context, Txt.s(R.string.meet_added_guest, Bidi.isolate(name ?: email)), android.widget.Toast.LENGTH_LONG).show()
+        } else sendMail(context, listOf(email), Txt.s(R.string.meet_invitation_subject, ev.title), Txt.s(R.string.meet_invitation_body, app.plait.data.device.Invite.text(ev)))
     }
     val shown = ev.guests.take(3)
     val more = ev.guests.size - shown.size
@@ -474,7 +480,7 @@ private fun GuestsCard(ev: CalEvent, brief: MeetingBrief) {
     ) {
         Column(Modifier.padding(horizontal = 4.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                Text("Guests", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+                Text(stringResource(R.string.meet_guests), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
                 if (ev.guests.isNotEmpty()) Text("${ev.guests.size}", style = PlaitType.monoLabel, color = plait.muted)
             }
             if (brief.rsvpLine.isNotBlank()) Text(brief.rsvpLine, style = PlaitType.caption, color = plait.muted, modifier = Modifier.padding(top = 2.dp))
@@ -483,33 +489,33 @@ private fun GuestsCard(ev: CalEvent, brief: MeetingBrief) {
             FlowRow(Modifier.padding(horizontal = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (invite != null) {
                     val to = Regex("[\\w.+-]+@[\\w.-]+\\.\\w+").find(invite.from)?.value
-                    PillButton("Reply to the invite email", { sendMail(context, listOfNotNull(to), if (invite.subject.startsWith("Re:", true)) invite.subject else "Re: " + invite.subject) }, Icons.Filled.Reply, primary = true)
+                    PillButton(stringResource(R.string.meet_reply_invite), { sendMail(context, listOfNotNull(to), if (invite.subject.startsWith("Re:", true)) invite.subject else "Re: " + invite.subject) }, Icons.AutoMirrored.Filled.Reply, primary = true)
                 }
-                if (organizer != null) PillButton("Reply to organizer", { sendMail(context, listOf(organizer.email!!), subject) }, Icons.Filled.Reply, primary = invite == null)
-                if (others.size > 1 || (others.size == 1 && organizer == null)) PillButton("Email everyone", { sendMail(context, others.map { it.email!! }, ev.title) }, Icons.Filled.Email)
+                if (organizer != null) PillButton(stringResource(R.string.meet_reply_organizer), { sendMail(context, listOf(organizer.email!!), subject) }, Icons.AutoMirrored.Filled.Reply, primary = invite == null)
+                if (others.size > 1 || (others.size == 1 && organizer == null)) PillButton(stringResource(R.string.meet_email_everyone), { sendMail(context, others.map { it.email!! }, ev.title) }, Icons.Filled.Email)
             }
         }
         FlowRow(Modifier.padding(horizontal = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillButton("Add people", {
+            PillButton(stringResource(R.string.meet_add_people), {
                 // Android's own contact picker: it lists the contacts from every account on the phone and gives Plait only the one picked.
                 runCatching { pickContact.launch(android.content.Intent(android.content.Intent.ACTION_PICK, android.provider.ContactsContract.CommonDataKinds.Email.CONTENT_URI)) }
             }, Icons.Filled.PersonAdd)
-            PillButton("Share link", {
+            PillButton(stringResource(R.string.meet_share_link), {
                 val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
                     .putExtra(android.content.Intent.EXTRA_SUBJECT, ev.title).putExtra(android.content.Intent.EXTRA_TEXT, app.plait.data.device.Invite.text(ev))
-                context.startActivity(android.content.Intent.createChooser(send, "Share meeting"))
+                context.startActivity(android.content.Intent.createChooser(send, Txt.s(R.string.meet_share_meeting)))
             }, Icons.Filled.Share)
         }
         if (ev.guests.isEmpty()) {
             Text(
-                "The calendar didn't list any guests for this event. They only show up when the invite includes them.",
+                stringResource(R.string.meet_no_guests),
                 style = PlaitType.body, color = plait.muted, modifier = Modifier.padding(horizontal = 4.dp),
             )
         }
         shown.forEach { g -> GuestRow(g) { sendMail(context, listOf(it), subject) } }
-        if (more > 0) Text("+$more more · tap to see everyone", style = PlaitType.caption, color = plait.muted, modifier = Modifier.padding(horizontal = 4.dp))
+        if (more > 0) Text(stringResource(R.string.meet_guests_more, more), style = PlaitType.caption, color = plait.muted, modifier = Modifier.padding(horizontal = 4.dp))
     }
-    if (all) DetailDialog("Guests · ${ev.guests.size}", { all = false }) {
+    if (all) DetailDialog(stringResource(R.string.meet_guests_count, ev.guests.size), { all = false }) {
         ev.guests.forEach { g -> GuestRow(g) { sendMail(context, listOf(it), subject) } }
     }
 }
@@ -528,21 +534,21 @@ private fun GuestRow(g: app.plait.data.Guest, onEmail: (String) -> Unit) {
         }
         Column(Modifier.weight(1f)) {
             Text(
-                if (g.self) "${g.label} (you)".replace("You (you)", "You") else g.label,
-                style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                if (g.self) (if (g.label == "You") stringResource(R.string.meet_guest_you) else stringResource(R.string.meet_guest_name_you, Bidi.isolate(g.label))) else g.label,
+                style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
             val sub = buildList {
-                if (g.organizer) add("Organizer")
-                if (g.optional) add("Optional")
-                g.email?.let { add(it) }
+                if (g.organizer) add(stringResource(R.string.meet_organizer))
+                if (g.optional) add(stringResource(R.string.meet_optional))
+                g.email?.let { add(Bidi.isolate(it)) }
             }.joinToString(" · ")
             if (sub.isNotBlank()) Text(sub, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val (label, color) = when (g.rsvp) {
-            Rsvp.Accepted -> "Going" to plait.outlook
-            Rsvp.Declined -> "Declined" to plait.signal
-            Rsvp.Tentative -> "Maybe" to plait.icloud
-            Rsvp.Pending -> "Waiting" to plait.muted
+            Rsvp.Accepted -> stringResource(R.string.meet_rsvp_going) to plait.outlook
+            Rsvp.Declined -> stringResource(R.string.meet_rsvp_declined) to plait.signal
+            Rsvp.Tentative -> stringResource(R.string.meet_rsvp_maybe) to plait.icloud
+            Rsvp.Pending -> stringResource(R.string.meet_rsvp_waiting) to plait.muted
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Box(Modifier.size(7.dp).background(color, CircleShape))

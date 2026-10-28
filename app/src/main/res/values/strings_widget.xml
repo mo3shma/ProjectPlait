@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Names Android shows outside the app (widget picker, Quick Settings) and the widgets' fixed labels. Owner: i18n foundation. -->
+<resources>
+    <string name="widget_description_small">Your next meeting and its start time, with a Join button when it has a call link. 2×2.</string>
+    <string name="widget_description_quick">Your next meeting with a Join button, and one tap to record a voice note, start a task list or write a text note. 4×3.</string>
+    <string name="widget_description">Your next meeting, what comes after it, and a Join button when it has a call link. 4×2.</string>
+    <!-- Quick Settings tile name. -->
+    <string name="widget_label_tile">Plait voice note</string>
+    <!-- Widget picker name of the 4×2 widget. -->
+    <string name="widget_label_wide">Plait brief</string>
+    <!-- Widget picker name of the 2×2 widget. -->
+    <string name="widget_label_small">Plait brief, small</string>
+    <!-- Widget picker name of the 4×3 widget. -->
+    <string name="widget_label_quick">Plait quick add</string>
+    <!-- 4×3 widget button: start a new checklist. -->
+    <string name="widget_tile_task_list">Task list</string>
+    <!-- 4×3 widget button: start a new written note. -->
+    <string name="widget_tile_text_note">Text note</string>
+</resources>

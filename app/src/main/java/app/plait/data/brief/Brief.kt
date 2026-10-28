@@ -4,11 +4,24 @@ import app.plait.data.CalEvent
 import app.plait.data.Guest
 import app.plait.data.Rsvp
 import app.plait.data.SavedNote
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 
 /** What kind of meeting this looks like. Also drives the card colour. */
-enum class MeetingKind(val label: String) {
-    OneOnOne("1:1"), Standup("Check-in"), Review("Review"), Planning("Planning"), Interview("Interview"),
-    External("External"), Social("Social"), Personal("Personal"), Focus("Focus"), General("Meeting"),
+enum class MeetingKind(private val res: Int) {
+    OneOnOne(R.string.gen_kind_one_on_one), Standup(R.string.gen_kind_standup), Review(R.string.gen_kind_review),
+    Planning(R.string.gen_kind_planning), Interview(R.string.gen_kind_interview), External(R.string.gen_kind_external),
+    Social(R.string.gen_kind_social), Personal(R.string.gen_kind_personal), Focus(R.string.gen_kind_focus), General(R.string.gen_kind_general);
+
+    /** The tag in the app's language ("1:1", "Review"). */
+    val label: String get() = Txt.s(res)
+}
+
+/** "A, B and C" in the app's language, each item kept in its own direction. */
+internal fun listText(items: List<String>): String {
+    val iso = items.map(Bidi::isolate)
+    return if (iso.size < 2) iso.joinToString() else Txt.s(R.string.gen_and, iso.dropLast(1).joinToString(Txt.s(R.string.gen_list_sep)), iso.last())
 }
 
 data class LastTime(val whenMs: Long, val summary: String, val followUps: Int)
@@ -148,13 +161,13 @@ object BriefBuilder {
 
         val ext = externalGuests(e)
         val chips = buildList {
-            if (e.recurring) add("Repeats")
+            if (e.recurring) add(Txt.s(R.string.gen_chip_repeats))
             if (ext.isNotEmpty()) {
                 val named = ext.mapNotNull { it.domain }.filter { it !in personalDomains }
                     .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
-                add(if (named != null) "External · ${domainName(named)}" else "External guests")
+                add(if (named != null) Txt.s(R.string.gen_chip_external_org, Bidi.isolate(domainName(named))) else Txt.s(R.string.gen_chip_external_guests))
             }
-            if (e.guests.size > 2) add("${e.guests.size} people")
+            if (e.guests.size > 2) add(Txt.plural(R.plurals.gen_chip_people, e.guests.size))
         }
 
         return MeetingBrief(
@@ -168,8 +181,8 @@ object BriefBuilder {
     fun withLine(e: CalEvent): String {
         val o = others(e)
         if (o.isEmpty()) return ""
-        val first = o.take(2).joinToString(", ") { it.label.substringBefore(' ') }
-        return "with $first" + if (o.size > 2) " +${o.size - 2}" else ""
+        val first = o.take(2).joinToString(Txt.s(R.string.gen_list_sep)) { Bidi.isolate(it.label.substringBefore(' ')) }
+        return if (o.size > 2) Txt.s(R.string.gen_with_more, first, o.size - 2) else Txt.s(R.string.gen_with, first)
     }
 
     fun rsvpLine(e: CalEvent): String {
@@ -179,9 +192,9 @@ object BriefBuilder {
         val declined = g.count { it.rsvp == Rsvp.Declined }
         val pending = g.count { it.rsvp == Rsvp.Pending || it.rsvp == Rsvp.Tentative }
         return buildList {
-            add("$accepted of ${g.size} accepted")
-            if (declined > 0) add("$declined declined")
-            if (pending > 0 && accepted + declined + pending == g.size && pending < g.size) add("$pending waiting")
+            add(Txt.s(R.string.gen_rsvp_accepted, accepted, g.size))
+            if (declined > 0) add(Txt.s(R.string.gen_rsvp_declined, declined))
+            if (pending > 0 && accepted + declined + pending == g.size && pending < g.size) add(Txt.s(R.string.gen_rsvp_waiting, pending))
         }.joinToString(" · ")
     }
 
@@ -190,22 +203,25 @@ object BriefBuilder {
     /** Plain statements about what we can tell from the title and guest list, worded as guesses. */
     fun guess(e: CalEvent, kind: MeetingKind): String {
         val o = others(e)
-        val who = o.firstOrNull()?.label ?: topic(e.title).substringAfter("with ", "").trim().ifBlank { "someone" }
+        val who = o.firstOrNull()?.label?.let(Bidi::isolate)
+            ?: topic(e.title).substringAfter("with ", "").trim().takeIf { it.isNotBlank() }?.let(Bidi::isolate)
+            ?: Txt.s(R.string.gen_guess_someone)
         val count = e.guests.size
+        val subject = Bidi.isolate(topic(e.title))
         return when (kind) {
-            MeetingKind.OneOnOne -> "A one-to-one with $who. The invite doesn't say what it's about."
-            MeetingKind.Standup -> "A regular check-in${if (count > 2) " with $count people" else ""}. No agenda was added, so expect updates and blockers."
-            MeetingKind.Review -> "Looks like a review of ${topic(e.title)}. The invite doesn't say more."
-            MeetingKind.Planning -> "Looks like a planning session: ${topic(e.title)}. No agenda was added."
-            MeetingKind.Interview -> "Looks like an interview${if (o.isNotEmpty()) " with ${o.take(2).joinToString(" and ") { it.label }}" else ""}. Check the guest list for who is joining."
+            MeetingKind.OneOnOne -> Txt.s(R.string.gen_guess_one_on_one, who)
+            MeetingKind.Standup -> if (count > 2) Txt.plural(R.plurals.gen_guess_standup_people, count) else Txt.s(R.string.gen_guess_standup)
+            MeetingKind.Review -> Txt.s(R.string.gen_guess_review, subject)
+            MeetingKind.Planning -> Txt.s(R.string.gen_guess_planning, subject)
+            MeetingKind.Interview -> if (o.isNotEmpty()) Txt.s(R.string.gen_guess_interview_with, listText(o.take(2).map { it.label })) else Txt.s(R.string.gen_guess_interview)
             MeetingKind.External -> {
                 val ext = externalGuests(e).mapNotNull { it.domain }.filter { it !in personalDomains }.firstOrNull()
-                "A meeting with people outside your organisation${if (ext != null) " (${domainName(ext)})" else ""}. The invite doesn't say what it covers."
+                if (ext != null) Txt.s(R.string.gen_guess_external_org, Bidi.isolate(domainName(ext))) else Txt.s(R.string.gen_guess_external)
             }
-            MeetingKind.Social -> if (o.isNotEmpty()) "Time with ${o.take(3).joinToString(", ") { it.label.substringBefore(' ') }}." else "Social time."
-            MeetingKind.Personal -> "A personal appointment on your calendar."
-            MeetingKind.Focus -> "Time set aside for focused work."
-            MeetingKind.General -> if (count > 2) "A meeting with $count people. The invite has no description." else "The invite has no description."
+            MeetingKind.Social -> if (o.isNotEmpty()) Txt.s(R.string.gen_guess_social_with, o.take(3).joinToString(Txt.s(R.string.gen_list_sep)) { Bidi.isolate(it.label.substringBefore(' ')) }) else Txt.s(R.string.gen_guess_social)
+            MeetingKind.Personal -> Txt.s(R.string.gen_guess_personal)
+            MeetingKind.Focus -> Txt.s(R.string.gen_guess_focus)
+            MeetingKind.General -> if (count > 2) Txt.plural(R.plurals.gen_guess_general_people, count) else Txt.s(R.string.gen_guess_general)
         }
     }
 

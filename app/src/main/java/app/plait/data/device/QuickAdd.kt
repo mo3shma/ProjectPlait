@@ -17,9 +17,12 @@ data class QuickResult(
 )
 
 /**
- * Turns "lunch with sam@acme.com friday 1pm for 1h at Café Nero" into a meeting. Plain rules, English only, no AI
- * needed: dates (today, tomorrow, weekdays, "next monday", "in 3 days", "15 oct"), times (3pm, 15:30, noon),
- * lengths (for 45 min, 1.5h, 3-4pm), guests (email addresses) and places ("at …", "@ …").
+ * Turns "lunch with sam@acme.com friday 1pm for 1h at Café Nero" into a meeting. Plain rules, no AI needed: dates (today,
+ * tomorrow, weekdays, "next monday", "in 3 days", "15 oct"), times (3pm, 15:30, noon), lengths (for 45 min, 1.5h, 3-4pm),
+ * guests (email addresses) and places ("at …", "@ …").
+ *
+ * Arabic is read too, whatever the app's language, whenever the text has Arabic letters ([parseArabic]): "غداء مع
+ * sam@acme.com الجمعة 1 م لمدة ساعة في مقهى نيرو". Arabic-Indic digits (٠-٩, ۰-۹) are read as 0-9 everywhere.
  */
 object QuickAdd {
     private val days = mapOf(
@@ -37,8 +40,15 @@ object QuickAdd {
 
     private fun rx(p: String) = Regex(p, RegexOption.IGNORE_CASE)
 
+    /** Arabic-Indic and Persian digits typed on an Arabic keyboard, as 0-9. */
+    internal fun westernDigits(s: String): String = buildString(s.length) {
+        for (c in s) append(if (c in '\u0660'..'\u0669') '0' + (c - '\u0660') else if (c in '\u06F0'..'\u06F9') '0' + (c - '\u06F0') else c)
+    }
+
+    private val arabicLetter = Regex("[\\u0621-\\u064A]")
+
     fun parse(input: String, today: LocalDate): QuickResult {
-        var s = " " + input.trim().replace(Regex("\\s+"), " ") + " "
+        var s = " " + westernDigits(input).trim().replace(Regex("\\s+"), " ") + " "
         fun take(r: Regex): MatchResult? = r.find(s)?.also { s = s.replaceRange(it.range, " ") }
 
         val guests = email.findAll(s).map { it.value.lowercase() }.distinct().toList()
@@ -48,7 +58,7 @@ object QuickAdd {
         for (m in email.findAll(s)) {
             withName.append(s, last, m.range.first)
             val after = withName.toString().trimEnd()
-            if (after.endsWith("with", ignoreCase = true)) {
+            if (after.endsWith("with", ignoreCase = true) || withAr.containsMatchIn(after)) {
                 withName.append(m.value.substringBefore('@').split('.', '_', '-', '+').firstOrNull { it.isNotBlank() }?.replaceFirstChar { it.uppercase() } ?: "")
             } else withName.append(' ')
             last = m.range.last + 1
@@ -56,8 +66,11 @@ object QuickAdd {
         withName.append(s, last, s.length)
         s = withName.toString()
 
+        // Arabic first, so "الساعة 3:30" is read whole before the English rules see "3:30".
+        val ar = if (arabicLetter.containsMatchIn(s)) parseArabic(s, today).also { s = it.rest } else null
+
         // length: "for 45 min", "for 1.5 hours", "90 minutes"
-        var duration: Int? = null
+        var duration: Int? = ar?.durationMin
         take(rx("""\bfor\s+(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)\b"""))?.let { m ->
             val n = m.groupValues[1].toDouble()
             duration = if (m.groupValues[2].lowercase().startsWith("h")) (n * 60).toInt() else n.toInt()
@@ -68,7 +81,7 @@ object QuickAdd {
         }
 
         // time range "3-4pm", "3pm-4pm", "3 to 4:30pm"
-        var time: LocalTime? = null
+        var time: LocalTime? = ar?.time
         take(rx("""\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|to|until)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b"""))?.let { m ->
             val endAp = m.groupValues[6].lowercase()
             val startAp = m.groupValues[3].lowercase().ifEmpty { endAp }
@@ -94,7 +107,7 @@ object QuickAdd {
         }
 
         // date
-        var date: LocalDate? = null
+        var date: LocalDate? = ar?.date
         var allDay = false
         if (take(rx("""\b(?:all[- ]day)\b""")) != null) allDay = true
         if (take(rx("""\btonight\b""")) != null) { date = today; if (time == null) time = LocalTime.of(19, 0) }
@@ -125,13 +138,127 @@ object QuickAdd {
         take(rx("""\s@\s*([^,]+?)(?=\s(?:for|on|tomorrow|today|at)\b|$)"""))?.let { place = it.groupValues[1].trim() }
         if (place.isEmpty()) take(rx("""\bat\s+([A-Z][^,]*?)(?=\s(?:for|on|tomorrow|today|next|this)\b|\s*$)"""))?.let { place = it.groupValues[1].trim() }
         if (place.isEmpty()) take(Regex("""\bat\s+([A-Za-zÀ-ÿ][^,]*?)\s*$"""))?.let { place = it.groupValues[1].trim() }
+        if (place.isEmpty() && ar != null) take(Regex("""$B0(?:في|عند)\s+(\S[^,،]*?)(?=\s+(?:مع|لمدة)$B1|\s*[,،]|\s*$)"""))?.let { place = it.groupValues[1].trim() }
 
         // title is what is left
         var title = s.replace(Regex("\\s+"), " ").trim()
         title = title.replace(rx("""\b(with|on|at|for|in|to|and)\s*$"""), "").trim().trimEnd(',', '-', '–').trim()
         title = title.replace(rx("""^(add|schedule|set up|book|create|new meeting:?|meeting:?)\s+"""), "").trim()
+        if (ar != null) {
+            title = title.replace(Regex("""(?:\s+(?:مع|في|عند|يوم|لمدة|مدة|من|الساعة|الساعه|و))+\s*$"""), "").trim().trimEnd(',', '،', '-', '–').trim()
+            title = title.replace(Regex("""^(?:أضف|اضف|إضافة|اضافة|احجز|جدولة|موعد:|اجتماع جديد:)\s*"""), "").trim()
+        }
         if (title.isNotEmpty()) title = title.replaceFirstChar { it.uppercase() }
         return QuickResult(title, date, time, duration, guests, place, allDay)
+    }
+
+    // Arabic rules. Java's \b only knows ASCII letters, so word edges are spelled out; marks (tanween, shadda) count as letters.
+    private const val B0 = """(?<![\p{L}\p{M}\p{N}_])"""
+    private const val B1 = """(?![\p{L}\p{M}\p{N}_])"""
+    /** The optional ending of an adverb: "صباحًا", "صباحاً", "صباحا". */
+    private const val TAN = "(?:\u064Bا|ا\u064B|ا|\u064B)?"
+    private const val AM = "(?:(?:ال)?صباح$TAN|(?:ال)?صبح|(?:ال)?فجر$TAN|ص)"
+    private const val PM = "(?:(?:ال)?مساء$TAN|بعد الظهر|(?:ال)?ظهر$TAN|(?:ال)?عصر$TAN|(?:ال)?ليل$TAN|بالليل|م)"
+    private const val HOUR = "(?:الساع[ةه]\\s*)"
+    private val withAr = Regex("""(?:^|\s)مع$""")
+    private val arDays = mapOf(
+        "أحد" to DayOfWeek.SUNDAY, "احد" to DayOfWeek.SUNDAY, "اثنين" to DayOfWeek.MONDAY, "إثنين" to DayOfWeek.MONDAY, "أثنين" to DayOfWeek.MONDAY,
+        "اتنين" to DayOfWeek.MONDAY, "ثلاثاء" to DayOfWeek.TUESDAY, "ثلاثا" to DayOfWeek.TUESDAY, "تلات" to DayOfWeek.TUESDAY, "أربعاء" to DayOfWeek.WEDNESDAY,
+        "اربعاء" to DayOfWeek.WEDNESDAY, "أربعا" to DayOfWeek.WEDNESDAY, "اربعا" to DayOfWeek.WEDNESDAY, "خميس" to DayOfWeek.THURSDAY,
+        "جمعة" to DayOfWeek.FRIDAY, "جمعه" to DayOfWeek.FRIDAY, "سبت" to DayOfWeek.SATURDAY,
+    )
+    private val arMonths = mapOf(
+        "يناير" to Month.JANUARY, "فبراير" to Month.FEBRUARY, "مارس" to Month.MARCH, "أبريل" to Month.APRIL, "ابريل" to Month.APRIL, "إبريل" to Month.APRIL,
+        "مايو" to Month.MAY, "يونيو" to Month.JUNE, "يونيه" to Month.JUNE, "يوليو" to Month.JULY, "يوليه" to Month.JULY, "أغسطس" to Month.AUGUST,
+        "اغسطس" to Month.AUGUST, "سبتمبر" to Month.SEPTEMBER, "أكتوبر" to Month.OCTOBER, "اكتوبر" to Month.OCTOBER, "نوفمبر" to Month.NOVEMBER,
+        "ديسمبر" to Month.DECEMBER, "كانون الثاني" to Month.JANUARY, "شباط" to Month.FEBRUARY, "آذار" to Month.MARCH, "نيسان" to Month.APRIL,
+        "أيار" to Month.MAY, "حزيران" to Month.JUNE, "تموز" to Month.JULY, "آب" to Month.AUGUST, "أيلول" to Month.SEPTEMBER,
+        "تشرين الأول" to Month.OCTOBER, "تشرين الثاني" to Month.NOVEMBER, "كانون الأول" to Month.DECEMBER,
+    )
+
+    /** What the Arabic rules took out of the text, and what is left of it ([rest]) for the English rules and the title. */
+    internal class ArabicParts(val rest: String, val date: LocalDate?, val time: LocalTime?, val durationMin: Int?)
+
+    /**
+     * Arabic dates, times and lengths: "اليوم", "غدًا" / "بكرة", "بعد غد", "الجمعة", "يوم الأحد القادم", "الأسبوع القادم",
+     * "بعد 3 أيام", "15 أكتوبر"; "الساعة 1 م", "1 مساءً", "10 صباحًا", "3:30 م", "من 3 إلى 4 م", "الساعة 3:30" (1 to 6 with
+     * no morning or evening word is the afternoon, like English "at 3"), "الظهر", "الليلة"; "لمدة ساعة", "ساعتين",
+     * "ساعة ونصف", "نصف ساعة", "30 دقيقة", "لمدة 2 ساعات". Places ("في …", "عند …") are read in [parse] after the English rules.
+     */
+    internal fun parseArabic(text: String, today: LocalDate): ArabicParts {
+        var s = text
+        fun take(p: String): MatchResult? = Regex(p).find(s)?.also { s = s.replaceRange(it.range, " ") }
+        fun clock(h: Int, min: Int, am: String, pm: String): LocalTime? {
+            val hh = when {
+                am.isNotEmpty() -> hour24(h, "am")
+                pm.contains("ليل") && h == 12 -> 0
+                pm.isNotEmpty() -> hour24(h, "pm")
+                else -> h
+            }
+            return if (hh in 0..23 && min in 0..59) LocalTime.of(hh, min) else null
+        }
+
+        var duration: Int? = null
+        take("""$B0(?:(?:لمدة|مدة)\s*)?(\d+(?:\.\d+)?)\s*(ساعات|ساعة|ساعه|دقائق|دقيقة|دقيقه|دقايق)$B1""")?.let { m ->
+            val n = m.groupValues[1].toDouble()
+            duration = if (m.groupValues[2].startsWith("س")) (n * 60).toInt() else n.toInt()
+        }
+        val lengths = listOf("ساعتين" to 120, "ساعتان" to 120, "ساعة ونصف" to 90, "ساعة و نصف" to 90, "ساعة ونص" to 90, "ساعة وربع" to 75,
+            "نصف ساعة" to 30, "نص ساعة" to 30, "ربع ساعة" to 15)
+        if (duration == null) take("""$B0(?:(?:لمدة|مدة)\s+)?(${lengths.joinToString("|") { it.first }})$B1""")?.let { m ->
+            duration = lengths.first { it.first == m.groupValues[1] }.second
+        }
+        // A bare "ساعة" is also a watch or a clock, so it is a length only after "لمدة".
+        if (duration == null) take("""$B0(?:لمدة|مدة)\s+(?:ساعة|ساعه)$B1""")?.let { duration = 60 }
+
+        var time: LocalTime? = null
+        take("""$B0(?:من\s+)?$HOUR?(\d{1,2})(?::(\d{2}))?\s*(?:($AM)|($PM))?\s*(?:-|–|إلى|الى|حتى|لـ|ل)\s*$HOUR?(\d{1,2})(?::(\d{2}))?\s*(?:($AM)|($PM))$B1""")?.let { m ->
+            val g = m.groupValues
+            val endAm = g[7]; val endPm = g[8]
+            val start = clock(g[1].toInt(), g[2].toIntOrNull() ?: 0, g[3].ifEmpty { if (g[4].isEmpty()) endAm else "" }, g[4].ifEmpty { if (g[3].isEmpty()) endPm else "" })
+            val end = clock(g[5].toInt(), g[6].toIntOrNull() ?: 0, endAm, endPm)
+            if (start != null && end != null) {
+                time = start
+                val len = (end.toSecondOfDay() - start.toSecondOfDay()) / 60
+                if (len > 0 && duration == null) duration = len
+            }
+        }
+        if (time == null) take("""$B0(?:في\s+)?$HOUR?(\d{1,2})(?::(\d{2}))?\s*(?:($AM)|($PM))$B1""")?.let { m ->
+            time = clock(m.groupValues[1].toInt(), m.groupValues[2].toIntOrNull() ?: 0, m.groupValues[3], m.groupValues[4])
+        }
+        if (time == null) take("""$B0(?:في\s+)?$HOUR(\d{1,2})(?::(\d{2}))?$B1""")?.let { m ->
+            val h = m.groupValues[1].toInt()
+            // "الساعة 3" means the afternoon, "الساعة 9" the morning, as with English "at 3".
+            time = clock(if (h in 1..6) h + 12 else h, m.groupValues[2].toIntOrNull() ?: 0, "", "")
+        }
+        if (time == null) take("""$B0(?:عند\s+|في\s+)?(?:منتصف الليل)$B1""")?.let { time = LocalTime.MIDNIGHT }
+        if (time == null) take("""(?<!بعد\s)$B0(?:عند\s+|في\s+)?(?:الظهر|الظهيرة)$B1""")?.let { time = LocalTime.NOON }
+
+        var date: LocalDate? = null
+        if (take("""${B0}الليلة$B1""") != null) { date = today; if (time == null) time = LocalTime.of(19, 0) }
+        if (date == null) take("""${B0}بعد\s+(?:غد$TAN|بكر[ةه])$B1""")?.let { date = today.plusDays(2) }
+        if (date == null) take("""$B0(?:غد$TAN|بكر[ةه]|الغد)$B1""")?.let { date = today.plusDays(1) }
+        if (date == null) take("""${B0}اليوم$B1""")?.let { date = today }
+        if (date == null) take("""${B0}بعد\s+(?:(\d+)\s*(أيام|ايام|يوم|يومًا|يوما|أسابيع|اسابيع|أسبوع|اسبوع)|(يومين|أسبوعين|اسبوعين|أسبوع|اسبوع))$B1""")?.let { m ->
+            val g = m.groupValues
+            date = when {
+                g[3].startsWith("يوم") -> today.plusDays(2)
+                g[3].isNotEmpty() -> today.plusWeeks(if (g[3].endsWith("ين")) 2 else 1)
+                g[2].contains("سب") -> today.plusWeeks(g[1].toLong())
+                else -> today.plusDays(g[1].toLong())
+            }
+        }
+        if (date == null) take("""$B0(?:ال)?[أا]سبوع\s+(?:القادم|المقبل|الجاي|الجاى)$B1""")?.let { date = today.plusWeeks(1) }
+        if (date == null) take("""$B0(?:في\s+)?(?:يوم\s+(?:ال)?|ال)(${arDays.keys.joinToString("|")})$B1(\s+(?:القادمة|القادم|المقبلة|المقبل|الجاية|الجاي|الجاى)$B1)?""")?.let { m ->
+            val dow = arDays.getValue(m.groupValues[1])
+            var d = today.plusDays(((dow.value - today.dayOfWeek.value + 7) % 7).toLong())
+            if (m.groupValues[2].isNotBlank() && d == today) d = d.plusWeeks(1)
+            date = d
+        }
+        if (date == null) take("""$B0(?:في\s+)?(\d{1,2})\s+(?:من\s+)?(${arMonths.keys.joinToString("|")})$B1""")?.let { m ->
+            date = resolve(today, arMonths.getValue(m.groupValues[2]), m.groupValues[1].toInt())
+        }
+        return ArabicParts(s, date, time, duration)
     }
 
     private fun hour24(h: Int, ampm: String): Int = when (ampm) {

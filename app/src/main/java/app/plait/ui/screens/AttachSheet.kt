@@ -2,6 +2,11 @@ package app.plait.ui.screens
 
 import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import android.widget.Toast
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.AnimatedVisibility
@@ -59,8 +64,6 @@ import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import java.util.UUID
 
 /**
@@ -97,28 +100,28 @@ fun AttachSheet(shared: SharedMail, onAttached: (CalEvent) -> Unit, onDismiss: (
                     Box(Modifier.size(width = 40.dp, height = 5.dp).background(plait.muted.copy(alpha = 0.5f), CircleShape))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Add to a meeting", style = PlaitType.section.copy(fontSize = 28.sp, lineHeight = 32.sp), color = plait.text)
-                    PlaitButton("Discard", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                    Text(stringResource(R.string.note_attach_title), style = PlaitType.section.copy(fontSize = 28.sp, lineHeight = 32.sp), color = plait.text)
+                    PlaitButton(stringResource(R.string.note_attach_discard), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                 }
 
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(plait.surface).padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(mail.subject.ifBlank { "Shared text" }, style = PlaitType.bodyStrong, color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(mail.subject.ifBlank { stringResource(R.string.note_attach_shared_text) }, style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     val meta = buildList {
-                        if (mail.from.isNotBlank()) add(EmailParser.displayName(mail.from))
-                        if (mail.attachments.isNotEmpty()) add("${mail.attachments.size} attachment${if (mail.attachments.size > 1) "s" else ""}")
+                        if (mail.from.isNotBlank()) add(Bidi.isolate(EmailParser.displayName(mail.from)))
+                        if (mail.attachments.isNotEmpty()) add(Txt.plural(R.plurals.note_attach_attachments, mail.attachments.size))
                     }.joinToString(" · ")
                     if (meta.isNotBlank()) Text(meta, style = PlaitType.monoSmall, color = plait.muted)
-                    if (preview.isNotBlank()) Text(preview, style = PlaitType.body, color = plait.muted, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    if (preview.isNotBlank()) Text(preview, style = PlaitType.body.userText(), color = plait.muted, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
 
                 if (matches.isEmpty()) {
                     Text(
-                        "No upcoming meetings to add this to. Connect a calendar first, then share the email again.",
+                        stringResource(R.string.note_attach_no_meetings),
                         style = PlaitType.body, color = plait.muted,
                     )
                 } else {
                     Text(
-                        if (matches.first().score >= 3.0) "Best match first" else "Pick the meeting this is about",
+                        stringResource(if (matches.first().score >= 3.0) R.string.note_attach_best_first else R.string.note_attach_pick),
                         style = PlaitType.bodyStrong, color = plait.text,
                     )
                     matches.forEachIndexed { i, m ->
@@ -128,12 +131,12 @@ fun AttachSheet(shared: SharedMail, onAttached: (CalEvent) -> Unit, onDismiss: (
                                 mail.body.take(60_000), System.currentTimeMillis(), shared.source, mail.attachments,
                             )
                             ContextStore.get(context).add(item)
-                            Toast.makeText(context, "Added to ${m.event.title}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, Txt.s(R.string.note_attach_added, Bidi.isolate(m.event.title)), Toast.LENGTH_SHORT).show()
                             onAttached(m.event)
                         }
                     }
                 }
-                Text("Stays on this phone.", style = PlaitType.caption, color = plait.muted)
+                Text(stringResource(R.string.note_attach_stays), style = PlaitType.caption, color = plait.muted)
                 Spacer(Modifier.height(6.dp))
             }
         }
@@ -145,7 +148,7 @@ private fun MatchRow(ev: CalEvent, reasons: List<String>, best: Boolean, zone: Z
     val kind = remember(ev.id) { BriefBuilder.classify(ev) }
     val tone = kind.tone()
     val whenText = remember(ev.id) {
-        Instant.ofEpochMilli(ev.startMs).atZone(zone).format(DateTimeFormatter.ofPattern("EEE d MMM · h:mm a", Locale.getDefault()))
+        Instant.ofEpochMilli(ev.startMs).atZone(zone).format(app.plait.data.TimeFmt.fmt("EEE d MMM · h:mm a"))
     }
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(tone.bg).pressable(onClick).padding(18.dp),
@@ -153,9 +156,9 @@ private fun MatchRow(ev: CalEvent, reasons: List<String>, best: Boolean, zone: Z
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             KindPill(kind, tone)
-            if (best) Text("Best match", style = PlaitType.monoSmall, color = tone.ink)
+            if (best) Text(stringResource(R.string.note_attach_best), style = PlaitType.monoSmall, color = tone.ink)
         }
-        Text(ev.title, style = PlaitType.cardTitle.copy(fontSize = 20.sp, lineHeight = 23.sp), color = tone.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(ev.title, style = PlaitType.cardTitle.copy(fontSize = 20.sp, lineHeight = 23.sp).userText(), color = tone.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(whenText, style = PlaitType.monoSmall, color = tone.ink.copy(alpha = 0.7f))
         if (reasons.isNotEmpty()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

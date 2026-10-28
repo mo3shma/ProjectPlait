@@ -1,6 +1,11 @@
 package app.plait.ui.screens
 
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -135,8 +140,13 @@ internal fun grounded(answer: String, source: String): String {
 }
 
 /** A sentence-case "Likely about …" from the title alone, for when no AI is on. */
-internal fun ruleGuess(title: String): String =
-    "Likely about " + title.trim().trimEnd('.', '!', '?').replaceFirstChar { it.lowercase() } + "."
+internal fun ruleGuess(title: String): String = title.trim().trimEnd('.', '!', '?').let { t ->
+    // Sentence case is English only: in Arabic the title is quoted as written ("على الأرجح بشأن Interview with Omar").
+    Txt.s(R.string.meet_about_rule_guess, Bidi.isolate(if (app.plait.i18n.AppLocale.isRtl) t else t.replaceFirstChar { it.lowercase() }))
+}
+
+/** Whether [text] reads as a guess: it starts with the hedge word of the app's language ("Likely", "على الأرجح"). */
+internal fun hedged(text: String): Boolean = text.startsWith(Txt.s(R.string.ai_guess_hedge), ignoreCase = true)
 
 /**
  * "About this meeting": one very brief paragraph. From the invite's own text when it has some; otherwise a careful,
@@ -193,7 +203,7 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
             ?.let { app.plait.ai.AiHarness.paragraph(it, it, 35) } ?: ruleGuess(ev.title)
         AboutSource.Title -> ruleGuess(ev.title)
     }
-    val guess = (entry?.takeIf { text != null }?.kind ?: from) == AboutSource.Title || shown.startsWith("Likely", ignoreCase = true)
+    val guess = (entry?.takeIf { text != null }?.kind ?: from) == AboutSource.Title || (text == null && shown == ruleGuess(ev.title)) || hedged(shown)
     val look = LocalMeetingLook.current
     var open by remember { mutableStateOf(false) }
     Column(
@@ -202,30 +212,30 @@ internal fun MeetingInfoCard(ev: CalEvent, desc: String, brief: MeetingBrief, no
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("About this meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.meet_about_title), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.weight(1f))
             // Its own clickable, so a tap here does not also open the card.
-            if (upToDate) Text("Already up to date", style = PlaitType.caption, color = plait.muted)
+            if (upToDate) Text(stringResource(R.string.meet_up_to_date), style = PlaitType.caption, color = plait.muted)
             else if (aiReady && !busy) IconButton(writeAgain, Modifier.size(32.dp)) {
-                Icon(Icons.Filled.Refresh, "Write this again", tint = plait.muted, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Refresh, stringResource(R.string.meet_write_again), tint = plait.muted, modifier = Modifier.size(18.dp))
             }
-            Icon(Icons.Filled.OpenInFull, "Open", tint = plait.muted, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.OpenInFull, stringResource(R.string.common_open), tint = plait.muted, modifier = Modifier.size(18.dp))
         }
-        if (guess) Text("No details in the invite. A guess from the title:", style = PlaitType.caption, color = plait.muted)
-        if (busy && text == null) Text(if (from == AboutSource.Title) "Thinking about the title…" else "Reading…", style = PlaitType.body, color = plait.muted)
-        else Text(shown, style = PlaitType.body, color = plait.text, maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        if (guess) Text(stringResource(R.string.meet_guess_from_title), style = PlaitType.caption, color = plait.muted)
+        if (busy && text == null) Text(stringResource(if (from == AboutSource.Title) R.string.meet_thinking_title else R.string.meet_reading), style = PlaitType.body, color = plait.muted)
+        else Text(shown, style = PlaitType.body.userText(), color = plait.text, maxLines = 4, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         if (from == AboutSource.Title) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillButton("Record", onRecord, Icons.Filled.Mic, primary = true)
-            PillButton("Write", { writing = true }, Icons.Filled.Edit)
+            PillButton(stringResource(R.string.meet_record), onRecord, Icons.Filled.Mic, primary = true)
+            PillButton(stringResource(R.string.note_write), { writing = true }, Icons.Filled.Edit)
         }
     }
-    if (open) DetailDialog("About this meeting", { open = false }) {
-        if (guess) Text("A guess from the title, since the invite has no details.", style = PlaitType.caption, color = plait.muted)
-        if (busy && text == null) Text(if (from == AboutSource.Title) "Thinking about the title…" else "Reading…", style = PlaitType.body, color = plait.muted)
-        else Text(shown, style = PlaitType.body, color = plait.text)
-        if (upToDate) Text("Already up to date", style = PlaitType.caption, color = plait.muted)
-        else if (aiReady && !busy) PillButton("Write this again", writeAgain, Icons.Filled.Refresh)
+    if (open) DetailDialog(stringResource(R.string.meet_about_title), { open = false }) {
+        if (guess) Text(stringResource(R.string.meet_guess_dialog), style = PlaitType.caption, color = plait.muted)
+        if (busy && text == null) Text(stringResource(if (from == AboutSource.Title) R.string.meet_thinking_title else R.string.meet_reading), style = PlaitType.body, color = plait.muted)
+        else Text(shown, style = PlaitType.body.userText(), color = plait.text)
+        if (upToDate) Text(stringResource(R.string.meet_up_to_date), style = PlaitType.caption, color = plait.muted)
+        else if (aiReady && !busy) PillButton(stringResource(R.string.meet_write_again), writeAgain, Icons.Filled.Refresh)
     }
-    if (writing) EditTextDialog("Write about this meeting", "", onSave = { t ->
+    if (writing) EditTextDialog(stringResource(R.string.meet_write_about), "", onSave = { t ->
         val note = Memo(UUID.randomUUID().toString(), ev.id, MemoKind.Text, System.currentTimeMillis(), t.trim())
         MemoStore.get(context).add(note)
         app.plait.audio.NoteProcessor.afterMemoSaved(context, note)
@@ -286,8 +296,10 @@ private suspend fun aboutFromInvite(context: Context, ev: CalEvent, invite: Stri
 
 /** A one-line guess from the title, through the harness: no new names or numbers, and it must stay on the title's subject. */
 private suspend fun guessFromTitle(context: Context, ev: CalEvent): String? {
-    val o = app.plait.ai.AiHarness.json(context, GUESS_RULES, "TITLE: ${ev.title}") ?: return null
+    // The hedge word is the app's language's own, so an Arabic answer ("على الأرجح ...") passes the same check as "Likely ...".
+    val rules = GUESS_RULES.replace("Start with \"Likely\"", "Start with \"${Txt.s(R.string.ai_guess_hedge)}\"")
+    val o = app.plait.ai.AiHarness.json(context, rules, "TITLE: ${ev.title}") ?: return null
     val likely = app.plait.ai.AiHarness.paragraph(o.optString("likely"), ev.title, 12, maxSentences = 1) ?: return null
-    if (!likely.startsWith("Likely", ignoreCase = true) || !app.plait.ai.AiHarness.onTopic(likely, ev.title)) return null
+    if (!hedged(likely) || !app.plait.ai.AiHarness.onTopic(likely, ev.title)) return null
     return likely
 }

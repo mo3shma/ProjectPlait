@@ -1,10 +1,11 @@
 package app.plait.data.brief
 
+import app.plait.R
 import app.plait.data.CalEvent
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /** One slot on the day strip: where a meeting sits between the start and end of the day. */
 data class LoadBlock(val eventId: String, val from: Float, val to: Float, val kind: MeetingKind)
@@ -24,17 +25,8 @@ data class DayBrief(
 )
 
 object DayBriefBuilder {
-    private val clock = app.plait.data.TimeFmt.clock
-    private val numbers = listOf("No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten")
-
-    private fun num(n: Int) = numbers.getOrNull(n) ?: n.toString()
-    private fun hm(ms: Long, zone: ZoneId) = Instant.ofEpochMilli(ms).atZone(zone).format(clock)
-
-    private fun span(min: Long): String = when {
-        min >= 60 && min % 60 == 0L -> "${min / 60} h"
-        min >= 60 -> "${min / 60} h ${min % 60} min"
-        else -> "$min min"
-    }
+    private fun hm(ms: Long, zone: ZoneId) = Bidi.isolate(Instant.ofEpochMilli(ms).atZone(zone).format(app.plait.data.TimeFmt.clock))
+    private fun title(t: String) = Bidi.isolate(tidyTitle(t))
 
     /**
      * [today] is today's events in time order, all-day events first. [briefs] holds each meeting's
@@ -54,8 +46,8 @@ object DayBriefBuilder {
             val email = emailFlags[ev.id]
             val flag = when {
                 email != null -> email
-                b.kind == MeetingKind.External && b.aboutIsGuess && b.agenda.isEmpty() -> "No agenda"
-                b.kind == MeetingKind.Interview -> "Check who's joining"
+                b.kind == MeetingKind.External && b.aboutIsGuess && b.agenda.isEmpty() -> Txt.s(R.string.gen_flag_no_agenda)
+                b.kind == MeetingKind.Interview -> Txt.s(R.string.gen_flag_check_guests)
                 else -> null
             }
             if (flag != null) flags[ev.id] = flag
@@ -72,7 +64,7 @@ object DayBriefBuilder {
         }
 
         if (today.isEmpty()) {
-            return DayBrief("A clear day.", "Nothing on the calendar. A good day for deep work.", flags, load, startHour, endHour)
+            return DayBrief(Txt.s(R.string.gen_brief_clear_headline), Txt.s(R.string.gen_brief_clear_summary), flags, load, startHour, endHour)
         }
         val left = timed.filter { it.endMs > nowMs }
         val running = timed.firstOrNull { it.startMs <= nowMs && it.endMs > nowMs }
@@ -80,32 +72,34 @@ object DayBriefBuilder {
         val external = left.count { briefs[it.id]?.kind == MeetingKind.External }
 
         val headline = when {
-            timed.isNotEmpty() && left.isEmpty() -> "That's a wrap."
-            running != null -> "In ${tidyTitle(running.title).take(40)} now."
+            timed.isNotEmpty() && left.isEmpty() -> Txt.s(R.string.gen_brief_wrap)
+            running != null -> Txt.s(R.string.gen_brief_in_now, Bidi.isolate(tidyTitle(running.title).take(40)))
             next != null && (next.startMs - nowMs) / 60_000 < 15 ->
-                "${tidyTitle(next.title).take(40)} starts in ${((next.startMs - nowMs) / 60_000).coerceAtLeast(1)} min."
-            left.size == 1 -> "One meeting left."
-            left.isNotEmpty() -> "${num(left.size)} meetings ahead."
-            else -> "Only all-day items today."
+                ((next.startMs - nowMs) / 60_000).coerceAtLeast(1).toInt().let { m ->
+                    Txt.plural(R.plurals.gen_brief_starts_in, m, Bidi.isolate(tidyTitle(next.title).take(40)), m)
+                }
+            left.size == 1 -> Txt.s(R.string.gen_brief_one_left)
+            left.isNotEmpty() -> Txt.plural(R.plurals.gen_brief_meetings_ahead, left.size, DayAnalytics.word(left.size))
+            else -> Txt.s(R.string.gen_brief_all_day_only)
         }
 
         val parts = ArrayList<String>()
         if (timed.isNotEmpty() && left.isEmpty()) {
-            parts.add("${timed.size} meeting${if (timed.size == 1) "" else "s"} done. Nothing else today.")
+            parts.add(Txt.plural(R.plurals.gen_brief_done, timed.size))
         } else if (left.isNotEmpty()) {
-            if (running == null && next != null) parts.add("Next is ${tidyTitle(next.title)} at ${hm(next.startMs, zone)}.")
-            if (external > 0) parts.add("$external with people outside your organisation.")
+            if (running == null && next != null) parts.add(Txt.s(R.string.gen_brief_next_at, title(next.title), hm(next.startMs, zone)))
+            if (external > 0) parts.add(Txt.plural(R.plurals.gen_brief_external, external))
             val b2b = backToBack(left)
-            if (b2b >= 3) parts.add("$b2b back to back from ${hm(left.first().startMs, zone)}.")
+            if (b2b >= 3) parts.add(Txt.plural(R.plurals.gen_brief_back_to_back, b2b, b2b, hm(left.first().startMs, zone)))
             val free = left.last().endMs
-            parts.add("Free from ${hm(free, zone)}.")
+            parts.add(Txt.s(R.string.gen_brief_free_from, hm(free, zone)))
             val gap = biggestGap(left, nowMs)
-            if (gap != null && gap.third >= 45) parts.add("Longest break ${hm(gap.first, zone)}–${hm(gap.second, zone)} (${span(gap.third)}).")
+            if (gap != null && gap.third >= 45) parts.add(Txt.s(R.string.gen_brief_longest_break, hm(gap.first, zone), hm(gap.second, zone), DayAnalytics.span(gap.third)))
         }
         val prep = flags.entries.firstOrNull { briefs[it.key]?.kind != null && (left.any { e -> e.id == it.key }) }
         if (prep != null) {
-            val title = tidyTitle(today.first { it.id == prep.key }.title)
-            parts.add("Prep: $title — ${prep.value.lowercase().replaceFirstChar { it.uppercase() }}.")
+            val flag = prep.value.lowercase().replaceFirstChar { it.uppercase() }
+            parts.add(Txt.s(R.string.gen_brief_prep, title(today.first { it.id == prep.key }.title), flag))
         }
         return DayBrief(headline, parts.joinToString(" "), flags, load, startHour, endHour)
     }
@@ -153,8 +147,9 @@ object DayBriefPrompt {
             val extra = listOfNotNull(b?.kind?.label, b?.withLine?.takeIf { it.isNotBlank() }, day.flags[ev.id]).joinToString("; ")
             "- $at ${tidyTitle(ev.title)}" + if (extra.isNotBlank()) " ($extra)" else ""
         }
-        return "You write a short morning briefing for a busy person. Use only the facts below. Do not invent anything.\n" +
-            "Write 2 or 3 plain sentences, no lists, no greeting. Say what the day looks like and what needs attention first.\n\n" +
+        // In Arabic the harness's language rule follows the instructions, so the answer is written in Arabic.
+        return app.plait.ai.AiHarness.withLanguage("You write a short morning briefing for a busy person. Use only the facts below. Do not invent anything.\n" +
+            "Write 2 or 3 plain sentences, no lists, no greeting. Say what the day looks like and what needs attention first.") + "\n\n" +
             "Meetings today:\n$lines\n\nSummary so far: ${day.summary}"
     }
 }

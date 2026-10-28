@@ -1,6 +1,8 @@
 package app.plait.ui.screens
 
 import android.content.Context
+import app.plait.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -69,16 +71,16 @@ internal fun BetterVoiceCard() {
         Modifier.fillMaxWidth().toneSurface(RoundedCornerShape(24.dp), GlassTone.Mint, 1, strong = true).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("Better results on voice notes", style = PlaitType.bodyStrong, color = plait.text)
+        Text(stringResource(R.string.note_bv_title), style = PlaitType.bodyStrong, color = plait.text)
         Text(
-            "Whisper Turbo writes the transcript and Qwen3 0.6B writes the summary and finds the tasks, all on your phone.",
+            stringResource(R.string.note_bv_body),
             style = PlaitType.caption, color = plait.muted,
         )
         listOf(turbo, qwen).forEach { m ->
             val st = ModelCenter.state(m.id)
             val note = when {
-                installed(m) -> "Ready"
-                st is ModelState.Downloading -> "Downloading… ${st.done * 100 / st.total.coerceAtLeast(1)}%"
+                installed(m) -> stringResource(R.string.note_bv_ready)
+                st is ModelState.Downloading -> stringResource(R.string.note_bv_downloading, (st.done * 100 / st.total.coerceAtLeast(1)).toInt())
                 st is ModelState.Failed -> st.reason
                 else -> m.sizeLabel
             }
@@ -87,19 +89,19 @@ internal fun BetterVoiceCard() {
                 PlaitBadge(note, if (st is ModelState.Failed) BadgeKind.Warning else if (installed(m)) BadgeKind.Included else BadgeKind.Size)
             }
         }
-        if (lowMem) Text("This phone has less memory than Turbo likes; ${safer.title} is a safer choice.", style = PlaitType.caption, color = plait.muted)
+        if (lowMem) Text(stringResource(R.string.note_bv_low_mem, safer.title), style = PlaitType.caption, color = plait.muted)
         if (busy) {
-            Text("It carries on if you leave Plait.", style = PlaitType.caption, color = plait.muted)
+            Text(stringResource(R.string.note_bv_carries_on), style = PlaitType.caption, color = plait.muted)
         } else FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             PlaitButton(
-                (if (main.size > 1) "Get both" else "Get ${main.first().title}") + " · ${label(main)}",
+                if (main.size > 1) stringResource(R.string.note_bv_get_both, label(main)) else stringResource(R.string.note_bv_get_one, main.first().title, label(main)),
                 { get(main) }, style = ButtonStyle.Primary, size = ButtonSize.Small,
             )
             if (lowMem && !installed(safer) && !installed(turbo)) {
                 val alt = missing(safer, qwen)
-                PlaitButton("Get ${safer.title} + ${qwen.title} · ${label(alt)}", { get(alt) }, style = ButtonStyle.Tinted, tone = GlassTone.Mint, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.note_bv_get_pair, safer.title, qwen.title, label(alt)), { get(alt) }, style = ButtonStyle.Tinted, tone = GlassTone.Mint, size = ButtonSize.Small)
             }
-            PlaitButton("Not now", { dismissed = true; prefs(context).edit().putBoolean(DISMISSED, true).apply() }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+            PlaitButton(stringResource(R.string.common_not_now), { dismissed = true; prefs(context).edit().putBoolean(DISMISSED, true).apply() }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
         }
     }
 }

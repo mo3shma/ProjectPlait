@@ -15,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import app.plait.MainActivity
 import app.plait.reminder.LiveAlert
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 
 /**
  * Keeps the process alive and the microphone open while a note is being recorded, so capture
@@ -70,7 +72,7 @@ class RecordingService : Service() {
             val nm = context.getSystemService(NotificationManager::class.java)
             if (nm.getNotificationChannel(CHANNEL) == null) {
                 nm.createNotificationChannel(
-                    NotificationChannel(CHANNEL, "Voice note recording", NotificationManager.IMPORTANCE_LOW)
+                    NotificationChannel(CHANNEL, Txt.s(R.string.note_notif_channel), NotificationManager.IMPORTANCE_LOW)
                 )
             }
         }
@@ -88,12 +90,12 @@ class RecordingService : Service() {
                 Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-            val who = title.ifBlank { "Tap to return to Plait" }
-            val b = LiveAlert.builder(context, CHANNEL, "Recording a voice note", open)
+            val who = Bidi.isolate(title.ifBlank { Txt.s(R.string.note_notif_tap_return) })
+            val b = LiveAlert.builder(context, CHANNEL, Txt.s(R.string.note_notif_title), open)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .addAction(0, if (paused) "Resume" else "Pause", action(context, 1, ACTION_TOGGLE))
-                .addAction(0, "Stop", action(context, 2, ACTION_STOP))
-                .setContentText("${if (paused) "Paused" else "Recording"} · $who").setShowWhen(false)
+                .addAction(0, Txt.s(if (paused) R.string.note_notif_resume else R.string.note_notif_pause), action(context, 1, ACTION_TOGGLE))
+                .addAction(0, Txt.s(R.string.note_notif_stop), action(context, 2, ACTION_STOP))
+                .setContentText(Txt.s(if (paused) R.string.note_notif_paused else R.string.note_notif_recording, who)).setShowWhen(false)
             return b.build()
         }
 

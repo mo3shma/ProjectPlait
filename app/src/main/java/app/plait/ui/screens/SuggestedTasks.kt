@@ -1,6 +1,9 @@
 package app.plait.ui.screens
 
 import android.Manifest
+import app.plait.R
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -65,23 +68,23 @@ internal fun SuggestedTasksCard(ev: CalEvent) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.AddTask, null, tint = plait.text, modifier = Modifier.size(22.dp))
-            Text("Suggested tasks", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            Text(stringResource(R.string.note_tasks_suggested), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
         }
-        Text("Found in your notes. Add one to the checklist with a reminder.", style = PlaitType.caption, color = plait.muted)
+        Text(stringResource(R.string.note_tasks_found), style = PlaitType.caption, color = plait.muted)
         ideas.forEach { idea ->
             val now = remember(idea.id) { System.currentTimeMillis() }
             val dueMs = remember(idea.id) { TaskSuggester.dueMs(idea.due, now) }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(idea.text, style = PlaitType.bodyStrong, color = plait.text)
-                    Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: "No due date. Reminder ${TaskReminders.label(TaskSuggester.remindAt(idea.due, now))}", style = PlaitType.caption, color = plait.muted)
+                    Text(idea.text, style = PlaitType.bodyStrong.userText(), color = plait.text, modifier = Modifier.fillMaxWidth())
+                    Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: stringResource(R.string.note_tasks_no_due, app.plait.i18n.Bidi.isolate(TaskReminders.label(TaskSuggester.remindAt(idea.due, now)))), style = PlaitType.caption, color = plait.muted)
                 }
-                PlaitButton("Add", { add(listOf(idea)) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_add), { add(listOf(idea)) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
                 IconButton(onClick = { TaskIdeas.decide(context, idea) }) {
-                    Icon(Icons.Filled.Close, "Dismiss", tint = plait.muted)
+                    Icon(Icons.Filled.Close, stringResource(R.string.common_dismiss), tint = plait.muted)
                 }
             }
         }
-        if (ideas.size > 1) PlaitButton("Add all ${ideas.size}", { add(ideas) }, style = ButtonStyle.Secondary, size = ButtonSize.Small)
+        if (ideas.size > 1) PlaitButton(stringResource(R.string.note_tasks_add_all, ideas.size), { add(ideas) }, style = ButtonStyle.Secondary, size = ButtonSize.Small)
     }
 }

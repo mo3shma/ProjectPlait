@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gen_kind_one_on_one">فردي</string>
+    <string name="gen_kind_standup">متابعة</string>
+    <string name="gen_kind_review">مراجعة</string>
+    <string name="gen_kind_planning">تخطيط</string>
+    <string name="gen_kind_interview">مقابلة</string>
+    <string name="gen_kind_external">خارجي</string>
+    <string name="gen_kind_social">اجتماعي</string>
+    <string name="gen_kind_personal">شخصي</string>
+    <string name="gen_kind_focus">تركيز</string>
+    <string name="gen_kind_general">اجتماع</string>
+
+    <string name="gen_chip_repeats">متكرر</string>
+    <string name="gen_chip_external_org">خارجي · %1$s</string>
+    <string name="gen_chip_external_guests">ضيوف من الخارج</string>
+    <plurals name="gen_chip_people">
+        <item quantity="zero">لا أحد</item>
+        <item quantity="one">شخص واحد</item>
+        <item quantity="two">شخصان</item>
+        <item quantity="few">%d أشخاص</item>
+        <item quantity="many">%d شخصًا</item>
+        <item quantity="other">%d شخص</item>
+    </plurals>
+
+    <string name="gen_with">مع %1$s</string>
+    <string name="gen_with_more">مع %1$s +%2$d</string>
+    <string name="gen_list_sep">"، "</string>
+    <string name="gen_and">%1$s و%2$s</string>
+    <string name="gen_rsvp_accepted">وافق %1$d من %2$d</string>
+    <string name="gen_rsvp_declined">اعتذر %d</string>
+    <string name="gen_rsvp_waiting">%d بانتظار الرد</string>
+
+    <string name="gen_guess_someone">شخص ما</string>
+    <string name="gen_guess_one_on_one">لقاء فردي مع %1$s. لا تذكر الدعوة موضوعه.</string>
+    <plurals name="gen_guess_standup_people">
+        <item quantity="zero">متابعة دورية. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+        <item quantity="one">متابعة دورية مع شخص واحد. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+        <item quantity="two">متابعة دورية مع شخصين. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+        <item quantity="few">متابعة دورية مع %d أشخاص. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+        <item quantity="many">متابعة دورية مع %d شخصًا. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+        <item quantity="other">متابعة دورية مع %d شخص. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</item>
+    </plurals>
+    <string name="gen_guess_standup">متابعة دورية. لم يُضف جدول أعمال، لذا يُتوقع عرض المستجدات والعوائق.</string>
+    <string name="gen_guess_review">يبدو أنه اجتماع لمراجعة %1$s. لا تذكر الدعوة تفاصيل أخرى.</string>
+    <string name="gen_guess_planning">يبدو أنها جلسة تخطيط: %1$s. لم يُضف جدول أعمال.</string>
+    <string name="gen_guess_interview_with">يبدو أنها مقابلة مع %1$s. قائمة الضيوف توضح من سينضم.</string>
+    <string name="gen_guess_interview">يبدو أنها مقابلة. قائمة الضيوف توضح من سينضم.</string>
+    <string name="gen_guess_external_org">اجتماع مع أشخاص من خارج مؤسستك (%1$s). لا تذكر الدعوة ما يتناوله.</string>
+    <string name="gen_guess_external">اجتماع مع أشخاص من خارج مؤسستك. لا تذكر الدعوة ما يتناوله.</string>
+    <string name="gen_guess_social_with">وقت مع %1$s.</string>
+    <string name="gen_guess_social">وقت اجتماعي.</string>
+    <string name="gen_guess_personal">موعد شخصي في تقويمك.</string>
+    <string name="gen_guess_focus">وقت مخصص للعمل المركّز.</string>
+    <plurals name="gen_guess_general_people">
+        <item quantity="zero">اجتماع. لا وصف في الدعوة.</item>
+        <item quantity="one">اجتماع مع شخص واحد. لا وصف في الدعوة.</item>
+        <item quantity="two">اجتماع مع شخصين. لا وصف في الدعوة.</item>
+        <item quantity="few">اجتماع مع %d أشخاص. لا وصف في الدعوة.</item>
+        <item quantity="many">اجتماع مع %d شخصًا. لا وصف في الدعوة.</item>
+        <item quantity="other">اجتماع مع %d شخص. لا وصف في الدعوة.</item>
+    </plurals>
+    <string name="gen_guess_general">لا وصف في الدعوة.</string>
+
+    <string name="gen_flag_no_agenda">بلا جدول أعمال</string>
+    <string name="gen_flag_check_guests">التحقق من الحضور</string>
+
+    <string name="gen_brief_clear_headline">يوم خالٍ.</string>
+    <string name="gen_brief_clear_summary">لا شيء في التقويم. يوم مناسب للعمل العميق.</string>
+    <string name="gen_brief_wrap">انتهت اجتماعات اليوم.</string>
+    <string name="gen_brief_in_now">جارٍ الآن: %1$s.</string>
+    <plurals name="gen_brief_starts_in">
+        <item quantity="zero">يبدأ %1$s الآن.</item>
+        <item quantity="one">يبدأ %1$s بعد دقيقة.</item>
+        <item quantity="two">يبدأ %1$s بعد دقيقتين.</item>
+        <item quantity="few">يبدأ %1$s بعد %2$d دقائق.</item>
+        <item quantity="many">يبدأ %1$s بعد %2$d دقيقة.</item>
+        <item quantity="other">يبدأ %1$s بعد %2$d دقيقة.</item>
+    </plurals>
+    <string name="gen_brief_one_left">بقي اجتماع واحد.</string>
+    <plurals name="gen_brief_meetings_ahead">
+        <item quantity="zero">لا اجتماعات قادمة.</item>
+        <item quantity="one">اجتماع واحد قادم.</item>
+        <item quantity="two">اجتماعان قادمان.</item>
+        <item quantity="few">%1$s اجتماعات قادمة.</item>
+        <item quantity="many">%1$s اجتماعًا قادمًا.</item>
+        <item quantity="other">%1$s اجتماع قادم.</item>
+    </plurals>
+    <string name="gen_brief_all_day_only">لا شيء اليوم سوى أحداث تستغرق اليوم كله.</string>
+    <plurals name="gen_brief_done">
+        <item quantity="zero">لم ينتهِ أي اجتماع. لا شيء آخر اليوم.</item>
+        <item quantity="one">انتهى اجتماع واحد. لا شيء آخر اليوم.</item>
+        <item quantity="two">انتهى اجتماعان. لا شيء آخر اليوم.</item>
+        <item quantity="few">انتهت %d اجتماعات. لا شيء آخر اليوم.</item>
+        <item quantity="many">انتهى %d اجتماعًا. لا شيء آخر اليوم.</item>
+        <item quantity="other">انتهى %d اجتماع. لا شيء آخر اليوم.</item>
+    </plurals>
+    <string name="gen_brief_next_at">التالي: %1$s الساعة %2$s.</string>
+    <plurals name="gen_brief_external">
+        <item quantity="zero">لا اجتماعات مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="one">واحد منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="two">اثنان منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="few">%d منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="many">%d منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="other">%d منها مع أشخاص من خارج مؤسستك.</item>
+    </plurals>
+    <plurals name="gen_brief_back_to_back">
+        <item quantity="zero">لا اجتماعات متتالية.</item>
+        <item quantity="one">اجتماع واحد بدءًا من %2$s.</item>
+        <item quantity="two">اجتماعان متتاليان بدءًا من %2$s.</item>
+        <item quantity="few">%1$d اجتماعات متتالية بدءًا من %2$s.</item>
+        <item quantity="many">%1$d اجتماعًا متتاليًا بدءًا من %2$s.</item>
+        <item quantity="other">%1$d اجتماع متتالٍ بدءًا من %2$s.</item>
+    </plurals>
+    <string name="gen_brief_free_from">لا اجتماعات بعد %1$s.</string>
+    <string name="gen_brief_longest_break">أطول استراحة %1$s–%2$s (%3$s).</string>
+    <string name="gen_brief_prep">للتحضير: %1$s — %2$s.</string>
+
+    <plurals name="gen_dur_min">
+        <item quantity="zero">0 دقيقة</item>
+        <item quantity="one">دقيقة</item>
+        <item quantity="two">دقيقتان</item>
+        <item quantity="few">%d دقائق</item>
+        <item quantity="many">%d دقيقة</item>
+        <item quantity="other">%d دقيقة</item>
+    </plurals>
+    <plurals name="gen_dur_h">
+        <item quantity="zero">0 ساعة</item>
+        <item quantity="one">ساعة</item>
+        <item quantity="two">ساعتان</item>
+        <item quantity="few">%d ساعات</item>
+        <item quantity="many">%d ساعة</item>
+        <item quantity="other">%d ساعة</item>
+    </plurals>
+    <string name="gen_dur_h_min">%1$s و%2$s</string>
+    <plurals name="gen_countdown_h">
+        <item quantity="zero">0 ساعة</item>
+        <item quantity="one">ساعة</item>
+        <item quantity="two">ساعتان</item>
+        <item quantity="few">%d ساعات</item>
+        <item quantity="many">%d ساعة</item>
+        <item quantity="other">%d ساعة</item>
+    </plurals>
+    <plurals name="gen_countdown_m">
+        <item quantity="zero">0 دقيقة</item>
+        <item quantity="one">دقيقة</item>
+        <item quantity="two">دقيقتان</item>
+        <item quantity="few">%d دقائق</item>
+        <item quantity="many">%d دقيقة</item>
+        <item quantity="other">%d دقيقة</item>
+    </plurals>
+
+    <string name="gen_phase_morning">الصباح</string>
+    <string name="gen_phase_midday">منتصف النهار</string>
+    <string name="gen_phase_evening">المساء</string>
+    <string name="gen_greet_morning">صباح الخير</string>
+    <string name="gen_greet_afternoon">نهارك سعيد</string>
+    <string name="gen_greet_evening">مساء الخير</string>
+
+    <string name="gen_recap_no_meetings">لا اجتماعات اليوم، فكان اليوم كله لك.</string>
+    <plurals name="gen_recap_spent">
+        <item quantity="zero">وقتك في الاجتماعات حتى الآن: %1$s.</item>
+        <item quantity="one">وقتك في اجتماع واحد: %1$s.</item>
+        <item quantity="two">وقتك في اجتماعين: %1$s.</item>
+        <item quantity="few">وقتك في %2$d اجتماعات: %1$s.</item>
+        <item quantity="many">وقتك في %2$d اجتماعًا: %1$s.</item>
+        <item quantity="other">وقتك في %2$d اجتماع: %1$s.</item>
+    </plurals>
+    <string name="gen_recap_longest">كان أطولها %1$s (%2$s).</string>
+    <plurals name="gen_recap_external">
+        <item quantity="zero">لم يكن أي منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="one">كان واحد منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="two">كان اثنان منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="few">كان %d منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="many">كان %d منها مع أشخاص من خارج مؤسستك.</item>
+        <item quantity="other">كان %d منها مع أشخاص من خارج مؤسستك.</item>
+    </plurals>
+    <plurals name="gen_recap_still_to_come">
+        <item quantity="zero">لا اجتماعات متبقية.</item>
+        <item quantity="one">بقي اجتماع واحد.</item>
+        <item quantity="two">بقي اجتماعان.</item>
+        <item quantity="few">بقيت %d اجتماعات.</item>
+        <item quantity="many">بقي %d اجتماعًا.</item>
+        <item quantity="other">بقي %d اجتماع.</item>
+    </plurals>
+    <plurals name="gen_recap_no_notes">
+        <item quantity="zero">لكل اجتماع ملاحظة.</item>
+        <item quantity="one">اجتماع واحد بلا ملاحظات بعد.</item>
+        <item quantity="two">اجتماعان بلا ملاحظات بعد.</item>
+        <item quantity="few">%d اجتماعات بلا ملاحظات بعد.</item>
+        <item quantity="many">%d اجتماعًا بلا ملاحظات بعد.</item>
+        <item quantity="other">%d اجتماع بلا ملاحظات بعد.</item>
+    </plurals>
+    <string name="gen_recap_all_noted">لكل اجتماع منتهٍ ملاحظة.</string>
+
+    <string name="gen_sense_nothing">لا شيء مجدول.</string>
+    <string name="gen_sense_in_until">جارٍ الآن: %1$s حتى %2$s.</string>
+    <string name="gen_sense_last_ended">انتهى آخر اجتماعاتك الساعة %1$s.</string>
+    <string name="gen_sense_first_up">أولًا: %1$s الساعة %2$s، ويبقى على موعده %3$s.</string>
+    <string name="gen_sense_next">التالي: %1$s الساعة %2$s، ويبقى على موعده %3$s.</string>
+
+    <string name="gen_week_name">، %1$s</string>
+    <string name="gen_week_done">انتهى أسبوع عملك%1$s.</string>
+    <string name="gen_week_clear">كان أسبوعًا خاليًا من الاجتماعات.</string>
+    <string name="gen_week_one_meeting">كان لديك اجتماع واحد مدته %1$s، يوم %2$s.</string>
+    <plurals name="gen_week_meetings">
+        <item quantity="zero">لم يكن لديك أي اجتماع.</item>
+        <item quantity="one">كان لديك اجتماع واحد مدته %2$s، وكان يوم %3$s الأكثر ازدحامًا.</item>
+        <item quantity="two">كان لديك اجتماعان مجموعهما %2$s تقريبًا، وكان يوم %3$s الأكثر ازدحامًا.</item>
+        <item quantity="few">كان لديك %1$d اجتماعات مجموعها %2$s تقريبًا، وكان يوم %3$s الأكثر ازدحامًا.</item>
+        <item quantity="many">كان لديك %1$d اجتماعًا مجموعها %2$s تقريبًا، وكان يوم %3$s الأكثر ازدحامًا.</item>
+        <item quantity="other">كان لديك %1$d اجتماع مجموعها %2$s تقريبًا، وكان يوم %3$s الأكثر ازدحامًا.</item>
+    </plurals>
+    <plurals name="gen_week_tasks_open">
+        <item quantity="zero">لا مهام مفتوحة</item>
+        <item quantity="one">مهمة واحدة لا تزال مفتوحة</item>
+        <item quantity="two">مهمتان لا تزالان مفتوحتين</item>
+        <item quantity="few">%d مهام لا تزال مفتوحة</item>
+        <item quantity="many">%d مهمة لا تزال مفتوحة</item>
+        <item quantity="other">%d مهمة لا تزال مفتوحة</item>
+    </plurals>
+    <plurals name="gen_week_no_notes">
+        <item quantity="zero">لكل اجتماع ملاحظات</item>
+        <item quantity="one">اجتماع واحد بلا ملاحظات</item>
+        <item quantity="two">اجتماعان بلا ملاحظات</item>
+        <item quantity="few">%d اجتماعات بلا ملاحظات</item>
+        <item quantity="many">%d اجتماعًا بلا ملاحظات</item>
+        <item quantity="other">%d اجتماع بلا ملاحظات</item>
+    </plurals>
+    <string name="gen_week_one_clause">%1$s.</string>
+    <string name="gen_week_two_clauses">%1$s، و%2$s.</string>
+    <string name="gen_week_look">يستحق ذلك نظرة قبل بداية الأسبوع.</string>
+    <string name="gen_week_next_clear">الأسبوع القادم خالٍ تمامًا%1$s.</string>
+    <string name="gen_week_load_heavy">مزدحمًا</string>
+    <string name="gen_week_load_light">خفيفًا</string>
+    <string name="gen_week_load_moderate">معتدلًا</string>
+    <string name="gen_week_next_one">يبدو الأسبوع القادم %1$s%2$s: اجتماع واحد فقط، %3$s.</string>
+    <string name="gen_week_first_line">%1$s يوم %2$s الساعة %3$s</string>
+    <plurals name="gen_week_next_many">
+        <item quantity="zero">يبدو الأسبوع القادم %1$s%2$s: لا اجتماعات.</item>
+        <item quantity="one">يبدو الأسبوع القادم %1$s%2$s: اجتماع واحد على مدى %4$s.</item>
+        <item quantity="two">يبدو الأسبوع القادم %1$s%2$s: اجتماعان على مدى %4$s.</item>
+        <item quantity="few">يبدو الأسبوع القادم %1$s%2$s: %3$d اجتماعات على مدى %4$s.</item>
+        <item quantity="many">يبدو الأسبوع القادم %1$s%2$s: %3$d اجتماعًا على مدى %4$s.</item>
+        <item quantity="other">يبدو الأسبوع القادم %1$s%2$s: %3$d اجتماع على مدى %4$s.</item>
+    </plurals>
+    <plurals name="gen_week_days">
+        <item quantity="zero">0 يوم</item>
+        <item quantity="one">يوم واحد</item>
+        <item quantity="two">يومين</item>
+        <item quantity="few">%d أيام</item>
+        <item quantity="many">%d يومًا</item>
+        <item quantity="other">%d يوم</item>
+    </plurals>
+    <plurals name="gen_week_busiest">
+        <item quantity="zero">يوم %1$s بلا اجتماعات.</item>
+        <item quantity="one">يوم %1$s هو الأكثر ازدحامًا باجتماع واحد.</item>
+        <item quantity="two">يوم %1$s هو الأكثر ازدحامًا باجتماعين.</item>
+        <item quantity="few">يوم %1$s هو الأكثر ازدحامًا بـ%2$d اجتماعات.</item>
+        <item quantity="many">يوم %1$s هو الأكثر ازدحامًا بـ%2$d اجتماعًا.</item>
+        <item quantity="other">يوم %1$s هو الأكثر ازدحامًا بـ%2$d اجتماع.</item>
+    </plurals>
+    <string name="gen_week_first">أول اجتماع هو %1$s.</string>
+    <plurals name="gen_week_first_free">
+        <item quantity="zero">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+        <item quantity="one">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+        <item quantity="two">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+        <item quantity="few">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+        <item quantity="many">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+        <item quantity="other">أول اجتماع هو %1$s، أما %2$s فبلا اجتماعات.</item>
+    </plurals>
+    <string name="gen_week_rest_clear">بقية الأسبوع بلا اجتماعات.</string>
+    <plurals name="gen_week_free">
+        <item quantity="zero">%1$s بلا اجتماعات.</item>
+        <item quantity="one">%1$s بلا اجتماعات.</item>
+        <item quantity="two">%1$s بلا اجتماعات.</item>
+        <item quantity="few">%1$s بلا اجتماعات.</item>
+        <item quantity="many">%1$s بلا اجتماعات.</item>
+        <item quantity="other">%1$s بلا اجتماعات.</item>
+    </plurals>
+
+    <string name="gen_due_none">بلا تاريخ</string>
+    <string name="gen_due_today">اليوم</string>
+    <string name="gen_due_tomorrow">غدًا</string>
+    <string name="gen_due_this_week">هذا الأسبوع</string>
+    <string name="gen_due_next_week">الأسبوع القادم</string>
+    <plurals name="gen_overdue_days">
+        <item quantity="zero">متأخرة</item>
+        <item quantity="one">متأخرة يومًا واحدًا</item>
+        <item quantity="two">متأخرة يومين</item>
+        <item quantity="few">متأخرة %d أيام</item>
+        <item quantity="many">متأخرة %d يومًا</item>
+        <item quantity="other">متأخرة %d يوم</item>
+    </plurals>
+    <plurals name="gen_overdue_hours">
+        <item quantity="zero">متأخرة</item>
+        <item quantity="one">متأخرة ساعة</item>
+        <item quantity="two">متأخرة ساعتين</item>
+        <item quantity="few">متأخرة %d ساعات</item>
+        <item quantity="many">متأخرة %d ساعة</item>
+        <item quantity="other">متأخرة %d ساعة</item>
+    </plurals>
+    <plurals name="gen_overdue_min">
+        <item quantity="zero">متأخرة</item>
+        <item quantity="one">متأخرة دقيقة</item>
+        <item quantity="two">متأخرة دقيقتين</item>
+        <item quantity="few">متأخرة %d دقائق</item>
+        <item quantity="many">متأخرة %d دقيقة</item>
+        <item quantity="other">متأخرة %d دقيقة</item>
+    </plurals>
+    <plurals name="gen_due_in_hours">
+        <item quantity="zero">مستحقة الآن</item>
+        <item quantity="one">مستحقة بعد ساعة</item>
+        <item quantity="two">مستحقة بعد ساعتين</item>
+        <item quantity="few">مستحقة بعد %d ساعات</item>
+        <item quantity="many">مستحقة بعد %d ساعة</item>
+        <item quantity="other">مستحقة بعد %d ساعة</item>
+    </plurals>
+    <plurals name="gen_due_in_min">
+        <item quantity="zero">مستحقة الآن</item>
+        <item quantity="one">مستحقة بعد دقيقة</item>
+        <item quantity="two">مستحقة بعد دقيقتين</item>
+        <item quantity="few">مستحقة بعد %d دقائق</item>
+        <item quantity="many">مستحقة بعد %d دقيقة</item>
+        <item quantity="other">مستحقة بعد %d دقيقة</item>
+    </plurals>
+    <string name="gen_due_today_at">مستحقة اليوم %1$s</string>
+    <string name="gen_due_tomorrow_at">مستحقة غدًا %1$s</string>
+    <string name="gen_due_weekday_at">مستحقة %1$s %2$s</string>
+    <string name="gen_due_date_at">مستحقة %1$s %2$d %3$s، %4$s</string>
+    <string name="gen_ago_today">اليوم</string>
+    <string name="gen_ago_yesterday">أمس</string>
+    <plurals name="gen_ago_days">
+        <item quantity="zero">اليوم</item>
+        <item quantity="one">منذ يوم</item>
+        <item quantity="two">منذ يومين</item>
+        <item quantity="few">منذ %d أيام</item>
+        <item quantity="many">منذ %d يومًا</item>
+        <item quantity="other">منذ %d يوم</item>
+    </plurals>
+    <string name="gen_ago_last_week">الأسبوع الماضي</string>
+    <plurals name="gen_ago_weeks">
+        <item quantity="zero">هذا الأسبوع</item>
+        <item quantity="one">منذ أسبوع</item>
+        <item quantity="two">منذ أسبوعين</item>
+        <item quantity="few">منذ %d أسابيع</item>
+        <item quantity="many">منذ %d أسبوعًا</item>
+        <item quantity="other">منذ %d أسبوع</item>
+    </plurals>
+
+    <string name="gen_slot_label">%1$s، %2$s – %3$s</string>
+    <string name="gen_share_times">هل يناسبك أحد هذه المواعيد من أجل %1$s؟</string>
+    <string name="gen_share_our_meeting">اجتماعنا</string>
+    <string name="gen_share_times_end">يُرجى إعلامي بالموعد الأنسب لأرسل الدعوة.</string>
+    <string name="gen_todo_title">مهمة: %1$s</string>
+
+    <string name="gen_prep_last_time">في المرة السابقة: %1$s</string>
+    <string name="gen_prep_agenda">جدول الأعمال: %1$s</string>
+    <string name="gen_prep_is_done">هل أُنجز هذا: %1$s</string>
+    <string name="gen_prep_goal_question">ما هدف هذا الاجتماع؟</string>
+</resources>

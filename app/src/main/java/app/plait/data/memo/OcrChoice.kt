@@ -1,7 +1,14 @@
 package app.plait.data.memo
 
+import app.plait.R
+import app.plait.i18n.Txt
+
 /** Which alphabet to read a photo as. Auto tries both and keeps the better result. */
-enum class OcrLang(val label: String) { Auto("Auto"), Latin("English / Latin"), Arabic("Arabic") }
+enum class OcrLang(private val res: Int) {
+    Auto(R.string.note_ocr_auto), Latin(R.string.note_ocr_latin), Arabic(R.string.note_ocr_arabic);
+
+    val label: String get() = Txt.s(res)
+}
 
 object OcrChoice {
     fun isArabicLetter(c: Char): Boolean =

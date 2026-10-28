@@ -1,6 +1,8 @@
 package app.plait.ui.screens
 
 import android.app.ActivityManager
+import app.plait.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -64,28 +66,27 @@ internal fun SpeechUpgradeCard() {
         Modifier.fillMaxWidth().padding(top = 14.dp).fauxGlass(RoundedCornerShape(22.dp), plait.accent.copy(alpha = 0.16f)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("This note has no transcript yet", style = PlaitType.bodyStrong, color = plait.text)
+        Text(stringResource(R.string.note_su_title), style = PlaitType.bodyStrong, color = plait.text)
         Text(
-            "Nothing has written this recording down yet. Get ${spec.title}: it runs on your phone, understands accents and Arabic, " +
-                "and writes the transcript of this note and your others, then the summary and tasks follow.",
+            stringResource(R.string.note_su_body, spec.title),
             style = PlaitType.caption, color = plait.muted,
         )
-        Text("I mostly speak", style = PlaitType.bodyStrong, color = plait.text)
+        Text(stringResource(R.string.note_su_i_speak), style = PlaitType.bodyStrong, color = plait.text)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("en" to "English", "ar" to "Arabic", "ar+en" to "Both, mixed").forEach { (code, label) ->
+            listOf("en" to stringResource(R.string.note_su_english), "ar" to stringResource(R.string.note_su_arabic), "ar+en" to stringResource(R.string.note_su_both)).forEach { (code, label) ->
                 PlaitButton(label, { AiPrefs.setSpeechLang(context, code) }, style = if (AiPrefs.speechLang == code) ButtonStyle.Primary else ButtonStyle.Secondary, size = ButtonSize.Small)
             }
         }
         when (state) {
             is ModelState.Downloading -> Text(
-                "Downloading ${spec.title}… ${(state.done * 100 / state.total.coerceAtLeast(1))}%. It carries on if you leave Plait.",
+                stringResource(R.string.note_su_downloading, spec.title, (state.done * 100 / state.total.coerceAtLeast(1)).toInt()),
                 style = PlaitType.caption, color = plait.accent,
             )
             else -> {
                 if (state is ModelState.Failed) Text(state.reason, style = PlaitType.caption, color = plait.signal)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlaitButton("Get ${spec.title} · ${spec.sizeLabel}", { ModelCenter.download(context, spec) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                    PlaitButton("Not now", { hidden = true }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                    PlaitButton(stringResource(R.string.note_bv_get_one, spec.title, spec.sizeLabel), { ModelCenter.download(context, spec) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                    PlaitButton(stringResource(R.string.common_not_now), { hidden = true }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                 }
             }
         }
@@ -102,14 +103,14 @@ internal fun LanguagePicker(modifier: Modifier = Modifier, label: String? = null
     AiPrefs.load(context)
     var open by remember { mutableStateOf(false) }
     PlaitButton(
-        label ?: "Language: ${AiPrefs.languageName(AiPrefs.speechLang)}", { open = true }, modifier,
+        label ?: stringResource(R.string.note_lang_label, AiPrefs.languageName(AiPrefs.speechLang)), { open = true }, modifier,
         style = ButtonStyle.Secondary, size = ButtonSize.Small, icon = androidx.compose.material.icons.Icons.Filled.Translate,
     )
     if (open) ActionsDialog(
-        "I'm speaking",
+        stringResource(R.string.note_lang_speaking),
         // One language, "any", then two languages mixed in one note.
         (AiPrefs.speechLanguages.take(3) + AiPrefs.mixedLanguages.take(2) + AiPrefs.speechLanguages.drop(3) + AiPrefs.mixedLanguages.drop(2)).map { (code, name) ->
-            val label = if ('+' in code) "$name (mixed)" else name
+            val label = if ('+' in code) stringResource(R.string.note_lang_mixed, name) else name
             NoteAction(
                 if (code == AiPrefs.speechLang) "$label  ✓" else label,
                 when { code == "auto" -> androidx.compose.material.icons.Icons.Filled.AutoAwesome; '+' in code -> androidx.compose.material.icons.Icons.Filled.SwapHoriz; else -> androidx.compose.material.icons.Icons.Filled.Translate },

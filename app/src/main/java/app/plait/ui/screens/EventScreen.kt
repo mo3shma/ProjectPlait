@@ -1,6 +1,11 @@
 package app.plait.ui.screens
 
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -128,7 +133,10 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
     val undo = remember { UndoDelete() }
     var tab by rememberSaveable(eventId) { mutableIntStateOf(when (startTab) { 2 -> 1; 3 -> 2; else -> 0 }) }
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val tabs = remember { listOf(GlassTab("Brief"), GlassTab("Notes"), GlassTab("Transcript")) }
+    val tBrief = stringResource(R.string.meet_tab_brief)
+    val tNotes = stringResource(R.string.common_notes)
+    val tTranscript = stringResource(R.string.meet_tab_transcript)
+    val tabs = remember(tBrief, tNotes, tTranscript) { listOf(GlassTab(tBrief), GlassTab(tNotes), GlassTab(tTranscript)) }
 
     Box(Modifier.fillMaxSize().background(plait.ground)) {
         // Content layer
@@ -143,17 +151,17 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                     Column(Modifier.rise(1)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             KindPill(brief.kind, brief.kind.tone())
-                            if (brief.withLine.isNotBlank()) Text(brief.withLine, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (brief.withLine.isNotBlank()) Text(brief.withLine, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                         }
                         Spacer(Modifier.height(10.dp))
-                        Text(eventDate(ev) + " · ${ev.time}" + (if (ev.duration.isNotBlank()) " · ${ev.duration}" else ""), style = PlaitType.monoLabel, color = plait.muted)
+                        Text(Bidi.isolate(eventDate(ev)) + " · ${Bidi.isolate(ev.time)}" + (if (ev.duration.isNotBlank()) " · ${Bidi.isolate(ev.duration)}" else ""),style = PlaitType.monoLabel, color = plait.muted)
                         app.plait.data.ZoneHint.line(ev)?.let { Text(it, style = PlaitType.monoLabel, color = plait.muted, modifier = Modifier.padding(top = 4.dp)) }
                         Spacer(Modifier.height(10.dp))
-                        Text(ev.title, style = PlaitType.title.copy(fontSize = 44.sp, lineHeight = 43.sp), color = plait.text)
+                        Text(ev.title, style = PlaitType.title.copy(fontSize = 44.sp, lineHeight = 43.sp).userText(), color = plait.text)
                         Spacer(Modifier.height(14.dp))
                         Text(
-                            if (link != null) "${link.provider.label} · ${link.url.removePrefix("https://")}" else ev.place,
-                            style = PlaitType.monoLabel, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            if (link != null) "${link.provider.label} · ${Bidi.isolate(link.url.removePrefix("https://"))}" else ev.place,
+                            style = PlaitType.monoLabel.let { if (link == null) it.userText() else it }, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -197,7 +205,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back to today", onBack, backdrop)
+                GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.meet_back_to_today), onBack, backdrop)
                 val account = TextUtil.shortenAccount(ev.account.ifBlank { ev.source.label }.let { if (it.contains('@') || !ev.id.startsWith("g:")) it else ev.source.label })
                 if (app.plait.ui.glass.LocalGlassEnv.current.material) {
                     androidx.compose.material3.Surface(
@@ -206,9 +214,9 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                     ) {
                         Row(Modifier.padding(start = 8.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Box(Modifier.size(32.dp).background(ev.source.color(), CircleShape), contentAlignment = Alignment.Center) {
-                                Text(ev.source.label.take(1), style = PlaitType.label.copy(fontWeight = FontWeight.Bold), color = Color.White)
+                                Text(ev.source.initial, style = PlaitType.label.copy(fontWeight = FontWeight.Bold), color = Color.White)
                             }
-                            Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp), color = androidx.compose.material3.MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp).userText(), color = androidx.compose.material3.MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 } else {
@@ -218,12 +226,12 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Box(Modifier.size(10.dp).background(ev.source.color(), CircleShape))
-                        Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(account, style = PlaitType.bodyStrong.copy(fontSize = 14.sp).userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
             if (canManageHere) Box(Modifier.align(Alignment.CenterEnd)) {
-                GlassIconButton(Icons.Filled.EditCalendar, "Manage meeting", { manageOpen = true }, backdrop)
+                GlassIconButton(Icons.Filled.EditCalendar, stringResource(R.string.meet_manage_meeting), { manageOpen = true }, backdrop)
             }
         }
         if (manageOpen) ManageMeetingMenu(ev, onDismiss = { manageOpen = false }, onGone = onBack)
@@ -236,10 +244,10 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
         ) {
             if (link != null) {
                 GlassPillButton(
-                    label = "Join ${link.provider.short}",
+                    label = stringResource(R.string.meet_join_provider, link.provider.short),
                     onClick = {
                         if (!CallLinks.open(context, link)) {
-                            Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, Txt.s(R.string.meet_no_app_for_link), Toast.LENGTH_SHORT).show()
                         }
                     },
                     backdrop = backdrop,
@@ -251,7 +259,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                 )
             }
             GlassIconButton(
-                Icons.Filled.Mic, "Record", { onRecord(ev.id) }, backdrop,
+                Icons.Filled.Mic, stringResource(R.string.meet_record), { onRecord(ev.id) }, backdrop,
                 size = 64.dp, iconSize = 28.dp, tint = plait.signal, iconTint = Color(0xFF0E1316),
             )
         }
@@ -259,7 +267,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
 }
 
 private fun eventDate(ev: app.plait.data.CalEvent): String =
-    if (ev.startMs > 0) java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date(ev.startMs)) else ""
+    if (ev.startMs > 0) java.text.SimpleDateFormat("EEE d MMM", app.plait.i18n.AppLocale.locale).format(java.util.Date(ev.startMs)) else ""
 
 @Composable
 internal fun EmptyHint(text: String) {
@@ -282,31 +290,31 @@ private fun NotesTab(
         app.plait.data.Calendars.find(eventId)?.let { SuggestedTasksCard(it) }
         mine.forEach { m ->
             key("m" + m.id) {
-                SwipeToDelete(onDelete = { undo.delete("m" + m.id, "note") { memos.delete(m) } }, cornerRadius = 30) { MemoCard(m, memos, onLongPress = { actionsFor = m }) }
+                SwipeToDelete(onDelete = { undo.delete("m" + m.id, Txt.s(R.string.note_deleted)) { memos.delete(m) } }, cornerRadius = 30) { MemoCard(m, memos, onLongPress = { actionsFor = m }) }
             }
         }
         voice.forEach { n ->
             key("v" + n.id) {
-                SwipeToDelete(onDelete = { undo.delete("v" + n.id, "note") { store.delete(n) } }, cornerRadius = 30) { RealNoteCard(n, store, onLongPress = { actionsFor = n }) }
+                SwipeToDelete(onDelete = { undo.delete("v" + n.id, Txt.s(R.string.note_deleted)) { store.delete(n) } }, cornerRadius = 30) { RealNoteCard(n, store, onLongPress = { actionsFor = n }) }
             }
         }
         if (voice.isEmpty() && mine.isEmpty()) {
-            EmptyHint("No notes for this meeting yet. Record, write, photograph or start a list above.")
+            EmptyHint(stringResource(R.string.note_empty_meeting))
         }
         if (earlierVoice.isNotEmpty() || earlierMemos.isNotEmpty()) {
-            Text("From earlier in this series", style = PlaitType.monoLabel, color = plait.muted, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.note_earlier_in_series), style = PlaitType.monoLabel, color = plait.muted, modifier = Modifier.padding(top = 8.dp))
             earlierMemos.forEach { m -> key("em" + m.id) { MemoCard(m, memos, onLongPress = { actionsFor = m }) } }
             earlierVoice.forEach { n -> key("ev" + n.id) { RealNoteCard(n, store, onLongPress = { actionsFor = n }) } }
         }
     }
     actionsFor?.let { target ->
         ActionsDialog(
-            "Note",
+            stringResource(R.string.common_note),
             listOf(
-                NoteAction(if (target is SavedNote) "Edit transcript" else "Edit text", Icons.Filled.Edit) { editing = target },
-                NoteAction("Delete", Icons.Filled.Delete, danger = true) {
-                    if (target is SavedNote) undo.delete("v" + target.id, "note") { store.delete(target) }
-                    else if (target is app.plait.data.memo.Memo) undo.delete("m" + target.id, "note") { memos.delete(target) }
+                NoteAction(stringResource(if (target is SavedNote) R.string.note_edit_transcript else R.string.note_edit_text), Icons.Filled.Edit) { editing = target },
+                NoteAction(stringResource(R.string.common_delete), Icons.Filled.Delete, danger = true) {
+                    if (target is SavedNote) undo.delete("v" + target.id, Txt.s(R.string.note_deleted)) { store.delete(target) }
+                    else if (target is app.plait.data.memo.Memo) undo.delete("m" + target.id, Txt.s(R.string.note_deleted)) { memos.delete(target) }
                 },
             ),
             onDismiss = { actionsFor = null },
@@ -315,7 +323,7 @@ private fun NotesTab(
     (editing as? app.plait.data.memo.Memo)?.let { m -> EditMemoDialog(m, memos) { editing = null }; return }
     editing?.let { target ->
         EditTextDialog(
-            if (target is SavedNote) "Edit transcript" else "Edit note",
+            stringResource(if (target is SavedNote) R.string.note_edit_transcript else R.string.note_edit_note),
             if (target is SavedNote) app.plait.data.NoteEdit.transcriptText(target) else editableText(target as app.plait.data.memo.Memo),
             onSave = { text ->
                 if (target is SavedNote) store.update(app.plait.data.NoteEdit.applyTranscript(target, text))
@@ -342,11 +350,12 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
     }
     val hasAudio = remember(note.id) { store.audioFile(note).exists() }
     Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(30.dp)).pressable({}, lift = 2.dp, onLongClick = onLongPress).padding(20.dp)) {
-        if (!hasAudio) Text("The recording is on another phone. The transcript and summary came across.", style = PlaitType.caption, color = plait.muted)
-        else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (!hasAudio) Text(stringResource(R.string.note_recording_elsewhere), style = PlaitType.caption, color = plait.muted)
+        // Playback controls and the waveform run left to right in every language, like any media player.
+        else androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             CircleIconButton(
                 if (player.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                if (player.isPlaying) "Pause voice note" else "Play voice note",
+                stringResource(if (player.isPlaying) R.string.note_pause else R.string.note_play),
                 { player.toggle() }, plait.signal, Color(0xFF0E1316), size = 56.dp,
             )
             Row(Modifier.weight(1f).height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -358,25 +367,28 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
                 }
             }
             Text(formatClock(if (player.isPlaying || player.positionMs > 0) player.positionMs else note.durationMs), style = PlaitType.monoSmall.copy(fontSize = 13.sp), color = plait.muted)
-        }
+        } }
         if (hasAudio) {
             val speedPrefs = LocalContext.current.getSharedPreferences("plait", android.content.Context.MODE_PRIVATE)
             LaunchedEffect(player) { player.restoreSpeed(speedPrefs.getFloat("play_speed", 1f)) }
             Spacer(Modifier.height(10.dp))
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                CircleIconButton(Icons.Filled.Replay10, "Back 10 seconds", { player.skip(-NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+                CircleIconButton(Icons.Filled.Replay10, stringResource(R.string.note_back_10), { player.skip(-NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
                 PlaitButton(
                     NotePlayer.label(player.speed),
                     { speedPrefs.edit().putFloat("play_speed", player.cycleSpeed()).apply() },
                     size = ButtonSize.Small,
                 )
-                CircleIconButton(Icons.Filled.Forward10, "Forward 10 seconds", { player.skip(NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+                CircleIconButton(Icons.Filled.Forward10, stringResource(R.string.note_forward_10), { player.skip(NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+            }
             }
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val stamp = Bidi.isolate(app.plait.data.TimeFmt.stamp(note.createdAt))
             Text(
-                (note.author?.let { "From $it · " } ?: "") + "Recorded " + app.plait.data.TimeFmt.stamp(note.createdAt),
+                note.author?.let { stringResource(R.string.note_from_recorded_at, Bidi.isolate(it), stamp) } ?: stringResource(R.string.note_recorded_at, stamp),
                 style = PlaitType.caption, color = plait.muted, modifier = Modifier.weight(1f),
             )
         }
@@ -399,7 +411,7 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
             Spacer(Modifier.height(10.dp))
             // Pick the language, then the note is transcribed again in it (and summarised again from the new text).
             LanguagePicker(
-                label = (if (NoteProcessor.hasWhisper(context, note.id)) "Transcribe again" else "Improve transcript") + " · ${AiPrefs.languageName(AiPrefs.speechLang)}",
+                label = stringResource(if (NoteProcessor.hasWhisper(context, note.id)) R.string.note_transcribe_again else R.string.note_improve_transcript, AiPrefs.languageName(AiPrefs.speechLang)),
                 onPicked = {
                     scope.launch {
                         if (NoteProcessor.improveNow(context, store, note, speechSpec)) store.notes.firstOrNull { it.id == note.id }?.let { NoteProcessor.summariseNow(context, store, it) }
@@ -411,21 +423,21 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Filled.AutoAwesome, null, tint = plait.accent, modifier = Modifier.size(16.dp))
-                Text("Summary", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+                Text(stringResource(R.string.common_summary), style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
             }
-            ai.summary?.let { Text(it, style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 6.dp)) }
+            ai.summary?.let { Text(it, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.padding(top = 6.dp)) }
             if (ai.decisions.isNotEmpty()) {
-                Text("Decisions", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
-                ai.decisions.forEach { Text("• $it", style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
+                Text(stringResource(R.string.note_decisions), style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
+                ai.decisions.forEach { Text("• $it", style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
             }
             if (ai.followUps.isNotEmpty()) {
-                Text("Follow-ups", style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
-                ai.followUps.forEach { Text("• $it", style = PlaitType.body, color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
+                Text(stringResource(R.string.note_follow_ups), style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.padding(top = 10.dp))
+                ai.followUps.forEach { Text("• $it", style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.padding(top = 3.dp)) }
             }
             if (aiReady && NoteProcessor.working[note.id] == null) {
                 Spacer(Modifier.height(8.dp))
                 PlaitButton(
-                    if (aiBusy) "Writing…" else "Write again",
+                    stringResource(if (aiBusy) R.string.note_writing else R.string.note_write_again),
                     { if (!aiBusy) { aiBusy = true; scope.launch { NoteProcessor.summariseNow(context, store, note); aiBusy = false } } },
                     size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.AutoAwesome,
                 )
@@ -434,7 +446,7 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
             if (aiReady && NoteProcessor.working[note.id] == null) {
                 Spacer(Modifier.height(12.dp))
                 PlaitButton(
-                    if (aiBusy) "Summarising…" else "Summarise",
+                    stringResource(if (aiBusy) R.string.note_summarising else R.string.note_summarise),
                     { if (!aiBusy) { aiBusy = true; scope.launch { NoteProcessor.summariseNow(context, store, note); aiBusy = false } } },
                     size = ButtonSize.Small, icon = Icons.Filled.AutoAwesome,
                 )
@@ -442,23 +454,23 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
         }
         if (ai == null && bullets.isNotEmpty()) {
             Spacer(Modifier.height(14.dp))
-            Text("Summary", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+            Text(stringResource(R.string.common_summary), style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
             Spacer(Modifier.height(6.dp))
             bullets.forEach { b ->
                 Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.accent, CircleShape))
-                    Text(b, style = PlaitType.body, color = plait.text)
+                    Text(b, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.weight(1f))
                 }
             }
         }
         if (ai == null && actions.isNotEmpty()) {
             Spacer(Modifier.height(14.dp))
-            Text("Follow-ups", style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
+            Text(stringResource(R.string.note_follow_ups), style = PlaitType.section.copy(fontSize = 18.sp), color = plait.text)
             Spacer(Modifier.height(6.dp))
             actions.forEach { a ->
                 Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.signal, CircleShape))
-                    Text(a, style = PlaitType.body, color = plait.text)
+                    Text(a, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -483,10 +495,10 @@ internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             notes.forEach { n ->
                 Text(
-                    "Recorded " + app.plait.data.TimeFmt.stamp(n.createdAt),
+                    stringResource(R.string.note_recorded_at, Bidi.isolate(app.plait.data.TimeFmt.stamp(n.createdAt))),
                     style = PlaitType.monoLabel, color = plait.muted,
                 )
-                if (n.lines.isEmpty()) EmptyHint(n.silentReason ?: "No speech was detected in this note.")
+                if (n.lines.isEmpty()) EmptyHint(n.silentReason ?: stringResource(R.string.note_no_speech_in_note))
                 else Column(
                     Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(horizontal = 20.dp, vertical = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -495,12 +507,13 @@ internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
                     app.plait.data.Transcript.paragraphs(n.lines).forEach { p ->
                         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text(formatClock(p.atMs), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = plait.muted, modifier = Modifier.width(44.dp).padding(top = 3.dp))
-                            Column {
+                            Column(Modifier.weight(1f)) {
+                                // Each paragraph keeps its own direction, so Arabic and English lines both sit and flow right.
                                 Text(
-                                    p.text, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content),
-                                    color = if (p.shaky) plait.muted else plait.text,
+                                    p.text, style = PlaitType.body.userText(),
+                                    color = if (p.shaky) plait.muted else plait.text, modifier = Modifier.fillMaxWidth(),
                                 )
-                                if (p.shaky) Text("Partly unclear. Play the note to check.", style = PlaitType.caption, color = plait.muted)
+                                if (p.shaky) Text(stringResource(R.string.note_partly_unclear), style = PlaitType.caption, color = plait.muted)
                             }
                         }
                     }
@@ -509,5 +522,5 @@ internal fun TranscriptTab(eventId: String, notes: List<SavedNote>) {
         }
         return
     }
-    EmptyHint("Transcripts appear here after you record a voice note.")
+    EmptyHint(stringResource(R.string.note_transcripts_empty))
 }

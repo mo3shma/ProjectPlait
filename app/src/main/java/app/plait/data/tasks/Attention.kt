@@ -1,6 +1,10 @@
 package app.plait.data.tasks
 
 import android.content.Context
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import app.plait.data.CalEvent
 import app.plait.data.Calendars
 import app.plait.data.memo.Checklist
@@ -67,24 +71,25 @@ object AttentionTasks {
      */
     fun dueLabel(dueMs: Long, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): String {
         val diff = dueMs - nowMs
+        fun n(v: Long) = v.toInt()
         if (diff < 0) {
             val late = -diff
             return when {
-                late >= 24 * HOUR -> (late / (24 * HOUR)).let { "Overdue by $it day${if (it == 1L) "" else "s"}" }
-                late >= HOUR -> "Overdue by ${late / HOUR} h"
-                else -> "Overdue by ${maxOf(1L, late / 60_000L)} min"
+                late >= 24 * HOUR -> Txt.plural(R.plurals.gen_overdue_days, n(late / (24 * HOUR)))
+                late >= HOUR -> Txt.plural(R.plurals.gen_overdue_hours, n(late / HOUR))
+                else -> Txt.plural(R.plurals.gen_overdue_min, n(maxOf(1L, late / 60_000L)))
             }
         }
-        if (diff < 6 * HOUR) return if (diff >= HOUR) "Due in ${diff / HOUR} h" else "Due in ${maxOf(1L, diff / 60_000L)} min"
+        if (diff < 6 * HOUR) return if (diff >= HOUR) Txt.plural(R.plurals.gen_due_in_hours, n(diff / HOUR)) else Txt.plural(R.plurals.gen_due_in_min, n(maxOf(1L, diff / 60_000L)))
         val date = Instant.ofEpochMilli(dueMs).atZone(zone).toLocalDate()
         val days = ChronoUnit.DAYS.between(Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate(), date)
-        val clock = app.plait.data.TimeFmt.clock(dueMs, zone)
-        val dow = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+        val clock = Bidi.isolate(app.plait.data.TimeFmt.clock(dueMs, zone))
+        val dow = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, AppLocale.locale)
         return when {
-            days == 0L -> "Due today $clock"
-            days == 1L -> "Due tomorrow $clock"
-            days < 7 -> "Due $dow $clock"
-            else -> "Due $dow ${date.dayOfMonth} ${date.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)}, $clock"
+            days == 0L -> Txt.s(R.string.gen_due_today_at, clock)
+            days == 1L -> Txt.s(R.string.gen_due_tomorrow_at, clock)
+            days < 7 -> Txt.s(R.string.gen_due_weekday_at, dow, clock)
+            else -> Txt.s(R.string.gen_due_date_at, dow, date.dayOfMonth, date.month.getDisplayName(java.time.format.TextStyle.SHORT, AppLocale.locale), clock)
         }
     }
 
@@ -121,11 +126,11 @@ object AttentionTasks {
     fun ago(sinceMs: Long, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): String {
         val days = ChronoUnit.DAYS.between(Instant.ofEpochMilli(sinceMs).atZone(zone).toLocalDate(), Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate())
         return when {
-            days <= 0 -> "today"
-            days == 1L -> "yesterday"
-            days < 7 -> "$days days ago"
-            days < 14 -> "last week"
-            else -> "${days / 7} weeks ago"
+            days <= 0 -> Txt.s(R.string.gen_ago_today)
+            days == 1L -> Txt.s(R.string.gen_ago_yesterday)
+            days < 7 -> Txt.plural(R.plurals.gen_ago_days, days.toInt())
+            days < 14 -> Txt.s(R.string.gen_ago_last_week)
+            else -> Txt.plural(R.plurals.gen_ago_weeks, (days / 7).toInt())
         }
     }
 }

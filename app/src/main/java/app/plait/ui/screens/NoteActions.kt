@@ -1,6 +1,11 @@
 package app.plait.ui.screens
 
 import app.plait.ui.popupSurface
+import app.plait.R
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import app.plait.ui.plaitCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -72,7 +77,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Swipe a row from the right edge towards the left to delete it. The row follows the finger over a red field with a bin
+ * Swipe a row from its end edge towards the start (right to left, or left to right in Arabic) to delete it. The row follows the finger over a red field with a bin
  * that pops once the swipe is far enough. Let go past a third of the width (or flick) and the row springs to the end and is
  * deleted (the caller offers Undo); let go before that and it bounces back, so a delete can be cancelled by lifting early.
  */
@@ -80,13 +85,15 @@ import kotlinx.coroutines.launch
 fun SwipeToDelete(onDelete: () -> Unit, modifier: Modifier = Modifier, cornerRadius: Int = 28, content: @Composable () -> Unit) {
     val scope = rememberCoroutineScope()
     val view = LocalView.current
+    // [offset] is measured towards the start edge (negative = moved towards start); [dir] turns it into screen pixels.
+    val dir = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     val offset = remember { Animatable(0f) }
     var width by remember { mutableFloatStateOf(1f) }
     var armed by remember { mutableStateOf(false) }
     val drag = rememberDraggableState { d ->
         scope.launch {
             // Past the end the finger meets a little resistance.
-            val raw = offset.value + d
+            val raw = offset.value + d * dir
             val next = if (raw < -width) -width + (raw + width) * 0.3f else raw.coerceAtMost(0f)
             offset.snapTo(next)
             val nowArmed = next < -width * 0.33f
@@ -101,7 +108,7 @@ fun SwipeToDelete(onDelete: () -> Unit, modifier: Modifier = Modifier, cornerRad
             .drawBehind {
                 val reveal = -offset.value - 8.dp.toPx()
                 if (reveal > 0f) drawRoundRect(
-                    red.copy(alpha = if (armed) 1f else 0.75f), Offset(size.width - reveal, 0f), Size(reveal, size.height),
+                    red.copy(alpha = if (armed) 1f else 0.75f), Offset(if (dir > 0f) size.width - reveal else 0f, 0f), Size(reveal, size.height),
                     CornerRadius(minOf(cornerRadius.dp.toPx(), reveal / 2)),
                 )
             },
@@ -110,16 +117,17 @@ fun SwipeToDelete(onDelete: () -> Unit, modifier: Modifier = Modifier, cornerRad
             Modifier.align(Alignment.CenterEnd).size(56.dp).graphicsLayer {
                 val reveal = -offset.value - 8.dp.toPx()
                 alpha = (reveal / 56.dp.toPx()).coerceIn(0f, 1f)
-                translationX = -((reveal - 56.dp.toPx()) / 2f).coerceAtLeast(0f)
+                translationX = -((reveal - 56.dp.toPx()) / 2f).coerceAtLeast(0f) * dir
                 scaleX = pop; scaleY = pop
             },
             contentAlignment = Alignment.Center,
-        ) { Icon(Icons.Filled.Delete, "Delete", tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(26.dp)) }
+        ) { Icon(Icons.Filled.Delete, stringResource(R.string.common_delete), tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(26.dp)) }
         Box(
-            Modifier.graphicsLayer { translationX = offset.value }
+            Modifier.graphicsLayer { translationX = offset.value * dir }
                 .draggable(
                     state = drag, orientation = Orientation.Horizontal,
-                    onDragStopped = { v ->
+                    onDragStopped = { velocity ->
+                        val v = velocity * dir
                         scope.launch {
                             if (offset.value < -width * 0.33f || v < -1800f) {
                                 view.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
@@ -146,6 +154,7 @@ class UndoDelete {
 
     fun isHidden(key: String) = key in hidden
 
+    /** [label] is the whole message shown beside Undo, e.g. "Deleted note". */
     fun delete(key: String, label: String, commit: () -> Unit) {
         pending?.let { finish(it) }
         hidden.add(key)
@@ -170,8 +179,8 @@ class UndoDelete {
                 Modifier.fauxGlass(RoundedCornerShape(30.dp)).padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("Deleted ${shown?.label ?: ""}", style = PlaitType.bodyStrong.copy(fontSize = 15.sp), color = plait.text, maxLines = 1)
-                PlaitButton("Undo", { undo() }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                Text(shown?.label ?: "", style = PlaitType.bodyStrong.copy(fontSize = 15.sp), color = plait.text, maxLines = 1)
+                PlaitButton(stringResource(R.string.common_undo), { undo() }, style = ButtonStyle.Primary, size = ButtonSize.Small)
             }
         }
     }
@@ -211,8 +220,8 @@ fun EditTextDialog(title: String, initial: String, onSave: (String) -> Unit, onD
                 decorationBox = { inner -> Box(Modifier.fillMaxWidth().heightIn(min = 160.dp, max = 360.dp).clip(RoundedCornerShape(20.dp)).background(plait.surface).padding(16.dp)) { inner() } },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Save", { onSave(text); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = text.isNotBlank())
-                PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_save), { onSave(text); onDismiss() }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = text.isNotBlank())
+                PlaitButton(stringResource(R.string.common_cancel), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }
     } }
@@ -278,8 +287,8 @@ fun FormattedText(text: String, maxLines: Int = Int.MAX_VALUE) {
             lines.take(maxLines).forEach { line ->
                 if (line.startsWith("- ") || line.startsWith("• ")) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.accent, androidx.compose.foundation.shape.CircleShape))
-                    Text(line.drop(2), style = PlaitType.body, color = plait.text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                } else Text(line, style = PlaitType.body, color = plait.text, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(line.drop(2), style = PlaitType.body.userText(), color = plait.text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                } else Text(line, style = PlaitType.body.userText(), color = plait.text, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             }
             if (lines.size > maxLines) Text("…", style = PlaitType.body, color = plait.muted)
         }
@@ -291,8 +300,8 @@ fun FormattedText(text: String, maxLines: Int = Int.MAX_VALUE) {
                 para.lines().map { it.trim() }.filter { it.isNotEmpty() }.forEach { line ->
                     if (line.startsWith("- ") || line.startsWith("• ")) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(Modifier.padding(top = 9.dp).size(5.dp).background(plait.accent, androidx.compose.foundation.shape.CircleShape))
-                        Text(line.drop(2), style = PlaitType.body.copy(textDirection = TextDirection.Content), color = plait.text)
-                    } else Text(line, style = PlaitType.body.copy(textDirection = TextDirection.Content), color = plait.text)
+                        Text(line.drop(2), style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.weight(1f))
+                    } else Text(line, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -309,7 +318,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
             Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (items.isEmpty()) Text("No tasks yet. Add the first one below.", style = PlaitType.caption, color = plait.muted)
+                if (items.isEmpty()) Text(stringResource(R.string.note_no_tasks), style = PlaitType.caption, color = plait.muted)
                 items.forEachIndexed { i, item ->
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(plait.surface).padding(start = 6.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)) {
                     Row(
@@ -318,7 +327,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                     ) {
                         Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items[i] = item.copy(done = !item.done) }, lift = 2.dp), contentAlignment = Alignment.Center) {
                             Icon(
-                                if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, if (item.done) "Done" else "Not done",
+                                if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, stringResource(if (item.done) R.string.note_item_done else R.string.note_item_not_done),
                                 tint = if (item.done) plait.accent else plait.muted, modifier = Modifier.size(22.dp),
                             )
                         }
@@ -328,7 +337,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                             modifier = Modifier.weight(1f),
                         )
                         Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items.removeAt(i) }, lift = 2.dp), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Filled.Close, "Remove task", tint = plait.muted, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Filled.Close, stringResource(R.string.note_remove_task), tint = plait.muted, modifier = Modifier.size(20.dp))
                         }
                     }
                     if (!item.done) DueChip(item.dueMs, { items[i] = items[i].copy(dueMs = it) }, Modifier.padding(start = 46.dp, bottom = 6.dp))
@@ -344,21 +353,21 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                     modifier = Modifier.weight(1f),
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(plait.surface).padding(horizontal = 16.dp, vertical = 14.dp)) {
-                            if (draft.isEmpty()) Text("Add a task", style = PlaitType.body, color = plait.muted)
+                            if (draft.isEmpty()) Text(stringResource(R.string.note_add_task_hint), style = PlaitType.body, color = plait.muted)
                             inner()
                         }
                     },
                 )
-                app.plait.ui.CircleIconButton(Icons.Filled.Add, "Add task", { addDraft() }, plait.accent, plait.onAccent, size = 48.dp)
+                app.plait.ui.CircleIconButton(Icons.Filled.Add, stringResource(R.string.note_add_task), { addDraft() }, plait.accent, plait.onAccent, size = 48.dp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Save", {
+                PlaitButton(stringResource(R.string.common_save), {
                     addDraft()
                     val clean = items.map { it.copy(text = it.text.trim()) }.filter { it.text.isNotEmpty() }
                     if (clean.isNotEmpty()) onSave(clean)
                     onDismiss()
                 }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = items.isNotEmpty() || draft.isNotBlank())
-                PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_cancel), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }
     } }
@@ -371,7 +380,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
 @Composable
 fun CloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     if (app.plait.ui.glass.LocalGlassEnv.current.material) {
-        app.plait.ui.material.MPill("Close", onClick, modifier, Icons.Filled.Close, plait.signal, androidx.compose.ui.graphics.Color(0xFF0E1316), 56.dp)
+        app.plait.ui.material.MPill(stringResource(R.string.common_close), onClick, modifier, Icons.Filled.Close, plait.signal, androidx.compose.ui.graphics.Color(0xFF0E1316), 56.dp)
         return
     }
     val shape = androidx.compose.foundation.shape.CircleShape
@@ -382,6 +391,6 @@ fun CloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
     ) {
         Icon(Icons.Filled.Close, null, tint = androidx.compose.ui.graphics.Color(0xFF0E1316), modifier = Modifier.size(22.dp))
-        Text("Close", style = PlaitType.bodyStrong, color = androidx.compose.ui.graphics.Color(0xFF0E1316))
+        Text(stringResource(R.string.common_close), style = PlaitType.bodyStrong, color = androidx.compose.ui.graphics.Color(0xFF0E1316))
     }
 }

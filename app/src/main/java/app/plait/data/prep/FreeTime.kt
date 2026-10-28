@@ -1,11 +1,13 @@
 package app.plait.data.prep
 
+import app.plait.R
 import app.plait.data.TimeFmt
+import app.plait.data.brief.DayAnalytics
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 data class Slot(val startMs: Long, val endMs: Long)
 
@@ -20,6 +22,7 @@ object FreeTime {
         busy: List<Pair<Long, Long>>, fromMs: Long, days: Int, durationMin: Int,
         dayStartMin: Int = 9 * 60, dayEndMin: Int = 17 * 60, zone: ZoneId = ZoneId.systemDefault(),
         stepMin: Int = 30, bufferMin: Int = 0, weekdaysOnly: Boolean = true, perDay: Int = 3, limit: Int = 8,
+        workDay: (java.time.LocalDate) -> Boolean = FreeTime::monToFri,
     ): List<Slot> {
         val out = ArrayList<Slot>()
         val sorted = busy.sortedBy { it.first }
@@ -28,8 +31,7 @@ object FreeTime {
         var day = Instant.ofEpochMilli(fromMs).atZone(zone).toLocalDate()
         var scanned = 0
         while (scanned < days && out.size < limit) {
-            val dow = day.dayOfWeek
-            if (!(weekdaysOnly && (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY))) {
+            if (!weekdaysOnly || workDay(day)) {
                 var found = 0
                 var m = dayStartMin
                 val midnight = day.atStartOfDay(zone)
@@ -47,15 +49,18 @@ object FreeTime {
         return out
     }
 
-    private val dayFmt = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
+    /** The default work week; screens pass the one set in Settings (WorkWeek.isWorkDay), e.g. Sunday to Thursday. */
+    fun monToFri(day: java.time.LocalDate): Boolean = day.dayOfWeek != DayOfWeek.SATURDAY && day.dayOfWeek != DayOfWeek.SUNDAY
 
-    fun label(s: Slot, zone: ZoneId = ZoneId.systemDefault()): String =
-        Instant.ofEpochMilli(s.startMs).atZone(zone).format(dayFmt) + ", " + TimeFmt.clock(s.startMs, zone) + " – " + TimeFmt.clock(s.endMs, zone)
+    fun label(s: Slot, zone: ZoneId = ZoneId.systemDefault()): String = Txt.s(
+        R.string.gen_slot_label, Instant.ofEpochMilli(s.startMs).atZone(zone).format(TimeFmt.fmt("EEE d MMM")),
+        Bidi.isolate(TimeFmt.clock(s.startMs, zone)), Bidi.isolate(TimeFmt.clock(s.endMs, zone)),
+    )
 
     /** A message you can send from any app, listing the options. */
     fun shareText(title: String, slots: List<Slot>, zone: ZoneId = ZoneId.systemDefault()): String =
-        "Would any of these times work for ${title.ifBlank { "our meeting" }}?\n" + slots.joinToString("\n") { "• " + label(it, zone) } +
-            "\nTell me which suits you and I'll send the invite."
+        Txt.s(R.string.gen_share_times, if (title.isBlank()) Txt.s(R.string.gen_share_our_meeting) else Bidi.isolate(title)) + "\n" +
+            slots.joinToString("\n") { "• " + label(it, zone) } + "\n" + Txt.s(R.string.gen_share_times_end)
 }
 
 /** Long stretches of free time worth protecting, and a title for a to-do that needs time booked. */
@@ -67,12 +72,13 @@ object FocusTime {
     fun suggest(
         busy: List<Pair<Long, Long>>, fromMs: Long, days: Int, minMin: Int = 90, maxMin: Int = 180,
         dayStartMin: Int = 9 * 60, dayEndMin: Int = 17 * 60, zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+        workDay: (java.time.LocalDate) -> Boolean = FreeTime::monToFri,
     ): List<Slot> {
         val out = ArrayList<Slot>()
         var day = java.time.Instant.ofEpochMilli(fromMs).atZone(zone).toLocalDate()
         var scanned = 0
         while (scanned < days) {
-            if (day.dayOfWeek != java.time.DayOfWeek.SATURDAY && day.dayOfWeek != java.time.DayOfWeek.SUNDAY) {
+            if (workDay(day)) {
                 val midnight = day.atStartOfDay(zone)
                 val winStart = maxOf(midnight.plusMinutes(dayStartMin.toLong()).toInstant().toEpochMilli(), fromMs)
                 val winEnd = midnight.plusMinutes(dayEndMin.toLong()).toInstant().toEpochMilli()
@@ -97,10 +103,10 @@ object FocusTime {
     }
 
     /** "To do: Send the SLA draft to Northwind", kept short enough for a calendar title. */
-    fun todoTitle(text: String): String = "To do: " + text.trim().trimEnd('.').let { if (it.length > 60) it.take(60).substringBeforeLast(' ') + "…" else it }
+    fun todoTitle(text: String): String = Txt.s(R.string.gen_todo_title, text.trim().trimEnd('.').let { if (it.length > 60) it.take(60).substringBeforeLast(' ') + "…" else it })
 
     fun lengthLabel(s: Slot): String {
         val m = (s.endMs - s.startMs) / 60_000
-        return if (m % 60 == 0L) "${m / 60} h" else if (m > 60) "${m / 60} h ${m % 60} min" else "$m min"
+        return if (m % 60 == 0L) DayAnalytics.hours(m / 60) else DayAnalytics.span(m)
     }
 }

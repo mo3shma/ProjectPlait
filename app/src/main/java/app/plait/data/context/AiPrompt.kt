@@ -1,12 +1,16 @@
 package app.plait.data.context
 
+import app.plait.R
+import app.plait.ai.ArabicText
 import app.plait.data.CalEvent
 import app.plait.data.brief.MeetingBrief
 import app.plait.data.brief.Summarizer
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /** What the phone's built-in model wrote, split into the sections we asked for. */
 data class AiSections(val relation: String?, val keyPoints: List<String>, val toSettle: List<String>, val raw: String)
@@ -14,41 +18,41 @@ data class AiSections(val relation: String?, val keyPoints: List<String>, val to
 /**
  * Builds the prompt for the on-device model and reads its answer. The model has a small context
  * window, so each email is cleaned (no quoted history, signatures or disclaimers) and trimmed.
+ * The prompt, and so the answer, is in the app's language; the emails are left as they were written.
  */
 object AiPrompt {
     const val MAX_CHARS = 3200
 
     fun build(ev: CalEvent, brief: MeetingBrief, items: List<ContextItem>, zone: ZoneId = ZoneId.systemDefault(), maxChars: Int = MAX_CHARS): String {
+        val pattern = if (AppLocale.isRtl) "EEEE d MMMM، h:mm a" else "EEEE d MMMM, h:mm a"
         val whenText = if (ev.startMs > 0) Instant.ofEpochMilli(ev.startMs).atZone(zone)
-            .format(DateTimeFormatter.ofPattern("EEEE d MMMM, h:mm a", Locale.ENGLISH)) else ev.time
+            .format(DateTimeFormatter.ofPattern(pattern, AppLocale.locale)) else ev.time
         val others = ev.guests.filter { !it.self }.take(6).joinToString(", ") { it.label }
         val head = buildString {
-            appendLine("You are helping someone prepare for a meeting. Use only the emails below. Do not invent facts, names or numbers.")
+            appendLine(Txt.s(R.string.ai_ctx_prompt_intro))
             appendLine()
-            appendLine("Meeting: ${ev.title}")
-            appendLine("When: $whenText")
-            if (others.isNotBlank()) appendLine("With: $others")
-            appendLine("Why (from the invite): ${if (brief.aboutIsGuess) "not stated" else brief.about}")
+            appendLine(Txt.s(R.string.ai_ctx_prompt_meeting, ev.title))
+            appendLine(Txt.s(R.string.ai_ctx_prompt_when, whenText))
+            if (others.isNotBlank()) appendLine(Txt.s(R.string.ai_ctx_prompt_with, others))
+            appendLine(Txt.s(R.string.ai_ctx_prompt_why, if (brief.aboutIsGuess) Txt.s(R.string.ai_ctx_prompt_not_stated) else brief.about))
             appendLine()
-            appendLine("Emails the person attached:")
+            appendLine(Txt.s(R.string.ai_ctx_prompt_emails))
         }
-        val tail = """
-
-Answer in exactly this format and nothing else:
-Relation: one sentence on how these emails relate to the meeting, or say they do not relate.
-Key points:
-- up to 3 short bullets
-To settle in the meeting:
-- up to 3 short bullets"""
+        val tail = "\n\n" + Txt.s(R.string.ai_ctx_prompt_format)
         val budget = (maxChars - head.length - tail.length).coerceAtLeast(600)
         val per = (budget / items.size.coerceAtLeast(1)) - 80
         val body = items.mapIndexed { i, item ->
             val msgs = Threads.split(unwrapLinks(item.body), item.from)
             val text = msgs.joinToString("\n") { m -> (m.from?.let { "$it: " } ?: "") + m.text.replace(Regex("\\s+"), " ") }
-            "[Email ${i + 1}] From: ${EmailParser.displayName(item.from)} | Subject: ${item.subject}\n${Summarizer.clip(text, per.coerceAtLeast(200))}"
+            Txt.s(R.string.ai_ctx_prompt_email, i + 1, EmailParser.displayName(item.from), item.subject) + "\n" + Summarizer.clip(text, per.coerceAtLeast(200))
         }.joinToString("\n\n")
         return head + body + tail
     }
+
+    // Section names in either language: an answer saved in one still reads after the app switches to the other.
+    private val relationHead = Regex("^(relation|(ال)?علاقه)\\s*:")
+    private val keyHead = Regex("^(key points|(ال)?نقاط (ال)?رئيسيه)")
+    private val settleHead = Regex("^(to settle|ما يجب حسمه|للحسم)")
 
     fun parse(text: String): AiSections {
         var relation: String? = null
@@ -57,10 +61,11 @@ To settle in the meeting:
         var section = 0
         for (raw in text.lines()) {
             val line = raw.trim()
+            val head = ArabicText.norm(line)
             when {
-                line.startsWith("Relation:", true) -> { relation = line.substringAfter(':').trim().ifBlank { null }; section = 0 }
-                line.startsWith("Key points", true) -> section = 1
-                line.startsWith("To settle", true) -> section = 2
+                relationHead.containsMatchIn(head) -> { relation = line.substringAfter(':').trim().ifBlank { null }; section = 0 }
+                keyHead.containsMatchIn(head) -> section = 1
+                settleHead.containsMatchIn(head) -> section = 2
                 line.startsWith("-") || line.startsWith("•") || line.startsWith("*") -> {
                     val b = line.trimStart('-', '•', '*', ' ').trim()
                     if (b.isNotEmpty()) when (section) { 1 -> key.add(b); 2 -> settle.add(b) }
@@ -72,27 +77,20 @@ To settle in the meeting:
     }
 }
 
-/** A made-up email thread about a meeting, so the feature can be tried before real mail is shared. */
+/** A made-up email thread about a meeting, so the feature can be tried before real mail is shared. In the app's language. */
 object ExampleEmail {
     fun forEvent(ev: CalEvent, zone: ZoneId = ZoneId.systemDefault()): ParsedEmail {
         val others = ev.guests.filter { !it.self }
-        val first = others.getOrNull(0)?.label?.substringBefore(' ') ?: "Jordan"
-        val second = others.getOrNull(1)?.label?.substringBefore(' ') ?: "Alex"
+        val first = others.getOrNull(0)?.label?.substringBefore(' ') ?: Txt.s(R.string.ai_example_first_name)
+        val second = others.getOrNull(1)?.label?.substringBefore(' ') ?: Txt.s(R.string.ai_example_second_name)
         val day = if (ev.startMs > 0) Instant.ofEpochMilli(ev.startMs).atZone(zone)
-            .format(DateTimeFormatter.ofPattern("EEEE", Locale.ENGLISH)) else "Tuesday"
-        val body = """
-Hi all,
-
-Quick note ahead of ${ev.title} on $day. We agreed last week to keep the scope small, and $second will send the updated numbers by Thursday.
-
-Can you confirm who owns the follow-ups before we meet? One risk: the timeline is tight and I'm concerned about the 20% budget cut. Notes are attached in prep-notes.pdf.
-
-Thanks,
-$first
-""".trim()
-        val from = others.firstOrNull()?.let { "${it.label} <${it.email ?: "${first.lowercase()}@example.com"}>" } ?: "$first <${first.lowercase()}@example.com>"
+            .format(DateTimeFormatter.ofPattern("EEEE", AppLocale.locale)) else Txt.s(R.string.ai_example_day)
+        val body = Txt.s(R.string.ai_example_body, Bidi.isolate(ev.title), day, Bidi.isolate(second), first).trim()
+        // An address needs Latin letters; an Arabic first name gets a plain one.
+        val local = first.lowercase().takeIf { !ArabicText.has(it) } ?: "colleague"
+        val from = others.firstOrNull()?.let { "${it.label} <${it.email ?: "$local@example.com"}>" } ?: "$first <$local@example.com>"
         return ParsedEmail(
-            subject = "Before ${ev.title}", from = from, to = "You <you@example.com>", dateMs = null,
+            subject = Txt.s(R.string.ai_example_subject, ev.title), from = from, to = "${Txt.s(R.string.ai_example_you)} <you@example.com>", dateMs = null,
             body = body, attachments = listOf("prep-notes.pdf"),
         )
     }

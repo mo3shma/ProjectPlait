@@ -62,7 +62,7 @@ class RecordingController(
         consumer = scope.launch { listen() }
 
         val rec = WavRecorder(file, onFail = {
-            main.post { failure = "The recording stopped: the microphone or the storage failed. What was recorded is kept; tap stop to save it." }
+            main.post { failure = app.plait.i18n.Txt.s(app.plait.R.string.note_rec_failed_storage) }
         }, onBlocked = { on ->
             val mode = appContext.getSystemService(AudioManager::class.java)?.mode
             val reason = if (mode == AudioManager.MODE_IN_COMMUNICATION || mode == AudioManager.MODE_IN_CALL) MicWatch.BLOCKED_IN_CALL else MicWatch.BLOCKED
@@ -78,7 +78,7 @@ class RecordingController(
         }
         recorder = rec
         if (!rec.start()) {
-            failure = "The microphone is busy or unavailable."
+            failure = app.plait.i18n.Txt.s(app.plait.R.string.note_rec_mic_busy)
             phase = RecPhase.Failed
             return false
         }

@@ -2,6 +2,12 @@ package app.plait.ui.screens
 
 import app.plait.ui.popupSurface
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.graphics.graphicsLayer
@@ -28,7 +34,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -71,18 +77,20 @@ private class Entry(val key: String, val createdAt: Long, val eventId: String, v
     val photo get() = memo?.kind == MemoKind.Photo
     val list get() = memo?.kind == MemoKind.Checklist
     val icon: ImageVector get() = if (voice != null) Icons.Filled.Mic else if (photo) Icons.Filled.CameraAlt else if (list) Icons.Filled.Checklist else Icons.Filled.Edit
-    val kindLabel get() = if (voice != null) "Voice" else if (photo) "Photo" else if (list) "List" else "Text"
+    val kindLabel get() = Txt.s(if (voice != null) R.string.note_kind_voice else if (photo) R.string.common_photo else if (list) R.string.note_kind_list else R.string.note_kind_text)
+    /** "Voice note", "Photo note"... for the detail page's heading. */
+    val kindTitle get() = Txt.s(if (voice != null) R.string.common_voice_note else if (photo) R.string.note_kind_photo_note else if (list) R.string.note_kind_list_note else R.string.note_kind_text_note)
     val title: String get() = when {
-        voice != null -> if (eventId.isEmpty()) "Voice note" else voice.title.ifBlank { "Voice note" }
+        voice != null -> if (eventId.isEmpty()) Txt.s(R.string.common_voice_note) else voice.title.ifBlank { Txt.s(R.string.common_voice_note) }
         list -> app.plait.data.memo.Checklist.heading(memo!!.title, memo.text)
-        else -> memo!!.text.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(60) ?: if (photo) "Photo" else "Note"
+        else -> memo!!.text.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(60) ?: Txt.s(if (photo) R.string.common_photo else R.string.common_note)
     }
     val snippet: String get() = when {
-        list -> app.plait.data.memo.Checklist.parse(memo!!.text).filter { !it.done }.joinToString(" · ") { it.text }.ifBlank { "All done" }
-        voice != null -> voice.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary } ?: voice.lines.firstOrNull()?.text ?: "No speech detected"
+        list -> app.plait.i18n.Bidi.join(app.plait.data.memo.Checklist.parse(memo!!.text).filter { !it.done }.map { it.text }, " · ").ifBlank { Txt.s(R.string.note_all_done) }
+        voice != null -> voice.ai?.let { app.plait.ai.NoteAiPrompt.parse(it).summary } ?: voice.lines.firstOrNull()?.text ?: Txt.s(R.string.note_no_speech_short)
         memo?.ai != null -> memo.ai
-        else -> memo!!.text.lines().filter { it.isNotBlank() }.drop(1).joinToString(" ").trim()
-            .ifBlank { if (photo && memo!!.text.isBlank()) "No text was found in this picture." else "" }
+        else -> app.plait.i18n.Bidi.join(memo!!.text.lines().map { it.trim() }.filter { it.isNotBlank() }.drop(1))
+            .ifBlank { if (photo && memo!!.text.isBlank()) Txt.s(R.string.note_no_text_this_picture) else "" }
     }
 }
 
@@ -109,7 +117,8 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
     var editing by remember { mutableStateOf<Entry?>(null) }
     var linking by remember { mutableStateOf<Entry?>(null) }
 
-    val filterTabs = remember { listOf("All", "Voice", "Text", "Photo", "Lists").map { app.plait.ui.glass.GlassTab(it) } }
+    val tabNames = listOf(R.string.note_filter_all, R.string.note_kind_voice, R.string.note_kind_text, R.string.common_photo, R.string.note_filter_lists).map { stringResource(it) }
+    val filterTabs = remember(tabNames) { tabNames.map { app.plait.ui.glass.GlassTab(it) } }
     val all = entries(voiceStore.notes.toList(), memoStore.items.toList())
     val shown = all.filter { e ->
         !undo.isHidden(e.key) && when (filter) { 1 -> e.voice != null; 2 -> e.memo != null && !e.photo && !e.list; 3 -> e.photo; 4 -> e.list; else -> true }
@@ -119,8 +128,8 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
 
     val delete: (Entry) -> Unit = { e ->
         if (open?.key == e.key) openKey = null
-        if (e.voice != null) undo.delete(e.key, "note") { voiceStore.delete(e.voice) }
-        else if (e.memo != null) undo.delete(e.key, "note") { memoStore.delete(e.memo) }
+        if (e.voice != null) undo.delete(e.key, Txt.s(R.string.note_deleted)) { voiceStore.delete(e.voice) }
+        else if (e.memo != null) undo.delete(e.key, Txt.s(R.string.note_deleted)) { memoStore.delete(e.memo) }
     }
 
     val rootAt = remember { arrayOfNulls<LayoutCoordinates>(1) }
@@ -141,7 +150,7 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
                 contentPadding = listPadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item { ScreenHeader("Notes", "Notes") }
+                item { stringResource(R.string.common_notes).let { ScreenHeader(it, it) } }
                 item { BetterVoiceCard() }
                 item { SearchPanel(onOpenAt) }
                 item { AddNoteCard("", memoStore, backdrop) }
@@ -154,7 +163,7 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
                 if (shown.isEmpty()) {
                     item {
                         Text(
-                            if (all.isEmpty()) "No notes yet. Write or photograph something above, or tap + to record." else "No notes of this kind.",
+                            stringResource(if (all.isEmpty()) R.string.note_library_empty else R.string.note_library_empty_kind),
                             style = PlaitType.body, color = plait.muted, modifier = Modifier.rise(1),
                         )
                     }
@@ -183,11 +192,11 @@ internal fun NotesLibrary(backdrop: com.kyant.backdrop.Backdrop, onOpenEvent: (S
         ActionsDialog(
             e.title,
             listOfNotNull(
-                NoteAction("Open", Icons.Filled.OpenInNew) { openKey = e.key },
-                NoteAction(if (e.eventId.isEmpty()) "Link to a meeting" else "Change meeting", Icons.Filled.Link) { linking = e },
-                if (e.eventId.isNotEmpty()) NoteAction("Unlink from meeting", Icons.Filled.LinkOff) { unlink(e, voiceStore, memoStore) } else null,
-                if (!e.photo || e.memo?.text?.isNotBlank() == true) NoteAction(if (e.voice != null) "Edit transcript" else if (e.list) "Edit items" else "Edit text", Icons.Filled.Edit) { editing = e } else null,
-                NoteAction("Delete", Icons.Filled.Delete, danger = true) { delete(e) },
+                NoteAction(stringResource(R.string.common_open), Icons.AutoMirrored.Filled.OpenInNew) { openKey = e.key },
+                NoteAction(stringResource(if (e.eventId.isEmpty()) R.string.note_link_to_meeting else R.string.note_change_meeting), Icons.Filled.Link) { linking = e },
+                if (e.eventId.isNotEmpty()) NoteAction(stringResource(R.string.note_unlink_from_meeting), Icons.Filled.LinkOff) { unlink(e, voiceStore, memoStore) } else null,
+                if (!e.photo || e.memo?.text?.isNotBlank() == true) NoteAction(stringResource(if (e.voice != null) R.string.note_edit_transcript else if (e.list) R.string.note_edit_items else R.string.note_edit_text), Icons.Filled.Edit) { editing = e } else null,
+                NoteAction(stringResource(R.string.common_delete), Icons.Filled.Delete, danger = true) { delete(e) },
             ),
             onDismiss = { actionsFor = null },
         )
@@ -211,7 +220,7 @@ private fun unlink(e: Entry, voices: NoteStore, memos: MemoStore) {
 private fun EditEntry(e: Entry, voices: NoteStore, memos: MemoStore, onDismiss: () -> Unit) {
     if (e.memo != null) { EditMemoDialog(e.memo, memos, onDismiss); return }
     EditTextDialog(
-        if (e.voice != null) "Edit transcript" else "Edit note",
+        stringResource(if (e.voice != null) R.string.note_edit_transcript else R.string.note_edit_note),
         e.voice?.let { NoteEdit.transcriptText(it) } ?: editableText(e.memo!!),
         onSave = { text ->
             e.voice?.let { voices.update(NoteEdit.applyTranscript(it, text)) }
@@ -231,14 +240,14 @@ private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit, 
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(e.icon, null, tint = plait.accent, modifier = Modifier.size(18.dp))
-            Text(e.title, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(e.title, style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             app.plait.ui.PlaitBadge(if (e.voice != null) formatClock(e.voice.durationMs) else e.kindLabel, if (e.voice != null) app.plait.ui.BadgeKind.Size else app.plait.ui.BadgeKind.Info)
         }
-        if (e.snippet.isNotBlank()) Text(e.snippet, style = PlaitType.body.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content), color = plait.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (e.snippet.isNotBlank()) Text(e.snippet, style = PlaitType.body.userText(), color = plait.muted, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth())
         e.memo?.let { m -> app.plait.audio.NoteProcessor.working[m.id]?.let { Text(it, style = PlaitType.caption, color = plait.muted) } }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                ((e.voice?.author ?: e.memo?.author)?.let { "From $it · " } ?: "") + app.plait.data.TimeFmt.stamp(e.createdAt),
+                (e.voice?.author ?: e.memo?.author)?.let { stringResource(R.string.note_from_stamp, Bidi.isolate(it), Bidi.isolate(app.plait.data.TimeFmt.stamp(e.createdAt))) } ?: app.plait.data.TimeFmt.stamp(e.createdAt),
                 style = PlaitType.monoSmall, color = plait.muted, maxLines = 1,
             )
         }
@@ -247,7 +256,7 @@ private fun LibraryCard(e: Entry, onClick: () -> Unit, onLongClick: () -> Unit, 
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(if (linked != null) Icons.Filled.CalendarMonth else Icons.Filled.LinkOff, null, tint = plait.text, modifier = Modifier.size(14.dp))
-            Text(linked ?: "Not linked to a meeting", style = PlaitType.caption, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(linked ?: stringResource(R.string.note_not_linked), style = PlaitType.caption.let { if (linked != null) it.userText() else it }, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -262,22 +271,22 @@ private fun NoteDetail(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        PlaitButton("Notes", onBack, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.AutoMirrored.Filled.ArrowBack)
+        PlaitButton(stringResource(R.string.common_notes), onBack, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.AutoMirrored.Filled.ArrowBack)
         Column(Modifier.rise(0), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(e.kindLabel.uppercase() + " NOTE · " + app.plait.data.TimeFmt.stamp(e.createdAt), style = PlaitType.monoLabel, color = plait.muted)
-            Text(e.title, style = PlaitType.title.copy(fontSize = 34.sp, lineHeight = 36.sp), color = plait.text)
+            Text(e.kindTitle.uppercase(AppLocale.locale) + " · " + Bidi.isolate(app.plait.data.TimeFmt.stamp(e.createdAt)), style = PlaitType.monoLabel, color = plait.muted)
+            Text(e.title, style = PlaitType.title.copy(fontSize = 34.sp, lineHeight = 36.sp).userText(), color = plait.text)
         }
         Column(
             Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Meeting", style = PlaitType.monoSmall, color = plait.muted)
-            Text(linked ?: "Not linked to a meeting", style = PlaitType.bodyStrong, color = plait.text)
+            Text(stringResource(R.string.common_meeting), style = PlaitType.monoSmall, color = plait.muted)
+            Text(linked ?: stringResource(R.string.note_not_linked), style = PlaitType.bodyStrong.let { if (linked != null) it.userText() else it }, color = plait.text)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton(if (linked == null) "Link to a meeting" else "Change meeting", onLink, size = ButtonSize.Small, style = ButtonStyle.Primary, icon = Icons.Filled.Link)
+                PlaitButton(stringResource(if (linked == null) R.string.note_link_to_meeting else R.string.note_change_meeting), onLink, size = ButtonSize.Small, style = ButtonStyle.Primary, icon = Icons.Filled.Link)
                 if (linked != null) {
-                    PlaitButton("Open meeting", { onOpenEvent(e.eventId) }, size = ButtonSize.Small, icon = Icons.Filled.CalendarMonth)
-                    PlaitButton("Unlink", { unlink(e, voices, memos) }, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.LinkOff)
+                    PlaitButton(stringResource(R.string.note_open_meeting), { onOpenEvent(e.eventId) }, size = ButtonSize.Small, icon = Icons.Filled.CalendarMonth)
+                    PlaitButton(stringResource(R.string.note_unlink), { unlink(e, voices, memos) }, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.LinkOff)
                 }
             }
         }
@@ -289,7 +298,7 @@ private fun NoteDetail(
             MemoCard(m, memos, onLongPress = onEdit)
         }
         if (e.voice != null || e.memo?.text?.isNotBlank() == true) {
-            PlaitButton(if (e.voice != null) "Edit transcript" else "Edit text", onEdit, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.Edit)
+            PlaitButton(stringResource(if (e.voice != null) R.string.note_edit_transcript else R.string.note_edit_text), onEdit, size = ButtonSize.Small, style = ButtonStyle.Quiet, icon = Icons.Filled.Edit)
         }
     }
 }
@@ -304,9 +313,9 @@ private fun LinkPicker(e: Entry, onPick: (String) -> Unit, onDismiss: () -> Unit
     }
     PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).popupSurface().padding(vertical = 16.dp)) {
-            Text("Link to a meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
+            Text(stringResource(R.string.note_link_to_meeting), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
             if (events.isEmpty()) {
-                Text("No meetings found around now. Connect a calendar to link notes.", style = PlaitType.body, color = plait.muted, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
+                Text(stringResource(R.string.note_no_meetings_around), style = PlaitType.body, color = plait.muted, modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp))
             } else LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 items(events, key = { it.id }) { ev ->
                     Column(
@@ -314,13 +323,13 @@ private fun LinkPicker(e: Entry, onPick: (String) -> Unit, onDismiss: () -> Unit
                             .background(if (ev.id == e.eventId) plait.surface else androidx.compose.ui.graphics.Color.Transparent)
                             .pressable({ onDismiss(); onPick(ev.id) }, lift = 2.dp).padding(horizontal = 16.dp, vertical = 12.dp),
                     ) {
-                        Text(ev.title, style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        val day = java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date(ev.startMs))
-                        Text("$day · ${ev.time}", style = PlaitType.monoSmall, color = plait.muted)
+                        Text(ev.title, style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        val day = java.text.SimpleDateFormat("EEE d MMM", AppLocale.locale).format(java.util.Date(ev.startMs))
+                        Text("${Bidi.isolate(day)} · ${Bidi.isolate(ev.time)}", style = PlaitType.monoSmall, color = plait.muted)
                     }
                 }
             }
-            Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { PlaitButton("Cancel", onDismiss, size = ButtonSize.Small, style = ButtonStyle.Quiet) }
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { PlaitButton(stringResource(R.string.common_cancel), onDismiss, size = ButtonSize.Small, style = ButtonStyle.Quiet) }
         }
     } }
 }

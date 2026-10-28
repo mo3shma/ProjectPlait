@@ -16,11 +16,13 @@ object Transcript {
         val out = ArrayList<Paragraph>()
         var start = 0L
         val text = StringBuilder()
+        val phrases = ArrayList<String>()
         var shaky = 0; var count = 0
         var prev: NoteLine? = null
         fun flush() {
-            if (text.isNotBlank()) out.add(Paragraph(start, text.toString().trim(), shaky * 2 > count))
-            text.clear(); shaky = 0; count = 0
+            // Phrases in Arabic and English each keep their own direction (Bidi.join); one script reads exactly as joined.
+            if (text.isNotBlank()) out.add(Paragraph(start, app.plait.i18n.Bidi.join(phrases), shaky * 2 > count))
+            text.clear(); phrases.clear(); shaky = 0; count = 0
         }
         for (ln in lines) {
             val t = ln.text.trim()
@@ -28,8 +30,9 @@ object Transcript {
             val p = prev
             val silence = if (p == null) 0L else ln.atMs - p.atMs - spokenMs(p.text)
             if (p != null && (silence > pauseMs || text.length > maxChars)) flush()
-            if (text.isEmpty()) { start = ln.atMs; text.append(t.replaceFirstChar { it.uppercase() }) }
-            else text.append(' ').append(join(text, t))
+            val phrase = if (text.isEmpty()) t.replaceFirstChar { it.uppercase() }.also { start = ln.atMs } else join(text, t)
+            if (text.isNotEmpty()) text.append(' ')
+            text.append(phrase); phrases.add(phrase)
             if (ln.conf < 0.6f) shaky++
             count++
             prev = ln

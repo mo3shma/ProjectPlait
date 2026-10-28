@@ -17,6 +17,8 @@ import app.plait.data.CalEvent
 import app.plait.data.Calendars
 import app.plait.data.NextUp
 import app.plait.data.google.CalEventJson
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Txt
 import app.plait.reminder.Reminders
 import app.plait.ui.WidgetLaunch
 import java.time.Instant
@@ -138,6 +140,15 @@ class NextMeetingWidget : AppWidgetProvider() {
 
         private fun show(v: RemoteViews, id: Int, on: Boolean) = v.setViewVisibility(id, if (on) View.VISIBLE else View.GONE)
 
+        /**
+         * The launcher inflates widgets in the phone's language and direction, which can differ from the app's: set the
+         * direction and the fixed labels ([labels]: view id to string id) from the app's language.
+         */
+        private fun localize(v: RemoteViews, vararg labels: Pair<Int, Int>) {
+            v.setInt(R.id.widget_root, "setLayoutDirection", if (AppLocale.isRtl) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR)
+            labels.forEach { (view, text) -> v.setTextViewText(view, Txt.s(text)) }
+        }
+
         /** The source-coloured dot: the model's accent as a colour filter on the white dot drawable. */
         private fun dot(v: RemoteViews, m: WidgetModel, on: Boolean = !m.clearDay) {
             show(v, R.id.widget_dot, on)
@@ -147,6 +158,7 @@ class NextMeetingWidget : AppWidgetProvider() {
         private fun build(context: Context, m: WidgetModel): RemoteViews {
             val l = WidgetModel.wideLines(m)
             val v = RemoteViews(context.packageName, R.layout.widget_day_wide)
+            localize(v, R.id.widget_now to R.string.common_now, R.id.widget_join_label to R.string.common_join)
             v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             v.setTextViewText(R.id.widget_date, m.date)
@@ -193,6 +205,7 @@ class NextMeetingWidget : AppWidgetProvider() {
         private fun buildSmall(context: Context, m: WidgetModel): RemoteViews {
             val l = WidgetModel.smallLines(m)
             val v = RemoteViews(context.packageName, R.layout.widget_day_small)
+            localize(v, R.id.widget_join_label to R.string.common_join)
             v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             v.setTextViewText(R.id.widget_date, m.dateShort)
@@ -225,6 +238,10 @@ class NextMeetingWidget : AppWidgetProvider() {
         private fun buildQuick(context: Context, m: WidgetModel): RemoteViews {
             val l = WidgetModel.quickLines(m)
             val v = RemoteViews(context.packageName, R.layout.widget_quick)
+            localize(
+                v, R.id.widget_join_label to R.string.common_join, R.id.widget_tile_voice_label to R.string.common_voice_note,
+                R.id.widget_tile_list_label to R.string.widget_tile_task_list, R.id.widget_tile_text_label to R.string.widget_tile_text_note,
+            )
             v.setInt(R.id.widget_root, "setBackgroundResource", bg(m.phase))
             v.setOnClickPendingIntent(R.id.widget_root, Reminders.open(context, null, 0, 9100))
             dot(v, m)

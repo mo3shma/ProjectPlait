@@ -1,6 +1,10 @@
 package app.plait.data.week
 
 import android.content.Context
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import app.plait.ai.Ai
 import app.plait.ai.AiHarness
 import app.plait.data.CalEvent
@@ -9,7 +13,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle
-import java.util.Locale
 
 /** [by] is the AI's label ("Gemma 4 · E2B"), null when written by rules. */
 data class BriefText(val text: String, val by: String?)
@@ -69,6 +72,7 @@ Rules:
         return runCatching {
             val status = Ai.status(context)
             // An empty week has nothing to write about, and the rules text says it better than a model would.
+            // In Arabic the harness asks for Arabic and [verify] reads Arabic "empty" and "busy" wording too.
             if (!status.ready || meetings == 0) return@runCatching fallback
             val hash = facts.hashCode().toString()
             val prefs = context.applicationContext.getSharedPreferences("plait", Context.MODE_PRIVATE)
@@ -123,8 +127,9 @@ Rules:
     private val spelledOk = Regex("(?i)\\b\\d+-day\\b|\\bfive\\b")
     private val quoted = Regex("[\"“]([^\"”]{2,})[\"”]")
     private val titleRun = Regex("\\b\\p{Lu}[\\p{L}\\p{N}]+(?:\\s+\\p{Lu}[\\p{L}\\p{N}]+)+")
-    private val saysNone = Regex("(?i)\\bno meetings (this|next|all|at all|in)\\b|\\b(completely|totally|entirely) (clear|free|empty)\\b|\\bnothing (booked|scheduled|on)\\b")
-    private val saysSome = Regex("(?i)\\b(busiest|busy|heavy|moderate|[1-9]\\d* meetings?)\\b")
+    private val saysNone = Regex("(?i)\\bno meetings (this|next|all|at all|in)\\b|\\b(completely|totally|entirely) (clear|free|empty)\\b|\\bnothing (booked|scheduled|on)\\b" +
+        "|لا (?:توجد |يوجد )?(?:أي )?اجتماعات|بلا اجتماعات|خال\\S*\\s+تمام|فارغ\\S*\\s+تمام")
+    private val saysSome = Regex("(?i)\\b(busiest|busy|heavy|moderate|[1-9]\\d* meetings?)\\b|انشغال|مزدحم|حافل|[1-9]\\d*\\s+اجتماع")
 
     /**
      * The model's answer if it is fit to show, else null. Pure: it is the safety net for text nobody reviewed.
@@ -146,17 +151,14 @@ Rules:
 
     // --- facts -----------------------------------------------------------------------------------------------
 
-    private fun dayName(d: LocalDate) = d.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+    private fun dayName(d: LocalDate) = d.dayOfWeek.getDisplayName(TextStyle.FULL, app.plait.i18n.AppLocale.locale)
 
     private fun CalEvent.startDate(zone: ZoneId) = Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
 
     private fun title(t: String) = t.replace(Regex("\\s+"), " ").trim().take(60)
 
-    /** 12-hour clock without relying on the locale ("9:00 AM"). */
-    internal fun clock(ms: Long, zone: ZoneId): String {
-        val t = Instant.ofEpochMilli(ms).atZone(zone)
-        return "%d:%02d %s".format(Locale.ENGLISH, (t.hour + 11) % 12 + 1, t.minute, if (t.hour < 12) "AM" else "PM")
-    }
+    /** 12-hour clock in the app's language ("9:00 AM"). */
+    internal fun clock(ms: Long, zone: ZoneId): String = app.plait.data.TimeFmt.clock(ms, zone)
 
     internal fun load(meetings: Int, minutes: Long) = when {
         meetings >= HEAVY_AT || minutes > HEAVY_MINUTES -> "heavy"
@@ -166,10 +168,7 @@ Rules:
 
     private fun plural(n: Int, one: String, many: String = one + "s") = "$n ${if (n == 1) one else many}"
 
-    private fun list(items: List<String>) = when (items.size) {
-        0, 1 -> items.joinToString()
-        else -> items.dropLast(1).joinToString(", ") + " and " + items.last()
-    }
+    private fun list(items: List<String>) = app.plait.data.brief.listText(items)
 
     internal fun recapFacts(s: WeekStats, firstName: String?): String = buildString {
         firstName?.takeIf { it.isNotBlank() }?.let { appendLine("NAME: $it") }
@@ -198,43 +197,51 @@ Rules:
 
     // --- rules text ------------------------------------------------------------------------------------------
 
-    private fun comma(name: String?) = name?.takeIf { it.isNotBlank() }?.let { ", $it" }.orEmpty()
+    private fun comma(name: String?) = name?.takeIf { it.isNotBlank() }?.let { Txt.s(R.string.gen_week_name, Bidi.isolate(it)) }.orEmpty()
 
     fun recapRules(stats: WeekStats, firstName: String?): String {
         val out = ArrayList<String>()
-        out += "That's your work week done${comma(firstName)}."
+        out += Txt.s(R.string.gen_week_done, comma(firstName))
         val b = stats.busiest
-        if (stats.meetings == 0 || b == null) out += "It was a clear week with no meetings."
-        else if (stats.meetings == 1) out += "You had 1 meeting, ${WeekAnalytics.span(stats.minutes)} long, on ${dayName(b.date)}."
-        else out += "You had ${stats.meetings} meetings, about ${WeekAnalytics.span(stats.minutes)} in total, and ${dayName(b.date)} was your busiest day."
+        val span = WeekAnalytics.span(stats.minutes)
+        if (stats.meetings == 0 || b == null) out += Txt.s(R.string.gen_week_clear)
+        else if (stats.meetings == 1) out += Txt.s(R.string.gen_week_one_meeting, span, dayName(b.date))
+        else out += Txt.plural(R.plurals.gen_week_meetings, stats.meetings, stats.meetings, span, dayName(b.date))
         val open = stats.tasksOpen
         val bare = stats.missingNotes
-        val tasks = if (open > 0) "${plural(open, "task")} ${if (open == 1) "is" else "are"} still open" else null
-        val notes = if (bare > 0) "${plural(bare, "meeting")} ${if (bare == 1) "has" else "have"} no notes" else null
-        listOfNotNull(tasks, notes).takeIf { it.isNotEmpty() }?.let { out += it.joinToString(" and ") + "." }
-        if (open > 0) out += "Worth a look before Monday."
+        val tasks = if (open > 0) Txt.plural(R.plurals.gen_week_tasks_open, open) else null
+        val notes = if (bare > 0) Txt.plural(R.plurals.gen_week_no_notes, bare) else null
+        if (tasks != null && notes != null) out += Txt.s(R.string.gen_week_two_clauses, tasks, notes)
+        else (tasks ?: notes)?.let { out += Txt.s(R.string.gen_week_one_clause, it) }
+        if (open > 0) out += Txt.s(R.string.gen_week_look)
         return out.joinToString(" ")
     }
 
+    private fun loadText(meetings: Int, minutes: Long) = Txt.s(
+        when (load(meetings, minutes)) { "heavy" -> R.string.gen_week_load_heavy; "light" -> R.string.gen_week_load_light; else -> R.string.gen_week_load_moderate },
+    )
+
     fun previewRules(preview: WeekPreview, firstName: String?, zone: ZoneId): String {
         val first = preview.firstMeeting
-        if (preview.meetings == 0 || first == null) return "Next week is completely clear${comma(firstName)}."
+        if (preview.meetings == 0 || first == null) return Txt.s(R.string.gen_week_next_clear, comma(firstName))
         val firstDay = first.startDate(zone)
-        val firstLine = "${title(first.title)} on ${dayName(firstDay)} at ${clock(first.startMs, zone)}"
+        val firstLine = Txt.s(R.string.gen_week_first_line, Bidi.isolate(title(first.title)), dayName(firstDay), Bidi.isolate(clock(first.startMs, zone)))
         val busyDays = preview.perDay.count { it.meetings > 0 }
         val free = preview.freeDays.map(::dayName)
         val freeLine = when {
             free.isEmpty() -> ""
-            busyDays == 1 -> "The rest of the week is clear."
-            else -> "${list(free)} ${if (free.size == 1) "is" else "are"} clear."
+            busyDays == 1 -> Txt.s(R.string.gen_week_rest_clear)
+            else -> Txt.plural(R.plurals.gen_week_free, free.size, list(free))
         }
-        val load = load(preview.meetings, preview.minutes)
-        if (preview.meetings == 1) return "Next week looks $load${comma(firstName)}: just 1 meeting, $firstLine. $freeLine".trim()
-        val sb = StringBuilder("Next week looks $load${comma(firstName)}: ${preview.meetings} meetings over ${plural(busyDays, "day")}.")
-        preview.busiest?.takeIf { busyDays > 1 }?.let { sb.append(" ${dayName(it.date)} is the busiest with ${plural(it.meetings, "meeting")}.") }
-        sb.append(" The first one is $firstLine")
+        val load = loadText(preview.meetings, preview.minutes)
+        if (preview.meetings == 1) return (Txt.s(R.string.gen_week_next_one, load, comma(firstName), firstLine) + " " + freeLine).trim()
+        val sb = StringBuilder(Txt.plural(R.plurals.gen_week_next_many, preview.meetings, load, comma(firstName), preview.meetings, Txt.plural(R.plurals.gen_week_days, busyDays)))
+        preview.busiest?.takeIf { busyDays > 1 }?.let { sb.append(" ").append(Txt.plural(R.plurals.gen_week_busiest, it.meetings, dayName(it.date), it.meetings)) }
         // One sentence: the first meeting, then the free days.
-        if (free.isNotEmpty() && busyDays > 1) sb.append(", and ${list(free)} ${if (free.size == 1) "is" else "are"} clear.") else sb.append(".")
+        sb.append(" ").append(
+            if (free.isNotEmpty() && busyDays > 1) Txt.plural(R.plurals.gen_week_first_free, free.size, firstLine, list(free))
+            else Txt.s(R.string.gen_week_first, firstLine),
+        )
         if (busyDays == 1 && freeLine.isNotEmpty()) sb.append(" $freeLine")
         return sb.toString()
     }

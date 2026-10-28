@@ -17,6 +17,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import app.plait.MainActivity
 import app.plait.data.update.Updater
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -116,11 +118,11 @@ class ModelDownloadService : Service() {
         val done = active.sumOf { it.second.done } + (update?.done ?: 0L)
         val total = (active.sumOf { it.second.total } + (update?.info?.bytes ?: 0L)).coerceAtLeast(1)
         val title = when {
-            update != null && active.isEmpty() -> "Downloading Plait ${update.info.version}"
-            update != null -> "Downloading Plait and ${active.size} model${if (active.size == 1) "" else "s"}"
-            active.isEmpty() -> "Getting the download ready"
-            active.size == 1 -> "Downloading ${active[0].first.title}"
-            else -> "Downloading ${active.size} models"
+            update != null && active.isEmpty() -> Txt.s(R.string.ai_dl_title_update, Bidi.isolate(update.info.version))
+            update != null -> Txt.plural(R.plurals.ai_dl_title_update_models, active.size)
+            active.isEmpty() -> Txt.s(R.string.ai_dl_title_preparing)
+            active.size == 1 -> Txt.s(R.string.ai_dl_title_one, Bidi.isolate(active[0].first.title))
+            else -> Txt.plural(R.plurals.ai_dl_title_models, active.size)
         }
         val cancel = PendingIntent.getService(
             this, 1, Intent(this, ModelDownloadService::class.java).setAction(ACTION_CANCEL),
@@ -129,22 +131,22 @@ class ModelDownloadService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_PROGRESS)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText(if (active.isEmpty() && update == null) "Plait keeps downloading in the background." else "${ModelCatalog.formatSize(done)} of ${ModelCatalog.formatSize(total)}")
+            .setContentText(if (active.isEmpty() && update == null) Txt.s(R.string.ai_dl_background) else Txt.s(R.string.ai_dl_progress, ModelCatalog.formatSize(done), ModelCatalog.formatSize(total)))
             .setProgress(1000, (done * 1000 / total).toInt(), active.isEmpty() && update == null)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
-            .addAction(0, "Cancel", cancel)
+            .addAction(0, Txt.s(R.string.common_cancel), cancel)
             .build()
     }
 
     private fun notifyReady(spec: ModelSpec) {
         val n = NotificationCompat.Builder(this, CHANNEL_DONE)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("${spec.title} is ready")
-            .setContentText("Downloaded and in use. Nothing leaves your phone.")
+            .setContentTitle(Txt.s(R.string.ai_dl_ready_title, Bidi.isolate(spec.title)))
+            .setContentText(Txt.s(R.string.ai_dl_ready_text))
             .setAutoCancel(true)
             .setContentIntent(openApp())
             .build()
@@ -161,9 +163,9 @@ class ModelDownloadService : Service() {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val nm = context.getSystemService(NotificationManager::class.java)
             if (nm.getNotificationChannel(CHANNEL_PROGRESS) == null)
-                nm.createNotificationChannel(NotificationChannel(CHANNEL_PROGRESS, "Model downloads", NotificationManager.IMPORTANCE_LOW))
+                nm.createNotificationChannel(NotificationChannel(CHANNEL_PROGRESS, Txt.s(R.string.ai_dl_channel_progress), NotificationManager.IMPORTANCE_LOW))
             if (nm.getNotificationChannel(CHANNEL_DONE) == null)
-                nm.createNotificationChannel(NotificationChannel(CHANNEL_DONE, "Model ready", NotificationManager.IMPORTANCE_DEFAULT))
+                nm.createNotificationChannel(NotificationChannel(CHANNEL_DONE, Txt.s(R.string.ai_dl_channel_done), NotificationManager.IMPORTANCE_DEFAULT))
         }
 
         fun start(context: Context) {

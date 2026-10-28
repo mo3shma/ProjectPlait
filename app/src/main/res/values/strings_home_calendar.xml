@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home (Brief, Calendar, Notes tabs) and the calendar. Owner: home_calendar. Keys start with home_ or cal_. -->
+<resources>
+    <!-- Bottom tab: the day's brief. -->
+    <string name="home_tab_brief">Brief</string>
+    <!-- Bottom tab: the calendar. -->
+    <string name="home_tab_calendar">Calendar</string>
+    <!-- Bottom tab: voice and written notes. -->
+    <string name="home_tab_notes">Notes</string>
+    <!-- "+" menu item that opens the new meeting sheet. -->
+    <string name="home_menu_new_meeting">New meeting</string>
+
+    <!-- Short message while the calendars are read again. -->
+    <string name="home_refreshing_calendars">Refreshing calendars…</string>
+    <!-- Screen-reader label of the round sync button once calendars are connected. -->
+    <string name="home_refresh_calendars">Refresh calendars</string>
+    <!-- Screen-reader label of the round sync button before any calendar is connected. -->
+    <string name="home_connect_calendars">Connect calendars</string>
+    <!-- Screen-reader label of the camera icon on a meeting that has a video call link. -->
+    <string name="home_has_call_link">Has a call link</string>
+    <string name="home_no_app_for_link">No app can open this link</string>
+    <!-- Fallback name of the on-device AI, used inside a sentence. -->
+    <string name="home_ai_on_this_phone">the AI on this phone</string>
+
+    <!-- Empty states on the Home cards when no calendar can be read. -->
+    <string name="home_setup_no_calendar_title">No calendar connected yet</string>
+    <string name="home_setup_no_calendar_body">Connect your calendars and your real day shows up here.</string>
+    <!-- Button: let Plait read the calendars already on the phone. -->
+    <string name="home_setup_use_phone_calendars">Use my phone\'s calendars</string>
+    <!-- Button that opens the settings with every way to connect a calendar. -->
+    <string name="home_setup_more_options">More options</string>
+    <string name="home_setup_none_found_title">No calendars found on this phone</string>
+    <string name="home_setup_none_found_body">Add an account, or paste a calendar link, and your real day shows up here.</string>
+    <string name="home_setup_add_account">Add an account or link</string>
+
+    <!-- Card header: %1$s is a greeting ("Good morning"), %2$s the person's first name. -->
+    <string name="home_greeting_name">%1$s, %2$s</string>
+    <!-- Text of a guest count under a meeting. -->
+    <plurals name="home_guests">
+        <item quantity="one">%d guest</item>
+        <item quantity="other">%d guests</item>
+    </plurals>
+    <!-- Small tag on a finished meeting that has no note. -->
+    <string name="home_no_notes_yet">No notes yet</string>
+
+    <!-- Morning card headline when there are no meetings. -->
+    <string name="home_clear_day">A clear day.</string>
+    <!-- Morning card headline. %1$s is the count, written as a word in English ("Three"). -->
+    <plurals name="home_meetings_today">
+        <item quantity="one">%1$s meeting today.</item>
+        <item quantity="other">%1$s meetings today.</item>
+    </plurals>
+    <!-- Section heading above the day's meetings in time order. -->
+    <string name="home_today_in_order">Today in order</string>
+
+    <!-- Midday card headlines. -->
+    <string name="home_nothing_today">Nothing on today.</string>
+    <string name="home_day_over">That\'s the day.</string>
+    <string name="home_nothing_done_yet">Nothing done yet.</string>
+    <!-- %1$d meetings are over, %2$d are still to come. -->
+    <string name="home_done_to_go">%1$d done, %2$d to go.</string>
+    <!-- Section heading: meetings already over today. An adjective, not a button. -->
+    <string name="home_section_done">Done</string>
+    <!-- Section heading: meetings still to come today. -->
+    <string name="home_still_ahead">Still ahead</string>
+    <!-- %1$s is a length of time ("2 h 30 min"). -->
+    <string name="home_so_far">So far: %1$s in meetings.</string>
+
+    <!-- Evening card headlines. -->
+    <string name="home_quiet_day">A quiet day.</string>
+    <!-- %1$s is a length of time ("2 h 30 min"). -->
+    <string name="home_in_meetings_headline">%1$s in meetings.</string>
+    <string name="home_day_in_numbers">The day in numbers</string>
+    <!-- Label under a "3/4" tile: meetings that took place out of all of today's. -->
+    <string name="home_tile_meetings_held">meetings held</string>
+    <!-- Label under a percentage tile: share of an 8-hour working day spent in meetings. -->
+    <string name="home_tile_workday_share">of an 8 h workday</string>
+    <!-- Label under a duration tile: the longest meeting; %1$s is its title. -->
+    <string name="home_tile_longest">longest · %1$s</string>
+    <!-- Label under a clock-hour tile: the hour with the most meetings. -->
+    <string name="home_tile_busiest_hour">busiest hour</string>
+    <!-- Section heading above a bar of time spent per kind of meeting. -->
+    <string name="home_time_by_kind">Time by kind</string>
+    <string name="home_nothing_to_write">Nothing to write up yet.</string>
+    <string name="home_all_caught_up">All caught up. Every finished meeting has a note.</string>
+    <string name="home_add_lines_hint">Add a few lines while it\'s fresh. A voice note, some text or a photo all count.</string>
+    <!-- Button: write a note for this meeting. -->
+    <string name="home_add_note">Add note</string>
+    <!-- Under a cut list: %1$d more items are not shown. -->
+    <string name="home_n_more">+%1$d more</string>
+
+    <string name="home_tomorrow_clear">Tomorrow is clear.</string>
+    <!-- %1$s is the count, written as a word in English ("Three"). -->
+    <plurals name="home_meetings_tomorrow">
+        <item quantity="one">%1$s meeting tomorrow.</item>
+        <item quantity="other">%1$s meetings tomorrow.</item>
+    </plurals>
+    <!-- %1$s is a meeting title, %2$s its start time. -->
+    <string name="home_first_is">First is %1$s at %2$s.</string>
+    <!-- %1$s is a length of time ("2 h"), %2$s a clock time. -->
+    <string name="home_free_tomorrow">You have %1$s free tomorrow from %2$s.</string>
+    <!-- Button: book that free time in the calendar as focus time. -->
+    <string name="home_hold_focus">Hold it as focus time</string>
+    <!-- Title of the calendar event the button above creates. -->
+    <string name="home_focus_time_title">Focus time</string>
+
+    <!-- Tasks card. -->
+    <string name="home_att_title">Needs your attention</string>
+    <string name="home_att_empty">Nothing needs you right now.</string>
+    <!-- Screen-reader label of the ring that ticks a task off; %1$s is the task. -->
+    <string name="home_att_mark_done">Mark done: %1$s</string>
+    <!-- Caption of a suggested task with no meeting; %1$s is how long ago ("3 days ago"). -->
+    <string name="home_att_suggested_ago">Suggested · %1$s</string>
+    <!-- Caption of a suggested task; %1$s is the meeting's title. -->
+    <string name="home_att_suggested_from">Suggested from %1$s</string>
+    <!-- Caption of a task from a note that belongs to no meeting; %1$s is how long ago. -->
+    <string name="home_att_free_note">Free note · %1$s</string>
+    <!-- Caption of a task; %1$s is the meeting's title, %2$s how long ago. -->
+    <string name="home_att_from">From %1$s · %2$s</string>
+
+    <!-- Meeting prep card: title. A noun (preparation). -->
+    <string name="home_prep_title">Prep</string>
+    <!-- Prep section heading: things to keep in mind. -->
+    <string name="home_prep_remember">Remember</string>
+    <!-- Prep section heading: questions to raise in the meeting. -->
+    <string name="home_prep_ask">Ask</string>
+    <string name="home_prep_failed">Nothing came back. Try again in a moment.</string>
+    <!-- %1$s is the AI's name. -->
+    <string name="home_prep_writing_with">Writing with %1$s…</string>
+    <!-- Button; %1$s is the AI's name. -->
+    <string name="home_prep_write_with">Write with %1$s</string>
+    <string name="home_prep_write_again">Write again</string>
+    <!-- Button: drop the saved prep and go back to the generated one. -->
+    <string name="home_prep_reset">Reset</string>
+
+    <string name="home_since_title">Since last time</string>
+    <!-- Section heading: decisions taken in earlier meetings. -->
+    <string name="home_since_decided">Decided</string>
+    <!-- Section heading: follow-ups not done yet. -->
+    <string name="home_since_still_open">Still open</string>
+    <string name="home_since_footer">From your own notes on earlier meetings with this title.</string>
+
+    <string name="home_share_body">Make a file or message of this meeting: why you met, the agenda, prep, notes, follow-ups. It is built on this phone and goes only where you send it.</string>
+    <string name="home_share_hide_team">Hide teammate options</string>
+    <string name="home_share_send_team">Send my notes to a teammate</string>
+    <string name="home_share_team_body">They import the file in Plait (hub, Import backup) and the notes appear on their copy of this meeting, marked with your name.</string>
+    <!-- Chip: include emails attached to the meeting. -->
+    <string name="home_share_attached_emails">Attached emails</string>
+    <!-- Chip: include voice recordings and photos. -->
+    <string name="home_share_recordings_photos">Recordings and photos</string>
+    <string name="home_share_passphrase">Passphrase to lock the file (optional)</string>
+    <string name="home_share_mail_warning">Emails are other people\'s words. Only include them if you are allowed to pass them on.</string>
+    <string name="home_share_send_file">Send notes file</string>
+
+    <!-- Week recap tiles: labels under a number. -->
+    <string name="home_week_tile_meetings">meetings</string>
+    <string name="home_week_tile_in_meetings">in meetings</string>
+    <!-- %1$s is a length of time. -->
+    <string name="home_week_tile_busiest_day">busiest day · %1$s</string>
+    <string name="home_week_tile_noted">meetings noted</string>
+    <!-- Tile value: %1$d tasks done. -->
+    <string name="home_week_tile_done_value">%1$d done</string>
+    <!-- Tile label: %1$d tasks still open. -->
+    <string name="home_week_tile_tasks_open">tasks · %1$d open</string>
+    <!-- A day of next week with no meetings. An adjective. -->
+    <string name="home_week_day_clear">Clear</string>
+    <!-- One day of next week: %1$d meetings, %2$s the first one's start time, %3$s its title. -->
+    <plurals name="home_week_day_line">
+        <item quantity="one">%1$d meeting · first %2$s %3$s</item>
+        <item quantity="other">%1$d meetings · first %2$s %3$s</item>
+    </plurals>
+    <!-- %1$s is the AI's name. -->
+    <string name="home_written_by">Written by %1$s</string>
+    <!-- Screen-reader label of the refresh button next to "Written by". -->
+    <string name="home_write_again_desc">Write this again</string>
+    <string name="home_week_your_work_week">Your work week</string>
+    <string name="home_week_done">Week done.</string>
+    <!-- Button: write a short brief of next week. -->
+    <string name="home_week_brief_next">Brief me on next week</string>
+
+    <!-- Calendar view switch. -->
+    <string name="cal_view_day">Day</string>
+    <string name="cal_view_month">Month</string>
+    <string name="cal_nothing_planned">Nothing planned</string>
+    <string name="cal_free_day_body">A free day. Events you add to your calendars will show up here.</string>
+    <!-- Screen-reader description of the month grid. -->
+    <string name="cal_month_desc">Month calendar. Tap a day to see its events.</string>
+    <plurals name="cal_events">
+        <item quantity="one">%d event</item>
+        <item quantity="other">%d events</item>
+    </plurals>
+    <string name="cal_previous_day">Previous day</string>
+    <string name="cal_next_day">Next day</string>
+</resources>

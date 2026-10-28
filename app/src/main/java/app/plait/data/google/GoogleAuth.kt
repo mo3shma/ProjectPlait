@@ -1,5 +1,7 @@
 package app.plait.data.google
 
+import app.plait.R
+import app.plait.i18n.Txt
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -41,12 +43,12 @@ object GoogleAuth {
         when {
             result.hasResolution() -> AuthOutcome.NeedsConsent(result.pendingIntent!!)
             result.accessToken != null -> AuthOutcome.Token(result.accessToken!!)
-            else -> AuthOutcome.Failed("Google didn't return an access token.")
+            else -> AuthOutcome.Failed(Txt.s(R.string.gcal_auth_no_token))
         }
     } catch (e: ApiException) {
         AuthOutcome.Failed(explain(e))
     } catch (e: Exception) {
-        AuthOutcome.Failed(e.message ?: "Google sign-in failed.")
+        AuthOutcome.Failed(e.message ?: Txt.s(R.string.gcal_auth_failed))
     }
 
     /** Reads the token out of the result of the consent screen. */
@@ -58,10 +60,10 @@ object GoogleAuth {
 
     private fun explain(e: ApiException): String = when (e.statusCode) {
         CommonStatusCodes.DEVELOPER_ERROR, 10 ->
-            "Google sign-in isn't set up for this build yet. Register the app's package name and SHA-1 in Google Cloud."
-        CommonStatusCodes.NETWORK_ERROR -> "No connection to Google."
-        CommonStatusCodes.CANCELED, 16 -> "Sign-in was cancelled."
-        else -> "Google sign-in failed (code ${e.statusCode})."
+            Txt.s(R.string.gcal_auth_not_set_up)
+        CommonStatusCodes.NETWORK_ERROR -> Txt.s(R.string.gcal_auth_offline)
+        CommonStatusCodes.CANCELED, 16 -> Txt.s(R.string.gcal_auth_cancelled)
+        else -> Txt.s(R.string.gcal_auth_failed_code, e.statusCode)
     }
 }
 

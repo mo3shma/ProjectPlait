@@ -1,7 +1,9 @@
 package app.plait.ai
 
 import android.content.Context
+import app.plait.R
 import app.plait.audio.NoteProcessor
+import app.plait.i18n.Txt
 import app.plait.diag.Diag
 import android.net.ConnectivityManager
 import androidx.compose.runtime.mutableStateMapOf
@@ -105,7 +107,7 @@ object ModelCenter {
         val root = dir(app, spec.id).also { it.mkdirs() }
         val needed = spec.bytes - spec.files.sumOf { File(root, it.name + ".part").length() }
         if (root.usableSpace < needed + 50_000_000L) {
-            states[spec.id] = ModelState.Failed("Not enough free space. ${ModelCatalog.formatSize(needed)} needed.")
+            states[spec.id] = ModelState.Failed(Txt.s(R.string.ai_dl_no_space, ModelCatalog.formatSize(needed)))
             return
         }
         states[spec.id] = ModelState.Downloading(0, spec.bytes)
@@ -143,7 +145,7 @@ object ModelCenter {
                 Diag.log("DOWNLOAD", "${spec.id}: ${e.message}")
                 setPending(app, spec.id, false)
                 states[spec.id] = ModelState.Failed(
-                    if (e is IOException) "The download stopped (${e.message ?: "network"}). Tap Download to carry on." else (e.message ?: "The download failed."),
+                    if (e is IOException) Txt.s(R.string.ai_dl_stopped, e.message ?: Txt.s(R.string.ai_dl_network)) else (e.message ?: Txt.s(R.string.ai_dl_failed)),
                 )
             }
         }
@@ -162,7 +164,7 @@ object ModelCenter {
         try {
             val code = conn.responseCode
             if (code == 200 && have > 0) { part.delete(); have = 0 } // server ignored Range: start over
-            else if (code != 200 && code != 206) throw IOException("server answered $code")
+            else if (code != 200 && code != 206) throw IOException(Txt.s(R.string.ai_dl_server_answered, code))
             var done = doneBefore + have
             conn.inputStream.use { input ->
                 java.io.FileOutputStream(part, have > 0 && code == 206).use { out ->
@@ -179,8 +181,8 @@ object ModelCenter {
                     }
                 }
             }
-            if (part.length() != f.bytes) throw IOException("the file was incomplete (${part.length()} of ${f.bytes} bytes)")
-            if (!part.renameTo(File(root, f.name))) throw IOException("couldn't save the file")
+            if (part.length() != f.bytes) throw IOException(Txt.s(R.string.ai_dl_incomplete, part.length(), f.bytes))
+            if (!part.renameTo(File(root, f.name))) throw IOException(Txt.s(R.string.ai_dl_cannot_save))
             progress(done)
             return done
         } finally {

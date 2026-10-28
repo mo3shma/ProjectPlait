@@ -4,6 +4,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.size
 import app.plait.ui.fauxGlass
 import app.plait.ui.plaitCard
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,8 +95,8 @@ internal fun SearchPanel(onOpenAt: (eventId: String, tab: Int) -> Unit) {
             val words = Ai.generate(
                 context,
                 "Give up to 6 search words or short phrases that would find notes answering this question, including synonyms and the " +
-                    "main names in it. Reply with one comma-separated line only, nothing else.\nQuestion: $q",
-            )?.text?.lines()?.firstOrNull { it.isNotBlank() }?.split(',')?.map { it.trim().trim('.', '"') }?.filter { it.length > 1 && !it.equals(q, true) }?.take(6).orEmpty()
+                    "main names in it, in the language of the question. Reply with one comma-separated line only, nothing else.\nQuestion: $q",
+            )?.text?.lines()?.firstOrNull { it.isNotBlank() }?.split(',', '،')?.map { it.trim().trim('.', '"') }?.filter { it.length > 1 && !it.equals(q, true) }?.take(6).orEmpty()
             alsoSearched = words
             busy = true
             val found = withContext(Dispatchers.Default) {
@@ -99,7 +105,7 @@ internal fun SearchPanel(onOpenAt: (eventId: String, tab: Int) -> Unit) {
             hits = found
             busy = false
             val r = if (found.isEmpty()) null else Ai.generate(context, AskPrompt.build(q, found.take(6), s.promptBudget))
-            answer = r?.text?.trim() ?: if (found.isEmpty()) "Nothing in your notes matches that." else "No answer came back. The notes found are listed below."
+            answer = r?.text?.trim() ?: Txt.s(if (found.isEmpty()) R.string.note_search_no_match else R.string.note_search_no_answer)
             answerBy = r?.label
         }
     }
@@ -121,27 +127,27 @@ internal fun SearchPanel(onOpenAt: (eventId: String, tab: Int) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner ->
                 Box(Modifier.fillMaxWidth().heightIn(min = 52.dp).fauxGlass(RoundedCornerShape(26.dp), plait.accent.copy(alpha = 0.16f)).padding(horizontal = 18.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
-                    if (query.isEmpty()) Text("Search or ask: what did we decide with…", style = PlaitType.body, color = plait.muted, maxLines = 1)
+                    if (query.isEmpty()) Text(stringResource(R.string.note_search_hint), style = PlaitType.body, color = plait.muted, maxLines = 1)
                     inner()
                 }
             },
         )
         if (query.trim().length >= 2) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton("Clear", { query = "" }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_clear), { query = "" }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                 if (aiLabel != null) PlaitButton(
-                    if (asked && answer == null) "Thinking…" else "Search with AI", { smart() },
+                    stringResource(if (asked && answer == null) R.string.note_search_thinking else R.string.note_search_with_ai), { smart() },
                     style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = !(asked && answer == null),
                 )
             }
-            if (alsoSearched.isNotEmpty()) Text("Also searched: " + alsoSearched.joinToString(", "), style = PlaitType.caption, color = plait.muted)
+            if (alsoSearched.isNotEmpty()) Text(stringResource(R.string.note_also_searched, alsoSearched.joinToString(if (AppLocale.isRtl) "، " else ", ") { Bidi.isolate(it) }), style = PlaitType.caption, color = plait.muted)
         }
         answer?.let { a ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp)).background(plait.accent.copy(alpha = 0.16f)).padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(a, style = PlaitType.body.copy(fontSize = 16.sp, lineHeight = 23.sp, textDirection = TextDirection.Content), color = plait.text)
             }
         }
-        if (query.trim().length >= 2 && hits.isEmpty() && !busy) Text("Nothing found.", style = PlaitType.body, color = plait.muted)
+        if (query.trim().length >= 2 && hits.isEmpty() && !busy) Text(stringResource(R.string.note_search_nothing), style = PlaitType.body, color = plait.muted)
         hits.forEachIndexed { i, h -> HitCard(i + 1, h, onOpenAt) }
     }
 }
@@ -166,9 +172,9 @@ private fun HitCard(n: Int, hit: Hit, onOpenAt: (String, Int) -> Unit) {
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("[$n]", style = PlaitType.monoSmall, color = plait.accent)
-            Text(hit.doc.kind.label + if (hit.doc.whenMs > 0) " · " + TimeFmt.stamp(hit.doc.whenMs) else "", style = PlaitType.monoSmall, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(hit.doc.kind.label + if (hit.doc.whenMs > 0) " · " + Bidi.isolate(TimeFmt.stamp(hit.doc.whenMs)) else "", style = PlaitType.monoSmall, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(hit.doc.title, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold), color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(hit.doc.title, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold).userText(), color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(hit.snippet, style = PlaitType.body.copy(fontSize = 14.sp, lineHeight = 20.sp, textDirection = TextDirection.Content), color = plait.text.copy(alpha = 0.8f), maxLines = 3, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -185,29 +191,29 @@ internal fun FollowupsCard(onOpenAt: (eventId: String, tab: Int) -> Unit) {
     val open = all.filter { app.plait.data.followups.FollowupState.isOpen(it.id, now) }
     if (all.isEmpty()) return
     Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(30.dp)).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(if (open.isEmpty()) "Follow-ups · all done" else "Follow-ups · ${open.size} open", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
-        if (open.isEmpty()) Text("Nothing waiting on you. New ones appear as you take notes.", style = PlaitType.caption, color = plait.muted)
+        Text(if (open.isEmpty()) stringResource(R.string.note_followups_all_done) else stringResource(R.string.note_followups_open, open.size), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+        if (open.isEmpty()) Text(stringResource(R.string.note_followups_empty), style = PlaitType.caption, color = plait.muted)
         open.take(8).forEach { f ->
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(plait.surfaceHigh.copy(alpha = 0.6f)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(f.text, style = PlaitType.body.copy(textDirection = TextDirection.Content), color = plait.text)
+                Text(f.text, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.fillMaxWidth())
                 val from = listOfNotNull(f.title.ifBlank { null }).joinToString(" · ")
-                if (from.isNotBlank()) Text(from, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (from.isNotBlank()) Text(from, style = PlaitType.caption.userText(), color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlaitButton("Done", { app.plait.data.followups.FollowupState.markDone(context, f.id) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                    PlaitButton("Tomorrow", {
+                    PlaitButton(stringResource(R.string.common_done), { app.plait.data.followups.FollowupState.markDone(context, f.id) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                    PlaitButton(stringResource(R.string.common_tomorrow), {
                         val t = java.time.LocalDate.now().plusDays(1).atTime(9, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                         app.plait.data.followups.FollowupState.snooze(context, f.id, t)
                     }, size = ButtonSize.Small)
                     val slot = remember(f.id, app.plait.data.Calendars.events) {
-                        app.plait.data.prep.FreeTime.find(app.plait.data.Calendars.events.filter { !it.allDay }.map { it.startMs to it.endMs }, System.currentTimeMillis(), 5, 30, limit = 1).firstOrNull()
+                        app.plait.data.prep.FreeTime.find(app.plait.data.Calendars.events.filter { !it.allDay }.map { it.startMs to it.endMs }, System.currentTimeMillis(), 5, 30, limit = 1, workDay = { app.plait.data.week.WorkWeek.isWorkDay(it) }).firstOrNull()
                     }
-                    if (slot != null) PlaitButton("Book 30 min · " + app.plait.data.prep.FreeTime.label(slot).substringBefore(" –"), {
+                    if (slot != null) PlaitButton(stringResource(R.string.note_book_30, app.plait.data.prep.FreeTime.label(slot).substringBefore(" –")), {
                         android.widget.Toast.makeText(context, app.plait.data.device.Booking.book(context, app.plait.data.prep.FocusTime.todoTitle(f.text), slot), android.widget.Toast.LENGTH_LONG).show()
                     }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
-                    PlaitButton("Open", { onOpenAt(f.eventId, 2) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                    PlaitButton(stringResource(R.string.common_open), { onOpenAt(f.eventId, 2) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                 }
             }
         }
-        if (open.size > 8) Text("+${open.size - 8} more", style = PlaitType.caption, color = plait.muted)
+        if (open.size > 8) Text(stringResource(R.string.meet_more, open.size - 8), style = PlaitType.caption, color = plait.muted)
     }
 }

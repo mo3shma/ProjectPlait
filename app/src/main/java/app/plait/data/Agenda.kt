@@ -6,7 +6,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
-import java.util.Locale
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Txt
 
 /** Decides what "today", "up next" and "later" mean. Pure functions of the event list and the clock. */
 object Agenda {
@@ -34,13 +36,15 @@ object Agenda {
 
     /** Big number on the Up next card: "Now", "12 min", "1h 20m". */
     fun countdown(event: CalEvent, nowMs: Long): String {
-        if (event.startMs <= 0) return "${event.minutesAway} min"
+        fun mins(n: Long) = Txt.plural(R.plurals.gen_dur_min, n.toInt())
+        fun h(n: Long) = Txt.plural(R.plurals.gen_countdown_h, n.toInt())
+        if (event.startMs <= 0) return mins(event.minutesAway.toLong())
         val m = minutesUntil(event, nowMs)
         return when {
-            m <= 0 -> "Now"
-            m < 60 -> "$m min"
-            m % 60 == 0L -> "${m / 60}h"
-            else -> "${m / 60}h ${m % 60}m"
+            m <= 0 -> Txt.s(R.string.common_now)
+            m < 60 -> mins(m)
+            m % 60 == 0L -> h(m / 60)
+            else -> Txt.s(R.string.gen_dur_h_min, h(m / 60), Txt.plural(R.plurals.gen_countdown_m, (m % 60).toInt()))
         }
     }
 
@@ -64,7 +68,7 @@ object Agenda {
             val from = d.atStartOfDay(zone).toInstant().toEpochMilli()
             val to = d.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
             DayLoad(
-                day = d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                day = d.dayOfWeek.getDisplayName(TextStyle.SHORT, AppLocale.locale),
                 date = d.dayOfMonth.toString(),
                 count = events.count { it.startMs < to && it.endMs > from },
                 today = d == today,

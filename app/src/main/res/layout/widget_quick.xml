@@ -13,11 +13,11 @@
             android:src="@drawable/widget_dot" android:importantForAccessibility="no" />
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:gravity="center_vertical" android:orientation="vertical">
-            <TextView android:id="@+id/widget_time" android:text="1:30 PM"
+            <TextView android:id="@+id/widget_time" android:text="@string/wdg_preview_time"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:textAlignment="viewStart" android:textColor="#E6FFFFFF" android:textSize="12sp" android:textFontWeight="600"
                 android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
-            <TextView android:id="@+id/widget_title" android:text="Design review"
+            <TextView android:id="@+id/widget_title" android:text="@string/wdg_preview_title"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:textAlignment="viewStart" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"
                 android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
@@ -27,8 +27,8 @@
         android:background="@drawable/widget_pill_other" android:gravity="center" android:orientation="horizontal"
         android:paddingStart="16dp" android:paddingEnd="18dp">
         <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_widget_video" android:importantForAccessibility="no" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="5dp"
-            android:text="Join" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textFontWeight="600"
+        <TextView android:id="@+id/widget_join_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="5dp"
+            android:text="@string/common_join" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textFontWeight="600"
             android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
     </LinearLayout>
     </LinearLayout>
@@ -38,8 +38,8 @@
             android:background="@drawable/widget_tile_voice" android:gravity="center" android:orientation="vertical">
             <ImageView android:layout_width="32dp" android:layout_height="32dp" android:background="@drawable/widget_icon_circle"
                 android:padding="7dp" android:src="@drawable/ic_widget_mic" android:importantForAccessibility="no" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
-                android:text="Voice note" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
+            <TextView android:id="@+id/widget_tile_voice_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:text="@string/common_voice_note" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
                 android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
         </LinearLayout>
         <LinearLayout android:id="@+id/widget_tile_list"
@@ -47,8 +47,8 @@
             android:background="@drawable/widget_tile_list" android:gravity="center" android:orientation="vertical">
             <ImageView android:layout_width="32dp" android:layout_height="32dp" android:background="@drawable/widget_icon_circle"
                 android:padding="7dp" android:src="@drawable/ic_widget_checklist" android:importantForAccessibility="no" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
-                android:text="Task list" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
+            <TextView android:id="@+id/widget_tile_list_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:text="@string/widget_tile_task_list" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
                 android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
         </LinearLayout>
         <LinearLayout android:id="@+id/widget_tile_text"
@@ -56,8 +56,8 @@
             android:background="@drawable/widget_tile_text" android:gravity="center" android:orientation="vertical">
             <ImageView android:layout_width="32dp" android:layout_height="32dp" android:background="@drawable/widget_icon_circle"
                 android:padding="7dp" android:src="@drawable/ic_widget_pencil" android:importantForAccessibility="no" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
-                android:text="Text note" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
+            <TextView android:id="@+id/widget_tile_text_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:text="@string/widget_tile_text_note" android:textColor="#FF0E1316" android:textSize="13sp" android:textFontWeight="600"
                 android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
         </LinearLayout>
     </LinearLayout>

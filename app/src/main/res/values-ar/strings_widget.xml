@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget sizes sit in an LTR isolate (U+2066 ... U+2069) so "4×2" never reads as "2×4" in a right-to-left line. -->
+<resources>
+    <string name="widget_description_small">اجتماعك التالي ووقت بدئه، مع زر انضمام عندما يكون له رابط مكالمة. &#x2066;2×2&#x2069;.</string>
+    <string name="widget_description_quick">اجتماعك التالي مع زر انضمام، ونقرة واحدة لتسجيل ملاحظة صوتية أو بدء قائمة مهام أو كتابة ملاحظة نصية. &#x2066;4×3&#x2069;.</string>
+    <string name="widget_description">اجتماعك التالي وما يليه، مع زر انضمام عندما يكون له رابط مكالمة. &#x2066;4×2&#x2069;.</string>
+    <string name="widget_label_tile">ملاحظة صوتية في Plait</string>
+    <string name="widget_label_wide">موجز Plait</string>
+    <string name="widget_label_small">موجز Plait، صغير</string>
+    <string name="widget_label_quick">إضافة سريعة في Plait</string>
+    <string name="widget_tile_task_list">قائمة مهام</string>
+    <string name="widget_tile_text_note">ملاحظة نصية</string>
+</resources>

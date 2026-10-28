@@ -71,6 +71,10 @@ import app.plait.ui.popupSurface
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.userText
 
 /** A list of "what's new" items: a coloured dot, the lead in bold, the explanation under it. */
 @Composable
@@ -80,8 +84,8 @@ private fun NewsList(items: List<NewsItem>) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.padding(top = 7.dp).size(8.dp).background(plait.accent, CircleShape))
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(item.lead.trimEnd('.'), style = PlaitType.bodyStrong, color = plait.text)
-                    if (item.detail.isNotBlank()) Text(item.detail, style = PlaitType.body, color = plait.muted)
+                    Text(item.lead.trimEnd('.'), style = PlaitType.bodyStrong.userText(), color = plait.text)
+                    if (item.detail.isNotBlank()) Text(item.detail, style = PlaitType.body.userText(), color = plait.muted)
                 }
             }
         }
@@ -93,10 +97,10 @@ private fun NewsList(items: List<NewsItem>) {
 fun WhatsNewDialog(news: News, onDone: () -> Unit) {
     PlaitDialog(onDismissRequest = onDone) { PopIn {
         Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("What's new in ${news.version}", style = PlaitType.bodyStrong, color = plait.muted)
-            Text(news.title.replaceFirstChar { it.uppercase() }, style = PlaitType.section, color = plait.text)
+            Text(stringResource(R.string.sheet_news_title, Bidi.isolate(news.version)), style = PlaitType.bodyStrong, color = plait.muted)
+            Text(news.title.replaceFirstChar { it.uppercase() }, style = PlaitType.section.userText(), color = plait.text)
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) { NewsList(news.items) }
-            PlaitButton("Got it", onDone, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
+            PlaitButton(stringResource(R.string.sheet_news_got_it), onDone, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
         }
     } }
 }
@@ -134,12 +138,12 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
         Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).popupSurface().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Filled.SystemUpdate, null, tint = plait.accent, modifier = Modifier.size(24.dp))
-                Text("Plait ${info.version} is ready", style = PlaitType.section, color = plait.text)
+                Text(stringResource(R.string.sheet_update_ready, Bidi.isolate(info.version)), style = PlaitType.section, color = plait.text)
             }
-            Text("You have ${Updater.currentVersion(context)}. ${if (info.bytes > 0) ModelCatalog.formatSize(info.bytes) + " to download." else ""}", style = PlaitType.caption, color = plait.muted)
+            Text(if (info.bytes > 0) stringResource(R.string.sheet_update_have_size, Bidi.isolate(Updater.currentVersion(context)), Bidi.isolate(ModelCatalog.formatSize(info.bytes))) else stringResource(R.string.sheet_update_have, Bidi.isolate(Updater.currentVersion(context))), style = PlaitType.caption, color = plait.muted)
             val items = remember(info.notes) { WhatsNew.items(info.notes) }
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
-                if (items.isNotEmpty()) NewsList(items) else if (info.notes.isNotBlank()) Text(info.notes.take(600), style = PlaitType.body, color = plait.text)
+                if (items.isNotEmpty()) NewsList(items) else if (info.notes.isNotBlank()) Text(info.notes.take(600), style = PlaitType.body.userText(), color = plait.text)
             }
             when (state) {
                 is UpdateState.Downloading -> {
@@ -148,53 +152,47 @@ fun UpdatePrompt(forceOpen: Boolean = false, onClose: () -> Unit = {}) {
                         Box(Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(plait.surface)) {
                             Box(Modifier.fillMaxWidth((state.done.toFloat() / total).coerceIn(0f, 1f)).height(8.dp).clip(CircleShape).background(plait.accent))
                         }
-                        Text("Downloading… ${ModelCatalog.formatSize(state.done)} of ${ModelCatalog.formatSize(info.bytes)}. It carries on if you leave Plait.", style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.sheet_update_downloading, Bidi.isolate(ModelCatalog.formatSize(state.done)), Bidi.isolate(ModelCatalog.formatSize(info.bytes))), style = PlaitType.caption, color = plait.muted)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        PlaitButton("Hide", close, style = ButtonStyle.Secondary, size = ButtonSize.Small)
-                        PlaitButton("Cancel", { Updater.cancel() }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                        PlaitButton(stringResource(R.string.sheet_update_hide), close, style = ButtonStyle.Secondary, size = ButtonSize.Small)
+                        PlaitButton(stringResource(R.string.common_cancel), { Updater.cancel() }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                     }
                 }
                 is UpdateState.NeedsPermission -> {
-                    Text("Android asks you once to let Plait install its own updates. Turn on \"Allow from this source\", then come back.", style = PlaitType.body, color = plait.text)
-                    PlaitButton("Allow updates", {
+                    Text(stringResource(R.string.sheet_update_permission), style = PlaitType.body, color = plait.text)
+                    PlaitButton(stringResource(R.string.sheet_update_allow), {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) runCatching {
                             context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                         }
                     }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
                 }
-                is UpdateState.Installing -> Text("Installing… Android will ask you to confirm.", style = PlaitType.body, color = plait.muted)
+                is UpdateState.Installing -> Text(stringResource(R.string.sheet_update_installing), style = PlaitType.body, color = plait.muted)
                 is UpdateState.Failed -> {
                     Text(state.reason, style = PlaitType.body, color = plait.signal)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        PlaitButton("Try again", { Updater.download(context, info) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                        PlaitButton("Later", close, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                        PlaitButton(stringResource(R.string.common_try_again), { Updater.download(context, info) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                        PlaitButton(stringResource(R.string.common_later), close, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                     }
                 }
                 else -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PlaitButton("Update now", { Updater.download(context, info) }, style = ButtonStyle.Primary)
-                    PlaitButton("Later", close, style = ButtonStyle.Quiet)
+                    PlaitButton(stringResource(R.string.sheet_update_now), { Updater.download(context, info) }, style = ButtonStyle.Primary)
+                    PlaitButton(stringResource(R.string.common_later), close, style = ButtonStyle.Quiet)
                 }
             }
         }
     } }
 }
 
-private class TourPage(val icon: ImageVector, val colors: List<Color>, val title: String, val text: String)
+private class TourPage(val icon: ImageVector, val colors: List<Color>, @androidx.annotation.StringRes val title: Int, @androidx.annotation.StringRes val text: Int)
 
 private val tourPages = listOf(
-    TourPage(Icons.Filled.CalendarMonth, listOf(Color(0xFFD8EFFF), Color(0xFFA9D4FF)), "Every calendar, one day",
-        "Google, Outlook, Exchange, iCloud and calendar links in one agenda. Switch any account or calendar off when you like."),
-    TourPage(Icons.Filled.WbSunny, listOf(Color(0xFFFFF1C9), Color(0xFFFFC9A8)), "A card for each part of the day",
-        "Morning shows what's ahead, Midday what's done and what's left, Evening how the day went and what still needs notes. Swipe between them."),
-    TourPage(Icons.Filled.Groups, listOf(Color(0xFFE9DEFF), Color(0xFFF6C9DF)), "Everything about a meeting",
-        "Who's coming and their answers, what it's about, one tap to Join, and a button to edit, reschedule or answer the invite."),
-    TourPage(Icons.Filled.Mic, listOf(Color(0xFFFFD2C9), Color(0xFFE8725F)), "Notes four ways",
-        "Voice notes written as you speak, written notes, photos read into text, and checklists. Plait suggests tasks from them and reminds you."),
-    TourPage(Icons.Filled.Lock, listOf(Color(0xFFC9F2D9), Color(0xFF7FD8A5)), "AI that stays on your phone",
-        "Pick a model in Settings → AI on this phone. Summaries, prep and search run on the phone. Nothing is sent to a server, and there's no account."),
-    TourPage(Icons.Filled.AutoAwesome, listOf(Color(0xFFC7CCFF), Color(0xFF8A96FF)), "Let's bring your day in",
-        "Plait reads the calendars already on this phone. You can add more, or calendar links, in Settings later."),
+    TourPage(Icons.Filled.CalendarMonth, listOf(Color(0xFFD8EFFF), Color(0xFFA9D4FF)), R.string.sheet_tour_1_title, R.string.sheet_tour_1_text),
+    TourPage(Icons.Filled.WbSunny, listOf(Color(0xFFFFF1C9), Color(0xFFFFC9A8)), R.string.sheet_tour_2_title, R.string.sheet_tour_2_text),
+    TourPage(Icons.Filled.Groups, listOf(Color(0xFFE9DEFF), Color(0xFFF6C9DF)), R.string.sheet_tour_3_title, R.string.sheet_tour_3_text),
+    TourPage(Icons.Filled.Mic, listOf(Color(0xFFFFD2C9), Color(0xFFE8725F)), R.string.sheet_tour_4_title, R.string.sheet_tour_4_text),
+    TourPage(Icons.Filled.Lock, listOf(Color(0xFFC9F2D9), Color(0xFF7FD8A5)), R.string.sheet_tour_5_title, R.string.sheet_tour_5_text),
+    TourPage(Icons.Filled.AutoAwesome, listOf(Color(0xFFC7CCFF), Color(0xFF8A96FF)), R.string.sheet_tour_6_title, R.string.sheet_tour_6_text),
 )
 
 /** The first-run tour: a few pages that show what Plait does, ending with connecting the phone's calendars. */
@@ -215,7 +213,7 @@ fun OnboardingTour(onDone: () -> Unit) {
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Plait", style = PlaitType.section, color = plait.text, modifier = Modifier.weight(1f))
-                if (!last) PlaitButton("Skip", onDone, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                if (!last) PlaitButton(stringResource(R.string.sheet_tour_skip), onDone, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { i ->
                 val p = tourPages[i]
@@ -224,9 +222,9 @@ fun OnboardingTour(onDone: () -> Unit) {
                         Icon(p.icon, null, tint = Color(0xFF0E1316), modifier = Modifier.size(64.dp))
                     }
                     Spacer(Modifier.height(36.dp))
-                    Text(p.title, style = PlaitType.title.copy(fontSize = 32.sp, lineHeight = 34.sp), color = plait.text, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 420.dp))
+                    Text(stringResource(p.title), style = PlaitType.title.copy(fontSize = 32.sp, lineHeight = 34.sp), color = plait.text, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 420.dp))
                     Spacer(Modifier.height(14.dp))
-                    Text(p.text, style = PlaitType.body.copy(fontSize = 17.sp, lineHeight = 25.sp), color = plait.muted, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 420.dp))
+                    Text(stringResource(p.text), style = PlaitType.body.copy(fontSize = 17.sp, lineHeight = 25.sp), color = plait.muted, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 420.dp))
                 }
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
@@ -236,11 +234,11 @@ fun OnboardingTour(onDone: () -> Unit) {
                 }
             }
             if (last) {
-                PlaitButton("Use my phone's calendars", { connect() }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
+                PlaitButton(stringResource(R.string.sheet_tour_use_calendars), { connect() }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
                 Spacer(Modifier.height(10.dp))
-                PlaitButton("Not now", onDone, Modifier.fillMaxWidth(), style = ButtonStyle.Quiet)
+                PlaitButton(stringResource(R.string.common_not_now), onDone, Modifier.fillMaxWidth(), style = ButtonStyle.Quiet)
             } else {
-                PlaitButton("Next", { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
+                PlaitButton(stringResource(R.string.common_next), { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }, Modifier.fillMaxWidth(), style = ButtonStyle.Primary)
             }
         }
     }

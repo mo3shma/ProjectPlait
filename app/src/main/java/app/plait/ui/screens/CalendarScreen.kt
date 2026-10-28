@@ -70,8 +70,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
@@ -119,6 +119,12 @@ import app.plait.ui.rise
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 import com.kyant.backdrop.Backdrop
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.userText
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.drawscope.scale
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -130,7 +136,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-enum class CalView(val label: String) { Day("Day"), Month("Month") }
+enum class CalView(@androidx.annotation.StringRes val label: Int) { Day(R.string.cal_view_day), Month(R.string.cal_view_month) }
 
 /**
  * Which day, week or month is on screen, and which day (if any) is open in the pane.
@@ -143,6 +149,7 @@ class CalendarState(today: LocalDate) {
     var selected by mutableStateOf<LocalDate?>(null)
     var direction by mutableIntStateOf(1)
 
+    // The phone's region decides the first day (AppLocale keeps it in the default locale); AppLocale.locale has no region in English.
     val firstDay: DayOfWeek = WeekFields.of(Locale.getDefault()).firstDayOfWeek
 
     private fun shift(d: LocalDate, delta: Int): LocalDate = when (view) {
@@ -194,13 +201,15 @@ class CalendarState(today: LocalDate) {
 private val HOUR_HEIGHT = 56.dp
 
 private fun headline(state: CalendarState): Pair<String, String> {
-    val loc = Locale.getDefault()
+    val loc = AppLocale.locale
     return when (state.view) {
         CalView.Month -> state.anchor.year.toString() to state.anchor.month.getDisplayName(TextStyle.FULL, loc)
-        CalView.Day -> state.anchor.dayOfWeek.getDisplayName(TextStyle.FULL, loc) to
-            "${state.anchor.dayOfMonth} ${state.anchor.month.getDisplayName(TextStyle.FULL, loc)}"
+        CalView.Day -> state.anchor.dayOfWeek.getDisplayName(TextStyle.FULL, loc) to dayMonth(state.anchor)
     }
 }
+
+/** "5 October" (Arabic: "5 أكتوبر"). */
+private fun dayMonth(d: LocalDate): String = d.format(app.plait.data.TimeFmt.fmt("d MMMM"))
 
 /**
  * The Calendar tab. Day is a list of rows; Week and Month are grids. Tapping a day in a grid
@@ -281,11 +290,12 @@ fun CalendarContent(
 @Composable
 private fun CalendarHeader(state: CalendarState, backdrop: Backdrop, onToday: () -> Unit) {
     val (kicker, title) = headline(state)
-    val tabs = remember { CalView.entries.map { GlassTab(it.label) } }
+    val labels = CalView.entries.map { stringResource(it.label) }
+    val tabs = remember(labels) { labels.map { GlassTab(it) } }
     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp).padding(top = 76.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(kicker, style = PlaitType.monoLabel, color = plait.muted)
-            PlaitButton("Today", onToday, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+            PlaitButton(stringResource(R.string.common_today), onToday, style = ButtonStyle.Quiet, size = ButtonSize.Small)
         }
         Spacer(Modifier.height(4.dp))
         androidx.compose.animation.AnimatedContent(
@@ -326,8 +336,8 @@ private fun EmptyDay(modifier: Modifier = Modifier) {
         modifier.fillMaxWidth().plaitCard(RoundedCornerShape(28.dp)).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("Nothing planned", style = PlaitType.cardTitle.copy(fontSize = 22.sp), color = plait.text)
-        Text("A free day. Events you add to your calendars will show up here.", style = PlaitType.body, color = plait.muted)
+        Text(stringResource(R.string.cal_nothing_planned), style = PlaitType.cardTitle.copy(fontSize = 22.sp), color = plait.text)
+        Text(stringResource(R.string.cal_free_day_body), style = PlaitType.body, color = plait.muted)
     }
 }
 
@@ -403,7 +413,7 @@ private fun DayWheel(selected: LocalDate, today: LocalDate, counts: Map<Long, In
     ) {
         Box(Modifier.fillMaxWidth().height(WHEEL_ROW).padding(horizontal = 6.dp).clip(RoundedCornerShape(24.dp)).background(plait.accent.copy(alpha = 0.18f)))
         Text(
-            LocalDate.ofEpochDay(center.toLong()).month.getDisplayName(TextStyle.FULL, Locale.getDefault()),
+            LocalDate.ofEpochDay(center.toLong()).month.getDisplayName(TextStyle.FULL, AppLocale.locale),
             style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = plait.accent, maxLines = 1, softWrap = false,
             modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
         )
@@ -429,7 +439,7 @@ private fun DayWheel(selected: LocalDate, today: LocalDate, counts: Map<Long, In
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(),
+                    day.dayOfWeek.getDisplayName(TextStyle.SHORT, AppLocale.locale).uppercase(AppLocale.locale),
                     style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = if (day == today) plait.accent else plait.text.copy(alpha = 0.7f),
                 )
                 Text(day.dayOfMonth.toString(), style = PlaitType.cardHeadline.copy(fontSize = 28.sp, lineHeight = 30.sp), color = plait.text)
@@ -458,21 +468,24 @@ private fun DayTimeline(
             Column(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 allDay.take(3).forEach { e ->
                     Text(
-                        e.title, style = PlaitType.label.copy(fontSize = 13.sp), color = Color(0xFF0E1316), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        e.title, style = PlaitType.label.copy(fontSize = 13.sp).userText(), color = Color(0xFF0E1316), maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(e.source.color().copy(alpha = 0.9f))
                             .pressable({ onOpenEvent(e.id) }).padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
             }
         }
-        if (events.isEmpty()) Text("Nothing planned", style = PlaitType.caption, color = plait.muted, modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
+        if (events.isEmpty()) Text(stringResource(R.string.cal_nothing_planned), style = PlaitType.caption, color = plait.muted, modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
         Box(Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll)) {
             Box(
                 Modifier.fillMaxWidth().height(HOUR_HEIGHT * 24)
                     .drawBehind {
                         val h = HOUR_HEIGHT.toPx()
-                        val x0 = gutter.toPx()
-                        repeat(24) { i -> drawLine(line, Offset(x0, i * h), Offset(size.width, i * h), strokeWidth = 1f) }
+                        // The hour labels sit in the start gutter: the left in English, the right in Arabic.
+                        val rtl = layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl
+                        val x0 = if (rtl) 0f else gutter.toPx()
+                        val x1 = if (rtl) size.width - gutter.toPx() else size.width
+                        repeat(24) { i -> drawLine(line, Offset(x0, i * h), Offset(x1, i * h), strokeWidth = 1f) }
                     },
             ) {
                 repeat(24) { h ->
@@ -497,7 +510,7 @@ private fun DayTimeline(
                                         .background(tone.bg).pressable({ onOpenEvent(e.id) }).padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalArrangement = Arrangement.spacedBy(2.dp),
                                 ) {
-                                    Text(e.title, style = PlaitType.label.copy(fontSize = 13.sp, lineHeight = 16.sp), color = tone.ink, maxLines = if (height >= 64.dp) 2 else 1, overflow = TextOverflow.Ellipsis)
+                                    Text(e.title, style = PlaitType.label.copy(fontSize = 13.sp, lineHeight = 16.sp).userText(), color = tone.ink, maxLines = if (height >= 64.dp) 2 else 1, overflow = TextOverflow.Ellipsis)
                                     Text(e.time + if (e.endLabel.isNotBlank()) " – ${e.endLabel}" else "", style = PlaitType.monoSmall.copy(fontSize = 10.sp), color = tone.ink.copy(alpha = 0.7f), maxLines = 1)
                                 }
                             } else Spacer(Modifier.weight(1f))
@@ -549,26 +562,30 @@ private fun MonthView(
     val dayStyle = PlaitType.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium)
     val numbers = remember(cells, dayStyle) { cells.map { measurer.measure(it.dayOfMonth.toString(), dayStyle) } }
     val headers = remember(state.firstDay) {
-        List(7) { measurer.measure(state.firstDay.plus(it.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(3), PlaitType.monoSmall) }
+        // English short names are three letters; Arabic ones are the whole name, never cut, and shrunk below if a column is too narrow.
+        List(7) { measurer.measure(state.firstDay.plus(it.toLong()).getDisplayName(TextStyle.SHORT, AppLocale.locale).let { n -> if (AppLocale.isRtl) n else n.take(3) }, PlaitType.monoSmall) }
     }
     var pressed by remember { mutableIntStateOf(-1) }
     val density = LocalDensity.current
+    // The grid is painted by hand, so it is mirrored by hand: the week runs right to left in Arabic.
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+    val monthDesc = stringResource(R.string.cal_month_desc)
     val headerH = with(density) { 30.dp.toPx() }
     val pad = with(density) { 2.dp.toPx() }
 
     Canvas(
         Modifier.fillMaxSize().padding(horizontal = 8.dp)
-            .semantics { contentDescription = "Month calendar. Tap a day to see its events." }
-            .pointerInput(cells) {
+            .semantics { contentDescription = monthDesc }
+            .pointerInput(cells, rtl) {
                 detectTapGestures(
                     onPress = { p ->
-                        val i = cellAt(p, size.width.toFloat(), size.height.toFloat(), headerH, rows)
+                        val i = cellAt(p, size.width.toFloat(), size.height.toFloat(), headerH, rows, rtl)
                         pressed = i
                         tryAwaitRelease()
                         pressed = -1
                     },
                     onTap = { p ->
-                        val i = cellAt(p, size.width.toFloat(), size.height.toFloat(), headerH, rows)
+                        val i = cellAt(p, size.width.toFloat(), size.height.toFloat(), headerH, rows, rtl)
                         if (i in cells.indices) state.select(cells[i])
                     },
                 )
@@ -578,12 +595,15 @@ private fun MonthView(
         val ch = (size.height - headerH) / rows
         for (c in 0 until 7) {
             val l = headers[c]
-            drawText(l, muted, Offset(c * cw + (cw - l.size.width) / 2f, (headerH - l.size.height) / 2f))
+            val cx = (if (rtl) 6 - c else c) * cw + cw / 2f
+            val cy = headerH / 2f
+            val k = ((cw - 2 * pad) / l.size.width).coerceAtMost(1f)
+            scale(k, k, Offset(cx, cy)) { drawText(l, muted, Offset(cx - l.size.width / 2f, cy - l.size.height / 2f)) }
         }
         val selected = state.selected
         for (i in cells.indices) {
             val d = cells[i]
-            val col = i % 7
+            val col = if (rtl) 6 - i % 7 else i % 7
             val row = i / 7
             val x = col * cw + pad
             val y = headerH + row * ch + pad
@@ -631,9 +651,9 @@ private fun MonthView(
 }
 
 /** Which cell of the month grid a touch at [p] lands on, or -1. */
-private fun cellAt(p: Offset, width: Float, height: Float, headerH: Float, rows: Int): Int {
+internal fun cellAt(p: Offset, width: Float, height: Float, headerH: Float, rows: Int, rtl: Boolean = false): Int {
     if (p.y < headerH) return -1
-    val col = (p.x / (width / 7f)).toInt().coerceIn(0, 6)
+    val col = (p.x / (width / 7f)).toInt().coerceIn(0, 6).let { if (rtl) 6 - it else it }
     val row = ((p.y - headerH) / ((height - headerH) / rows)).toInt().coerceIn(0, rows - 1)
     return row * 7 + col
 }
@@ -683,15 +703,15 @@ private fun DaySheet(state: CalendarState, events: List<CalEvent>, nowMs: Long, 
             val list = remember(events, date) { Agenda.eventsOn(events, date, zone) }
             Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 14.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Text(date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault()), style = PlaitType.monoLabel, color = plait.muted)
+                    Text(date.dayOfWeek.getDisplayName(TextStyle.FULL, AppLocale.locale), style = PlaitType.monoLabel, color = plait.muted)
                     Text(
-                        "${date.dayOfMonth} " + date.month.getDisplayName(TextStyle.FULL, Locale.getDefault()),
+                        dayMonth(date),
                         style = PlaitType.section.copy(fontSize = 26.sp, lineHeight = 30.sp), color = plait.text, maxLines = 1,
                     )
-                    Text(if (list.isEmpty()) "Nothing planned" else if (list.size == 1) "1 event" else "${list.size} events", style = PlaitType.caption, color = plait.muted)
+                    Text(if (list.isEmpty()) stringResource(R.string.cal_nothing_planned) else pluralStringResource(R.plurals.cal_events, list.size, list.size), style = PlaitType.caption, color = plait.muted)
                 }
-                CircleIconButton(Icons.Filled.ChevronLeft, "Previous day", { state.select(date.minusDays(1)) }, plait.surface, plait.text, size = 44.dp)
-                CircleIconButton(Icons.Filled.ChevronRight, "Next day", { state.select(date.plusDays(1)) }, plait.surface, plait.text, size = 44.dp)
+                CircleIconButton(Icons.AutoMirrored.Filled.NavigateBefore, stringResource(R.string.cal_previous_day), { state.select(date.minusDays(1)) }, plait.surface, plait.text, size = 44.dp)
+                CircleIconButton(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.cal_next_day), { state.select(date.plusDays(1)) }, plait.surface, plait.text, size = 44.dp)
             }
             if (list.isEmpty()) {
                 EmptyDay(Modifier.padding(horizontal = 18.dp, vertical = 6.dp))

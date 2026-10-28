@@ -1,5 +1,8 @@
 package app.plait.data
 
+import app.plait.R
+import app.plait.i18n.Txt
+import app.plait.i18n.Bidi
 import java.time.Instant
 import java.time.ZoneId
 
@@ -20,6 +23,6 @@ object ZoneHint {
         val id = ev.zone?.takeIf { it.isNotBlank() } ?: return null
         val z = runCatching { ZoneId.of(id) }.getOrNull() ?: return null
         if (!differs(z, device, ev.startMs)) return null
-        return "${TimeFmt.clock(ev.startMs, z)} ${city(id)} · ${TimeFmt.clock(ev.startMs, device)} your time"
+        return Txt.s(R.string.zone_line, Bidi.isolate(TimeFmt.clock(ev.startMs, z)), Bidi.isolate(city(id)), Bidi.isolate(TimeFmt.clock(ev.startMs, device)))
     }
 }

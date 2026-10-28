@@ -36,8 +36,9 @@ object Invite {
     /** The meeting as a short message: title, when, where and the call link. */
     fun text(ev: CalEvent): String = buildString {
         append(ev.title).append('\n')
-        if (ev.startMs > 0) append(java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date(ev.startMs)))
-            .append(", ").append(TimeFmt.clock(ev.startMs)).append(" – ").append(TimeFmt.clock(ev.endMs)).append('\n')
+        // TimeFmt gives Arabic its own comma: "الأربعاء 28 أكتوبر، 12:57 ص".
+        if (ev.startMs > 0) append(java.time.Instant.ofEpochMilli(ev.startMs).atZone(java.time.ZoneId.systemDefault()).format(TimeFmt.fmt("EEE d MMM, h:mm a")))
+            .append(" – ").append(TimeFmt.clock(ev.endMs)).append('\n')
         ev.callLink?.let { append(it.provider.label).append(": ").append(it.url).append('\n') }
             ?: ev.place.takeIf { it.isNotBlank() }?.let { append(it).append('\n') }
     }.trim()

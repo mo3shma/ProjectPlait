@@ -8,11 +8,11 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="16dp" android:gravity="center_vertical" android:orientation="horizontal">
         <ImageView android:id="@+id/widget_dot" android:layout_width="6dp" android:layout_height="6dp" android:layout_marginEnd="6dp"
             android:src="@drawable/widget_dot" android:importantForAccessibility="no" />
-        <TextView android:id="@+id/widget_date" android:text="Thu 22 Oct"
+        <TextView android:id="@+id/widget_date" android:text="@string/wdg_preview_day"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:textAlignment="viewStart" android:textColor="#C7FFFFFF" android:textSize="12sp"
             android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
-        <TextView android:id="@+id/widget_count" android:text="3 meetings"
+        <TextView android:id="@+id/widget_count" android:text="@string/wdg_preview_count"
             android:layout_width="wrap_content" android:layout_height="16dp"
             android:background="@drawable/widget_capsule" android:gravity="center"
             android:paddingStart="8dp" android:paddingEnd="8dp"
@@ -28,18 +28,18 @@
             android:gravity="center_vertical" android:orientation="vertical">
             <LinearLayout android:id="@+id/widget_time_row" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:gravity="center_vertical" android:orientation="horizontal">
-                <TextView android:id="@+id/widget_now" android:text="Now"
+                <TextView android:id="@+id/widget_now" android:text="@string/common_now"
                     android:layout_width="wrap_content" android:layout_height="16dp" android:layout_marginEnd="6dp"
                     android:background="@drawable/widget_capsule" android:gravity="center"
                     android:paddingStart="8dp" android:paddingEnd="8dp"
                     android:textColor="#FFFFFFFF" android:textSize="11sp" android:textFontWeight="600"
                     android:includeFontPadding="false" android:fontFamily="@font/widget_font" />
-                <TextView android:id="@+id/widget_time" android:text="1:30 – 2:30 PM"
+                <TextView android:id="@+id/widget_time" android:text="@string/wdg_preview_range"
                     android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
                     android:textAlignment="viewStart" android:textColor="#F2FFFFFF" android:textSize="13sp" android:textFontWeight="600"
                     android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
             </LinearLayout>
-            <TextView android:id="@+id/widget_title" android:text="Design review"
+            <TextView android:id="@+id/widget_title" android:text="@string/wdg_preview_title"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:textAlignment="viewStart" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"
                 android:includeFontPadding="false" android:maxLines="2" android:ellipsize="end" android:fontFamily="@font/widget_font" />
@@ -54,8 +54,8 @@
         android:background="@drawable/widget_pill_other" android:gravity="center" android:orientation="horizontal"
         android:paddingStart="18dp" android:paddingEnd="20dp">
         <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_widget_video" android:importantForAccessibility="no" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
-            android:text="Join" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textFontWeight="600"
+        <TextView android:id="@+id/widget_join_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
+            android:text="@string/common_join" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textFontWeight="600"
             android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
     </LinearLayout>
     </LinearLayout>
@@ -63,15 +63,15 @@
         android:layout_width="match_parent" android:layout_height="20dp"
         android:background="@drawable/widget_capsule" android:gravity="center_vertical" android:orientation="horizontal"
         android:paddingStart="10dp" android:paddingEnd="10dp">
-        <TextView android:id="@+id/widget_then" android:text="Then Design review 12:00 PM"
+        <TextView android:id="@+id/widget_then" android:text="@string/wdg_preview_then"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:textAlignment="viewStart" android:textColor="#C7FFFFFF" android:textSize="12sp"
             android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:fontFamily="@font/widget_font" />
-        <TextView android:id="@+id/widget_more" android:text="+2 more"
+        <TextView android:id="@+id/widget_more" android:text="@string/wdg_preview_more"
             android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
             android:textColor="#FFFFFFFF" android:textSize="12sp" android:textFontWeight="600"
             android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />
-        <TextView android:id="@+id/widget_last" android:text="Last one today"
+        <TextView android:id="@+id/widget_last" android:text="@string/wdg_last_today"
             android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
             android:textColor="#C7FFFFFF" android:textSize="12sp"
             android:includeFontPadding="false" android:maxLines="1" android:fontFamily="@font/widget_font" />

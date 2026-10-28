@@ -1,6 +1,8 @@
 package app.plait.ai
 
 import android.content.Context
+import app.plait.R
+import app.plait.i18n.Txt
 
 /**
  * The one door to "the AI". It picks the engine the user chose (Gemini Nano, a downloaded model, or none), falls back
@@ -24,15 +26,17 @@ object Ai {
         AiPrefs.load(context)
         val nano = OnDeviceAi.state() == OnDeviceAi.State.Ready
         val chosenLocal = ModelCatalog.byId(AiPrefs.textModelId)?.takeIf { ModelCenter.isInstalled(context, it.id) }
+        val rules = Txt.s(R.string.ai_engine_rules)
+        val nanoName = Txt.s(R.string.ai_engine_nano)
         fun auto(note: String? = null): Status = when {
-            nano -> Status(Engine.Nano, "Gemini Nano", note)
+            nano -> Status(Engine.Nano, nanoName, note)
             bestInstalledLocal(context) != null -> bestInstalledLocal(context)!!.let { Status(Engine.Local, it.title, note, it.id) }
-            else -> Status(Engine.Rules, "Plait's own rules", note)
+            else -> Status(Engine.Rules, rules, note)
         }
         return when (AiPrefs.textChoice) {
-            AiPrefs.TextChoice.Rules -> Status(Engine.Rules, "Plait's own rules")
-            AiPrefs.TextChoice.Nano -> if (nano) Status(Engine.Nano, "Gemini Nano") else auto("Gemini Nano isn't ready on this phone.")
-            AiPrefs.TextChoice.Local -> chosenLocal?.let { Status(Engine.Local, it.title, null, it.id) } ?: auto("The chosen model isn't downloaded.")
+            AiPrefs.TextChoice.Rules -> Status(Engine.Rules, rules)
+            AiPrefs.TextChoice.Nano -> if (nano) Status(Engine.Nano, nanoName) else auto(Txt.s(R.string.ai_engine_nano_not_ready))
+            AiPrefs.TextChoice.Local -> chosenLocal?.let { Status(Engine.Local, it.title, null, it.id) } ?: auto(Txt.s(R.string.ai_engine_model_missing))
             AiPrefs.TextChoice.Auto -> auto()
         }
     }

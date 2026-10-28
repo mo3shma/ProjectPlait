@@ -23,7 +23,7 @@ data class IcsResult(val name: String?, val events: List<CalEvent>)
  * calendar", or an iCloud public calendar. Recurring meetings are expanded into the window asked for.
  */
 object IcsParser {
-    private val clock = TimeFmt.clock
+    private val clock get() = TimeFmt.clock
 
     private class Prop(val name: String, val params: Map<String, String>, val value: String)
 

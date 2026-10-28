@@ -16,6 +16,10 @@ import app.plait.data.followups.FollowupState
 import app.plait.data.memo.MemoStore
 import app.plait.data.prep.PrepStore
 import app.plait.diag.Diag
+import app.plait.R
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.data.TimeFmt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -94,10 +98,10 @@ object SyncEngine {
             val app = context.applicationContext
             val treeUri = tree(app)
             val pass = SecretStore.get(app, "sync_pass")
-            if (treeUri == null || pass == null) return@withContext Result(0, 0, false, "Sync isn't set up.")
-            running = true; status = "Syncing…"
+            if (treeUri == null || pass == null) return@withContext Result(0, 0, false, Txt.s(R.string.settings_sync_not_set_up))
+            running = true; status = Txt.s(R.string.common_syncing)
             try {
-                val folder = DocumentFile.fromTreeUri(app, treeUri) ?: throw java.io.IOException("The sync folder isn't available.")
+                val folder = DocumentFile.fromTreeUri(app, treeUri) ?: throw java.io.IOException(Txt.s(R.string.settings_sync_folder_unavailable))
                 folderName = folder.name
                 val me = PREFIX + deviceId(app) + SUFFIX
                 val seenPrefs = prefs(app).getStringSet("sync_seen", emptySet()).orEmpty().mapNotNull { s -> s.split('|').takeIf { it.size == 2 }?.let { it[0] to (it[1].toLongOrNull() ?: 0L) } }.toMap().toMutableMap()
@@ -115,7 +119,7 @@ object SyncEngine {
                         imported += a; removed += r
                         seenPrefs[name] = doc.lastModified()
                     } catch (e: Crypt.BadPassphrase) {
-                        throw java.io.IOException("Another phone's file couldn't be opened. The passphrase must be the same on every phone.")
+                        throw java.io.IOException(Txt.s(R.string.settings_sync_wrong_pass))
                     } finally { temp.deleteRecursively() }
                 }
                 prefs(app).edit().putStringSet("sync_seen", seenPrefs.map { "${it.key}|${it.value}" }.toSet()).apply()
@@ -129,24 +133,24 @@ object SyncEngine {
                     prefs(app).edit().putString("sync_fp", fp).apply()
                     wrote = true
                 }
-                status = "Synced " + java.text.SimpleDateFormat("h:mm a", java.util.Locale.ENGLISH).format(java.util.Date()) +
-                    (if (imported + removed > 0) " · $imported new, $removed removed" else "")
+                val at = Bidi.isolate(TimeFmt.clock(System.currentTimeMillis()))
+                status = if (imported + removed > 0) Txt.s(R.string.settings_sync_status_changes, at, imported, removed) else Txt.s(R.string.settings_sync_status, at)
                 Result(imported, removed, wrote, null)
             } catch (e: Exception) {
                 Diag.log("SYNC", e.message ?: e.javaClass.simpleName)
-                status = e.message ?: "Sync failed."
+                status = e.message ?: Txt.s(R.string.settings_sync_failed)
                 Result(0, 0, false, status)
             } finally { running = false }
         }
     }
 
     private fun readRemote(app: Context, doc: DocumentFile, pass: CharArray, temp: File): BackupData {
-        val raw = BufferedInputStream(app.contentResolver.openInputStream(doc.uri) ?: throw java.io.IOException("Couldn't open ${doc.name}."))
+        val raw = BufferedInputStream(app.contentResolver.openInputStream(doc.uri) ?: throw java.io.IOException(Txt.s(R.string.settings_sync_cant_open, Bidi.isolate(doc.name.orEmpty()))))
         return raw.use { input ->
             input.mark(32)
             val head = ByteArray(Crypt.MAGIC.size)
             val n = input.read(head)
-            if (n != head.size || !Crypt.isEncrypted(head)) throw java.io.IOException("${doc.name} isn't protected, so it was skipped.")
+            if (n != head.size || !Crypt.isEncrypted(head)) throw java.io.IOException(Txt.s(R.string.settings_sync_unprotected, Bidi.isolate(doc.name.orEmpty())))
             Backup.read(Crypt.decrypt(input, pass), temp)
         }
     }
@@ -183,8 +187,8 @@ object SyncEngine {
         val temp = File(app.cacheDir, "sync-out-" + System.nanoTime())
         try {
             temp.outputStream().use { raw -> Crypt.encrypt(raw, pass).use { Backup.write(it, data, media) } }
-            val target = folder.findFile(name) ?: folder.createFile("application/octet-stream", name) ?: throw java.io.IOException("Couldn't create the sync file.")
-            (app.contentResolver.openOutputStream(target.uri, "wt") ?: throw java.io.IOException("Couldn't write the sync file.")).use { out -> temp.inputStream().use { it.copyTo(out) } }
+            val target = folder.findFile(name) ?: folder.createFile("application/octet-stream", name) ?: throw java.io.IOException(Txt.s(R.string.settings_sync_cant_create))
+            (app.contentResolver.openOutputStream(target.uri, "wt") ?: throw java.io.IOException(Txt.s(R.string.settings_sync_cant_write))).use { out -> temp.inputStream().use { it.copyTo(out) } }
         } finally { temp.delete() }
     }
 }

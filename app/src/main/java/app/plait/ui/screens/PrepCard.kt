@@ -53,6 +53,9 @@ import app.plait.ui.PlaitButton
 import app.plait.ui.PlaitChip
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
+import app.plait.R
+import app.plait.i18n.Bidi
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 
 /**
@@ -80,7 +83,7 @@ internal fun PrepCard(ev: CalEvent, brief: MeetingBrief) {
     Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(32.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.AutoAwesome, null, tint = plait.accent, modifier = Modifier.size(20.dp))
-            Text("Prep", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            Text(stringResource(R.string.home_prep_title), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
         }
         if (editing) {
             BasicTextField(
@@ -90,18 +93,20 @@ internal fun PrepCard(ev: CalEvent, brief: MeetingBrief) {
                 decorationBox = { inner -> Box(Modifier.fillMaxWidth().heightIn(min = 140.dp).clip(RoundedCornerShape(20.dp)).background(plait.surfaceHigh).padding(14.dp)) { inner() } },
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton("Save", { store.put(ev.id, PrepEntry(draft.trim(), "You", System.currentTimeMillis())); editing = false }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = draft.isNotBlank())
-                PlaitButton("Cancel", { editing = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_save), { store.put(ev.id, PrepEntry(draft.trim(), "You", System.currentTimeMillis())); editing = false }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = draft.isNotBlank())
+                PlaitButton(stringResource(R.string.common_cancel), { editing = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         } else {
             sections.goal?.let { Text(it, style = PlaitType.body.copy(fontSize = 16.sp, lineHeight = 23.sp, textDirection = TextDirection.Content), color = plait.text) }
-            if (sections.remember.isNotEmpty()) { Text("Remember", style = PlaitType.monoSmall, color = plait.muted); sections.remember.forEach { PrepBullet(it) } }
-            if (sections.ask.isNotEmpty()) { Text("Ask", style = PlaitType.monoSmall, color = plait.muted); sections.ask.forEach { PrepBullet(it) } }
-            if (failed) Text("Nothing came back. Try again in a moment.", style = PlaitType.caption, color = plait.signal)
+            if (sections.remember.isNotEmpty()) { Text(stringResource(R.string.home_prep_remember), style = PlaitType.monoSmall, color = plait.muted); sections.remember.forEach { PrepBullet(it) } }
+            if (sections.ask.isNotEmpty()) { Text(stringResource(R.string.home_prep_ask), style = PlaitType.monoSmall, color = plait.muted); sections.ask.forEach { PrepBullet(it) } }
+            if (failed) Text(stringResource(R.string.home_prep_failed), style = PlaitType.caption, color = plait.signal)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 aiLabel?.let { label ->
                     PlaitButton(
-                        if (busy) "Writing with $label…" else if (saved == null || saved.by == "You") "Write with $label" else "Write again",
+                        if (busy) stringResource(R.string.home_prep_writing_with, Bidi.isolate(label))
+                        else if (saved == null || saved.by == "You") stringResource(R.string.home_prep_write_with, Bidi.isolate(label))
+                        else stringResource(R.string.home_prep_write_again),
                         {
                             if (!busy) scope.launch {
                                 busy = true; failed = false
@@ -114,8 +119,8 @@ internal fun PrepCard(ev: CalEvent, brief: MeetingBrief) {
                         style = ButtonStyle.Primary, size = ButtonSize.Small, icon = Icons.Filled.AutoAwesome, enabled = !busy,
                     )
                 }
-                PlaitButton("Edit", { draft = saved?.text ?: Prep.render(sections); editing = true }, size = ButtonSize.Small)
-                if (saved != null) PlaitButton("Reset", { store.clear(ev.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_edit), { draft = saved?.text ?: Prep.render(sections); editing = true }, size = ButtonSize.Small)
+                if (saved != null) PlaitButton(stringResource(R.string.home_prep_reset), { store.clear(ev.id) }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }
     }
@@ -141,18 +146,18 @@ internal fun SinceLastCard(ev: CalEvent) {
     } ?: return
     if (since.isEmpty) return
     Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(32.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Since last time", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
-        if (since.decisions.isNotEmpty()) { Text("Decided", style = PlaitType.monoSmall, color = plait.muted); since.decisions.forEach { PrepBullet(it) } }
+        Text(stringResource(R.string.home_since_title), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+        if (since.decisions.isNotEmpty()) { Text(stringResource(R.string.home_since_decided), style = PlaitType.monoSmall, color = plait.muted); since.decisions.forEach { PrepBullet(it) } }
         if (since.stillOpen.isNotEmpty()) {
-            Text("Still open", style = PlaitType.monoSmall, color = plait.muted)
+            Text(stringResource(R.string.home_since_still_open), style = PlaitType.monoSmall, color = plait.muted)
             since.stillOpen.take(5).forEach { f ->
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     PrepBullet(f.text)
-                    PlaitButton("Done", { FollowupState.markDone(context, f.id) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                    PlaitButton(stringResource(R.string.common_done), { FollowupState.markDone(context, f.id) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                 }
             }
         }
-        Text("From your own notes on earlier meetings with this title.", style = PlaitType.caption, color = plait.muted)
+        Text(stringResource(R.string.home_since_footer), style = PlaitType.caption, color = plait.muted)
     }
 }
 
@@ -161,8 +166,8 @@ internal fun SinceLastCard(ev: CalEvent) {
 internal fun ShareCard(ev: CalEvent, brief: MeetingBrief) {
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth().plaitCard(RoundedCornerShape(32.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Share", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
-        Text("Make a file or message of this meeting: why you met, the agenda, prep, notes, follow-ups. It is built on this phone and goes only where you send it.", style = PlaitType.caption, color = plait.muted)
+        Text(stringResource(R.string.common_share), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+        Text(stringResource(R.string.home_share_body), style = PlaitType.caption, color = plait.muted)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             app.plait.share.ShareFormat.entries.forEach { f ->
                 PlaitButton(f.label, { runCatching { app.plait.share.ShareOut.share(context, ev, brief, f) } }, size = ButtonSize.Small, style = if (f == app.plait.share.ShareFormat.Pdf) ButtonStyle.Primary else ButtonStyle.Secondary)
@@ -174,12 +179,12 @@ internal fun ShareCard(ev: CalEvent, brief: MeetingBrief) {
         var withMail by remember { mutableStateOf(false) }
         var withMedia by remember { mutableStateOf(false) }
         var pass by remember { mutableStateOf("") }
-        PlaitButton(if (team) "Hide teammate options" else "Send my notes to a teammate", { team = !team }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+        PlaitButton(stringResource(if (team) R.string.home_share_hide_team else R.string.home_share_send_team), { team = !team }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
         if (team) {
-            Text("They import the file in Plait (hub, Import backup) and the notes appear on their copy of this meeting, marked with your name.", style = PlaitType.caption, color = plait.muted)
+            Text(stringResource(R.string.home_share_team_body), style = PlaitType.caption, color = plait.muted)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitChip("Attached emails", withMail, { withMail = !withMail })
-                PlaitChip("Recordings and photos", withMedia, { withMedia = !withMedia })
+                PlaitChip(stringResource(R.string.home_share_attached_emails), withMail, { withMail = !withMail })
+                PlaitChip(stringResource(R.string.home_share_recordings_photos), withMedia, { withMedia = !withMedia })
             }
             BasicTextField(
                 value = pass, onValueChange = { pass = it }, singleLine = true,
@@ -187,13 +192,13 @@ internal fun ShareCard(ev: CalEvent, brief: MeetingBrief) {
                 textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent), modifier = Modifier.fillMaxWidth(),
                 decorationBox = { inner ->
                     Box(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(22.dp)).background(plait.surfaceHigh).padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.CenterStart) {
-                        if (pass.isEmpty()) Text("Passphrase to lock the file (optional)", style = PlaitType.body, color = plait.muted)
+                        if (pass.isEmpty()) Text(stringResource(R.string.home_share_passphrase), style = PlaitType.body, color = plait.muted)
                         inner()
                     }
                 },
             )
-            if (withMail) Text("Emails are other people's words. Only include them if you are allowed to pass them on.", style = PlaitType.caption, color = plait.signal)
-            PlaitButton("Send notes file", {
+            if (withMail) Text(stringResource(R.string.home_share_mail_warning), style = PlaitType.caption, color = plait.signal)
+            PlaitButton(stringResource(R.string.home_share_send_file), {
                 runCatching { app.plait.share.TeamShare.send(context, ev, app.plait.share.TeamShare.create(context, ev, withMail, withMedia, pass)) }
             }, style = ButtonStyle.Primary, size = ButtonSize.Small)
         }

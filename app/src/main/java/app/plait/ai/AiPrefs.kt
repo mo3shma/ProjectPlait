@@ -1,6 +1,9 @@
 package app.plait.ai
 
 import android.content.Context
+import androidx.annotation.StringRes
+import app.plait.R
+import app.plait.i18n.Txt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,8 +14,10 @@ internal fun textChoiceOf(saved: String?): AiPrefs.TextChoice =
 
 /** Which AI the user wants for writing and for speech. Kept on the phone. */
 object AiPrefs {
-    enum class TextChoice(val label: String) {
-        Auto("Automatic"), Nano("Gemini Nano"), Local("Downloaded model"), Rules("Plait's own rules only"),
+    enum class TextChoice(@StringRes private val res: Int) {
+        Auto(R.string.common_automatic), Nano(R.string.ai_engine_nano), Local(R.string.ai_choice_local), Rules(R.string.ai_choice_rules);
+
+        val label: String get() = Txt.s(res)
     }
 
     var textChoice by mutableStateOf(TextChoice.Rules); private set
@@ -24,21 +29,26 @@ object AiPrefs {
     var speechLang by mutableStateOf("auto"); private set
     private var loaded = false
 
-    val speechLanguages = listOf(
-        "auto" to "Detect automatically", "en" to "English", "ar" to "Arabic", "fr" to "French", "es" to "Spanish",
-        "de" to "German", "it" to "Italian", "pt" to "Portuguese", "nl" to "Dutch", "tr" to "Turkish", "ru" to "Russian",
-        "fa" to "Persian", "ur" to "Urdu", "hi" to "Hindi", "id" to "Indonesian", "zh" to "Chinese", "ja" to "Japanese", "ko" to "Korean",
+    private val names = mapOf(
+        "en" to R.string.ai_lang_en, "ar" to R.string.ai_lang_ar, "fr" to R.string.ai_lang_fr, "es" to R.string.ai_lang_es,
+        "de" to R.string.ai_lang_de, "it" to R.string.ai_lang_it, "pt" to R.string.ai_lang_pt, "nl" to R.string.ai_lang_nl,
+        "tr" to R.string.ai_lang_tr, "ru" to R.string.ai_lang_ru, "fa" to R.string.ai_lang_fa, "ur" to R.string.ai_lang_ur,
+        "hi" to R.string.ai_lang_hi, "id" to R.string.ai_lang_id, "zh" to R.string.ai_lang_zh, "ja" to R.string.ai_lang_ja,
+        "ko" to R.string.ai_lang_ko,
     )
+
+    /** Code to name, in the app's language (read it each time: the language can change). */
+    val speechLanguages: List<Pair<String, String>>
+        get() = listOf("auto" to Txt.s(R.string.ai_lang_auto)) + names.map { (code, res) -> code to Txt.s(res) }
 
     /** Two languages spoken in one note: each sentence is written in its own language. The first is the main one. */
-    val mixedLanguages = listOf(
-        "ar+en" to "Arabic + English", "en+ar" to "English + Arabic", "fr+en" to "French + English", "fr+ar" to "French + Arabic",
-        "es+en" to "Spanish + English", "de+en" to "German + English", "tr+en" to "Turkish + English", "hi+en" to "Hindi + English",
-        "ur+en" to "Urdu + English",
-    )
+    val mixedLanguages: List<Pair<String, String>>
+        get() = listOf("ar+en", "en+ar", "fr+en", "fr+ar", "es+en", "de+en", "tr+en", "hi+en", "ur+en").map { code ->
+            code to Txt.s(R.string.ai_lang_pair, Txt.s(names.getValue(code.substringBefore('+'))), Txt.s(names.getValue(code.substringAfter('+'))))
+        }
 
     fun languageName(code: String): String =
-        (speechLanguages + mixedLanguages).firstOrNull { it.first == code }?.second?.let { if (code == "auto") "Any language" else it } ?: code
+        (speechLanguages + mixedLanguages).firstOrNull { it.first == code }?.second?.let { if (code == "auto") Txt.s(R.string.ai_lang_any) else it } ?: code
 
     fun load(context: Context) {
         if (loaded) return

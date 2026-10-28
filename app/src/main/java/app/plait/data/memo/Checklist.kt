@@ -1,5 +1,9 @@
 package app.plait.data.memo
 
+import app.plait.R
+import app.plait.data.TimeFmt
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -20,7 +24,6 @@ object Checklist {
 
     private val token = Regex("""\s*⏰(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})$""")
     private val isoMinute = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm", Locale.ROOT)
-    private val exportDay = DateTimeFormatter.ofPattern("EEE d MMM, h:mm a", Locale.ENGLISH)
 
     /** [line] without a trailing due token. */
     fun stripDue(line: String): String = line.replace(token, "").trim()
@@ -44,7 +47,8 @@ object Checklist {
     }
 
     /** "due Sun 25 Oct, 5:00 PM" */
-    fun dueText(dueMs: Long, zone: ZoneId = ZoneId.systemDefault()): String = "due " + exportDay.format(Instant.ofEpochMilli(dueMs).atZone(zone))
+    fun dueText(dueMs: Long, zone: ZoneId = ZoneId.systemDefault()): String =
+        Txt.s(R.string.note_list_due, Bidi.isolate(TimeFmt.fmt("EEE d MMM, h:mm a").format(Instant.ofEpochMilli(dueMs).atZone(zone))))
 
     /** The list as people read it in an export: "[ ] Send deck (due Sun 25 Oct, 5:00 PM)". */
     fun export(text: String, zone: ZoneId = ZoneId.systemDefault()): String = parse(text, zone).joinToString("\n") {
@@ -69,11 +73,11 @@ object Checklist {
     fun setDue(text: String, index: Int, dueMs: Long?): String = format(parse(text).mapIndexed { i, it -> if (i == index) it.copy(dueMs = dueMs) else it })
 
     /** The name to show for a list: the user's own title, or "Checklist" when it is empty or blank. */
-    fun label(title: String?): String = title?.trim().orEmpty().ifEmpty { "Checklist" }
+    fun label(title: String?): String = title?.trim().orEmpty().ifEmpty { Txt.s(R.string.note_list_untitled) }
 
     /** "Groceries · 2 of 5 done" */
-    fun heading(title: String?, text: String): String = label(title) + " · " + progress(text)
+    fun heading(title: String?, text: String): String = Bidi.join(listOf(label(title), progress(text)), " · ") // an Arabic title in the English app too
 
     /** "2 of 5 done" */
-    fun progress(text: String): String = parse(text).let { l -> "${l.count { it.done }} of ${l.size} done" }
+    fun progress(text: String): String = parse(text).let { l -> Txt.s(R.string.note_list_progress, l.count { it.done }, l.size) }
 }

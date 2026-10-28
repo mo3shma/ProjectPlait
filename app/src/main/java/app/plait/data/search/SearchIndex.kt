@@ -1,9 +1,17 @@
 package app.plait.data.search
 
+import app.plait.R
+import app.plait.i18n.Txt
 import kotlin.math.ln
 import kotlin.math.sqrt
 
-enum class DocKind(val label: String) { Event("Meeting"), Voice("Voice note"), Memo("Note"), Photo("Photo"), Email("Email"), Followup("Follow-up") }
+enum class DocKind(private val res: Int) {
+    Event(R.string.common_meeting), Voice(R.string.common_voice_note), Memo(R.string.common_note), Photo(R.string.common_photo),
+    Email(R.string.note_search_kind_email), Followup(R.string.note_search_kind_followup);
+
+    /** "Meeting", "Voice note"... in the app's language. */
+    val label: String get() = Txt.s(res)
+}
 
 /** One thing that can be found: a meeting, a note, a photo's text, an email. */
 data class Doc(
@@ -67,16 +75,16 @@ class SearchIndex(private val docs: List<Doc>) {
         fun normalise(s: String): String {
             var t = java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFKD)
             t = t.replace(Regex("\\p{Mn}"), "").replace(diacritics, "")
-            return t.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ى', 'ي').replace('ة', 'ه')
-                .map { c -> if (c in '٠'..'٩') ('0' + (c - '٠')) else c }.joinToString("")
+            return app.plait.ai.ArabicText.westernDigits(t.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ى', 'ي').replace('ة', 'ه'))
         }
 
         fun stem(w: String): String = when {
+            // Arabic: clitics (و ف ب ل ك ال) and a plural ending off, so "وبالميزانية" finds "الميزانيات".
+            app.plait.ai.ArabicText.has(w) -> app.plait.ai.ArabicText.stem(w).ifEmpty { w }
             w.length > 6 && w.endsWith("ing") -> w.dropLast(3)
             w.length > 5 && w.endsWith("ed") -> w.dropLast(2)
             w.length > 5 && w.endsWith("es") -> w.dropLast(2)
             w.length > 4 && w.endsWith("s") && !w.endsWith("ss") -> w.dropLast(1)
-            w.length > 5 && w.startsWith("ال") -> w.drop(2)
             else -> w
         }
 
@@ -102,7 +110,7 @@ class SearchIndex(private val docs: List<Doc>) {
 /** The prompt for "ask your notes": the question and the passages found, with numbers so the answer can point to them. */
 object AskPrompt {
     fun build(question: String, hits: List<Hit>, maxChars: Int = 2200): String {
-        val head = "Answer the question using only the notes below. Cite the note numbers like [1]. If the notes don't say, answer: \"I can't find that in your notes.\" Keep it to three sentences.\n\n"
+        val head = app.plait.ai.AiHarness.withLanguage("Answer the question using only the notes below. Cite the note numbers like [1]. If the notes don't say, answer: \"I can't find that in your notes.\" Keep it to three sentences.") + "\n\n"
         val tail = "\n\nQuestion: $question\nAnswer:"
         val room = (maxChars - head.length - tail.length).coerceAtLeast(400)
         val per = room / hits.size.coerceAtLeast(1)

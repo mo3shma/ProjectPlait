@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -61,7 +62,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,7 +79,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -123,7 +131,7 @@ internal fun rememberCalendarAccess(): () -> Unit {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
         if (granted[Manifest.permission.READ_CALENDAR] == true || DeviceCalendar.hasPermission(context)) Calendars.refreshDevice(context)
-        else Calendars.report("Plait needs calendar access to show your events. You can allow it in Settings.")
+        else Calendars.report(Txt.s(R.string.settings_calendar_access_needed))
     }
     return {
         if (DeviceCalendar.hasPermission(context) && DeviceWrite.hasPermission(context)) Calendars.refreshDevice(context)
@@ -139,7 +147,7 @@ internal fun rememberGoogleSync(): () -> Unit {
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         val token = GoogleAuth.tokenFrom(context, result.data)
         if (token != null) scope.launch { Calendars.sync(context, token) }
-        else Calendars.report("Calendar access wasn't granted.")
+        else Calendars.report(Txt.s(R.string.settings_google_access_denied))
     }
     return {
         if (!Calendars.syncing) scope.launch {
@@ -208,13 +216,13 @@ fun HubScreen(onBack: () -> Unit) {
                 if (c.moveToFirst()) c.getString(0) else null
             } ?: "calendar.ics"
             val text = runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull()
-            fileNote = if (text == null) "Couldn't read that file." else Calendars.importFile(context, name, text) ?: "Imported $name."
+            fileNote = if (text == null) Txt.s(R.string.settings_import_file_unreadable) else Calendars.importFile(context, name, text) ?: Txt.s(R.string.settings_import_file_done, Bidi.isolate(name))
         }
     }
     fun addAccount(types: Array<String>?) {
         val intent = Intent(Settings.ACTION_ADD_ACCOUNT).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (types != null) intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, types)
-        runCatching { context.startActivity(intent) }.onFailure { Calendars.report("Couldn't open the phone's account settings.") }
+        runCatching { context.startActivity(intent) }.onFailure { Calendars.report(Txt.s(R.string.settings_add_account_failed)) }
     }
 
     var includeMedia by remember { mutableStateOf(true) }
@@ -226,9 +234,9 @@ fun HubScreen(onBack: () -> Unit) {
         scope.launch {
             backupBusy = true
             val result = runCatching { withContext(Dispatchers.IO) { BackupManager.import(context, uri, passphrase) } }
-            backupNote = result.fold({ pendingImport = null; BackupManager.summary(it, "Added") }, {
+            backupNote = result.fold({ pendingImport = null; backupSummary(it, saved = false) }, {
                 if (it is BackupManager.NeedsPassphrase) pendingImport = uri
-                it.message ?: "Couldn't read that backup."
+                it.message ?: Txt.s(R.string.settings_backup_unreadable)
             })
             backupBusy = false
         }
@@ -237,7 +245,7 @@ fun HubScreen(onBack: () -> Unit) {
         if (uri != null) scope.launch {
             backupBusy = true
             backupNote = runCatching { withContext(Dispatchers.IO) { BackupManager.export(context, uri, includeMedia, passphrase) } }
-                .fold({ BackupManager.summary(it, "Saved a backup with") }, { it.message ?: "Couldn't save the backup." })
+                .fold({ backupSummary(it, saved = true) }, { it.message ?: Txt.s(R.string.settings_backup_save_failed) })
             backupBusy = false
         }
     }
@@ -246,7 +254,7 @@ fun HubScreen(onBack: () -> Unit) {
         if (uri != null) scope.launch {
             backupBusy = true
             backupNote = runCatching { withContext(Dispatchers.IO) { app.plait.share.AllNotesExport.write(context, uri) } }
-                .fold({ "Saved $it meeting${if (it == 1) "" else "s"} as Markdown files, readable on any computer." }, { it.message ?: "Couldn't save the files." })
+                .fold({ Txt.plural(R.plurals.settings_markdown_saved, it) }, { it.message ?: Txt.s(R.string.settings_markdown_save_failed) })
             backupBusy = false
         }
     }
@@ -257,15 +265,15 @@ fun HubScreen(onBack: () -> Unit) {
     val dest = Calendars.destination()
 
     val accountList = AccountFilter.accounts(cals)
-    val accountsSummary = if (accountList.isEmpty()) (if (hasAccess) "None found yet" else "Needs calendar access")
-        else (if (Calendars.accountsChosen) accountList.count { Calendars.accountEnabled(it.name) } else accountList.size).toString() + " of " + accountList.size + " shown"
-    val sendSummary = dest?.let { TextUtil.shortenAccount(it.name + " · " + it.account, 34) } ?: "Not chosen yet"
+    val accountsSummary = if (accountList.isEmpty()) stringResource(if (hasAccess) R.string.settings_accounts_none else R.string.settings_accounts_needs_access)
+        else stringResource(R.string.settings_accounts_shown, if (Calendars.accountsChosen) accountList.count { Calendars.accountEnabled(it.name) } else accountList.size, accountList.size)
+    val sendSummary = dest?.let { Bidi.isolate(TextUtil.shortenAccount(it.name + " · " + it.account, 34)) } ?: stringResource(R.string.settings_send_not_chosen)
     val aiSummary = AiPrefs.let { p ->
         val text = when (p.textChoice) {
-            AiPrefs.TextChoice.Auto -> "Automatic"
-            AiPrefs.TextChoice.Nano -> "Gemini Nano"
-            AiPrefs.TextChoice.Local -> app.plait.ai.ModelCatalog.byId(p.textModelId)?.title ?: "Downloaded model"
-            AiPrefs.TextChoice.Rules -> "Rules only"
+            AiPrefs.TextChoice.Auto -> stringResource(R.string.common_automatic)
+            AiPrefs.TextChoice.Nano -> stringResource(R.string.settings_ai_gemini_nano)
+            AiPrefs.TextChoice.Local -> app.plait.ai.ModelCatalog.byId(p.textModelId)?.title ?: stringResource(R.string.settings_ai_downloaded_model)
+            AiPrefs.TextChoice.Rules -> stringResource(R.string.settings_ai_rules_only)
         }
         aiSummaryText(text, app.plait.ai.ModelCatalog.byId(p.speechModelId)?.title)
     }
@@ -274,9 +282,30 @@ fun HubScreen(onBack: () -> Unit) {
         app.plait.ai.ModelCenter.state(TURBO) is app.plait.ai.ModelState.Installed || app.plait.ai.ModelCenter.isInstalled(context, TURBO),
     )
     val remindersSummary = remindersSummaryText(app.plait.reminder.ReminderPrefs.before(context), app.plait.reminder.ReminderPrefs.leadMin(context), app.plait.reminder.ReminderPrefs.nudge(context))
-    val appearanceSummary = (if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass) "Liquid Glass" else "Material 3 Expressive") + (if (!app.plait.ui.theme.Appearance.glass) " · no glass effects" else "") + (if (app.plait.ui.theme.Appearance.calm) " · calm" else "")
-    val youSummary = app.plait.data.Profile.name.ifBlank { "Name, backup, import" }
-    val syncSummary = if (app.plait.data.sync.SyncEngine.configured(context)) "On" + app.plait.data.sync.SyncEngine.status.let { if (it.isBlank()) "" else " · $it" } else "Off"
+    val styleGlass = stringResource(R.string.settings_style_glass)
+    val styleMaterial = stringResource(R.string.settings_style_material)
+    val appearanceSummary = listOfNotNull(
+        if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass) styleGlass else styleMaterial,
+        if (!app.plait.ui.theme.Appearance.glass) stringResource(R.string.settings_appearance_no_glass) else null,
+        if (app.plait.ui.theme.Appearance.calm) stringResource(R.string.settings_appearance_calm) else null,
+    ).joinToString(" · ")
+    val youSummary = app.plait.data.Profile.name.ifBlank { stringResource(R.string.settings_you_summary) }
+    val syncSummary = if (app.plait.data.sync.SyncEngine.configured(context)) app.plait.data.sync.SyncEngine.status.let {
+        if (it.isBlank()) stringResource(R.string.common_on) else stringResource(R.string.settings_sync_summary_status, it)
+    } else stringResource(R.string.common_off)
+    val language = remember { AppLocale.choice(context) }
+    val languageNames = mapOf(
+        "" to stringResource(R.string.settings_language_system),
+        "en" to stringResource(R.string.settings_language_english),
+        "ar" to stringResource(R.string.settings_language_arabic),
+    )
+    val languageNote = stringResource(R.string.settings_language_note)
+    val addSummary = stringResource(R.string.settings_add_summary)
+    val importSummary = stringResource(R.string.settings_import_summary)
+    val diagSummary = stringResource(R.string.settings_diag_summary)
+    val advSummary = stringResource(R.string.settings_adv_google)
+    val versionLabel = stringResource(R.string.settings_updates_version, app.plait.data.update.Updater.currentVersion(context))
+    val weekSummary = app.plait.data.week.WorkWeek.label()
 
     val section = app.plait.ui.HomeState.hubSection
     val goBack: () -> Unit = { if (section != null) app.plait.ui.HomeState.hubSection = null else onBack() }
@@ -293,18 +322,20 @@ fun HubScreen(onBack: () -> Unit) {
             AmbientBackground()
             CompositionLocalProvider(LocalHubLook provides (section?.let { HubLook(hubTone(it), hubSectionIds.indexOf(it)) } ?: HubLook(GlassTone.Sky, 0))) { LazyColumn(
                 Modifier.widthIn(max = 720.dp).fillMaxHeight().align(Alignment.TopCenter)
-                    .graphicsLayer { val p = enter.value; translationX = (1f - p) * 72.dp.toPx() * slideFrom * (if (calm) 0f else 1f); alpha = p.coerceIn(0f, 1f) },
+                    .graphicsLayer { val p = enter.value; translationX = (1f - p) * 72.dp.toPx() * slideFrom * (if (calm) 0f else 1f) * (if (AppLocale.isRtl) -1f else 1f); alpha = p.coerceIn(0f, 1f) },
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 18.dp, end = 18.dp, top = statusTop + 76.dp, bottom = 60.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (section == null) item {
                     Column(Modifier.rise(0), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Settings", style = PlaitType.dateTitle, color = plait.text)
+                        Text(stringResource(R.string.common_settings), style = PlaitType.dateTitle, color = plait.text)
                         Text(
-                            if (Calendars.connected) countLabel(Calendars.events.size, "event") + " from " +
-                                countLabel(cals.count { it.id !in Calendars.hidden } + Calendars.feeds.size + (if (Calendars.googleOn) 1 else 0), "calendar") +
-                                (if (Calendars.syncing) " · syncing…" else "")
-                            else "Nothing connected yet. Pick a way below.",
+                            if (Calendars.connected) stringResource(
+                                if (Calendars.syncing) R.string.settings_connected_summary_syncing else R.string.settings_connected_summary,
+                                pluralStringResource(R.plurals.settings_events, Calendars.events.size, Calendars.events.size),
+                                (cals.count { it.id !in Calendars.hidden } + Calendars.feeds.size + (if (Calendars.googleOn) 1 else 0)).let { pluralStringResource(R.plurals.settings_calendars, it, it) },
+                            )
+                            else stringResource(R.string.settings_nothing_connected),
                             style = PlaitType.body, color = plait.muted,
                         )
                         Calendars.message?.let { Text(it, style = PlaitType.caption, color = plait.signal) }
@@ -314,23 +345,21 @@ fun HubScreen(onBack: () -> Unit) {
                 if (section == null && (!hasAccess || !canWrite)) {
                     item {
                         HubCard {
-                            Text(if (!hasAccess) "Allow calendar access" else "Allow saving to your calendar", style = PlaitType.bodyStrong, color = plait.text)
+                            Text(stringResource(if (!hasAccess) R.string.settings_access_title_read else R.string.settings_access_title_write), style = PlaitType.bodyStrong, color = plait.text)
                             Text(
-                                "Plait reads the calendars already on this phone, and saves meetings you create in Plait to the one you choose. Nothing goes through a Plait server.",
+                                stringResource(R.string.settings_access_body),
                                 style = PlaitType.body, color = plait.muted,
                             )
-                            HubButton(if (!hasAccess) "Allow access" else "Allow saving", primary = true, onClick = calendarAccess)
+                            HubButton(stringResource(if (!hasAccess) R.string.settings_access_button_read else R.string.settings_access_button_write), primary = true, onClick = calendarAccess)
                         }
                     }
                 }
 
-                fold(section, "accounts", "Accounts to show", accountsSummary) {
+                fold(section, "accounts", R.string.settings_accounts_title, accountsSummary) {
                 val accounts = AccountFilter.accounts(cals)
                 if (accounts.isNotEmpty()) {
                     item {
-                        FoldNote(if (Calendars.accountsChosen) "Only the accounts switched on appear in Plait. The rest stay out of your agenda."
-                            else "Everything on this phone is showing. Switch off the accounts you don't want here.",
-                        )
+                        FoldNote(stringResource(if (Calendars.accountsChosen) R.string.settings_accounts_note_chosen else R.string.settings_accounts_note_all))
                     }
                     accounts.forEachIndexed { i, acct ->
                         item(key = "acct-${acct.name}-${acct.type}") {
@@ -342,18 +371,18 @@ fun HubScreen(onBack: () -> Unit) {
                                     Box(
                                         Modifier.size(40.dp).background(acct.source.color().copy(alpha = 0.22f), CircleShape),
                                         contentAlignment = Alignment.Center,
-                                    ) { Text(acct.source.label.take(1), style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold), color = acct.source.color()) }
+                                    ) { Text(acct.source.initial, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold), color = acct.source.color()) }
                                     Column(Modifier.weight(1f)) {
-                                        Text(TextUtil.shortenAccount(acct.name, 30), style = PlaitType.bodyStrong, color = plait.text, maxLines = 1, softWrap = false)
+                                        Text(TextUtil.shortenAccount(acct.name, 30), style = PlaitType.bodyStrong.userText(), color = plait.text, maxLines = 1, softWrap = false)
                                         Text(
-                                            acct.source.label + " · " + acct.calendars.size + (if (acct.calendars.size == 1) " calendar" else " calendars"),
+                                            acct.source.label + " · " + pluralStringResource(R.plurals.settings_calendars, acct.calendars.size, acct.calendars.size),
                                             style = PlaitType.caption, color = plait.muted, maxLines = 1,
                                         )
                                     }
-                                    PlaitSwitch(on, { Calendars.setAccountEnabled(context, acct.name, !on) }, "Show ${acct.name}")
+                                    PlaitSwitch(on, { Calendars.setAccountEnabled(context, acct.name, !on) }, stringResource(R.string.settings_show_item, Bidi.isolate(acct.name)))
                                 }
                                 if (on) {
-                                    HubBtn(if (open) "Hide calendars" else "Choose calendars", { open = !open }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                                    HubBtn(stringResource(if (open) R.string.settings_calendars_hide else R.string.settings_calendars_choose), { open = !open }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                                     if (open) acct.calendars.forEach { cal ->
                                         val chosen = dest?.id == cal.id
                                         Column(
@@ -362,15 +391,15 @@ fun HubScreen(onBack: () -> Unit) {
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                                 Box(Modifier.size(12.dp).background(Color(cal.color or 0xFF000000.toInt()), CircleShape))
-                                                Text(cal.name, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Medium), color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                                                PlaitSwitch(cal.id !in Calendars.hidden, { Calendars.setCalendarVisible(context, cal.id, cal.id in Calendars.hidden) }, "Show ${cal.name}")
+                                                Text(cal.name, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Medium).userText(), color = plait.text, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                                PlaitSwitch(cal.id !in Calendars.hidden, { Calendars.setCalendarVisible(context, cal.id, cal.id in Calendars.hidden) }, stringResource(R.string.settings_show_item, Bidi.isolate(cal.name)))
                                             }
                                             if (cal.writable) {
                                                 HubChip(
-                                                    if (chosen) "✓  New meetings are saved here" else "Save new meetings here",
+                                                    stringResource(if (chosen) R.string.settings_save_here_chosen else R.string.settings_save_here),
                                                     chosen, { Calendars.setDestination(context, cal.id) },
                                                 )
-                                            } else Text("Read only", style = PlaitType.caption, color = plait.muted)
+                                            } else Text(stringResource(R.string.settings_read_only), style = PlaitType.caption, color = plait.muted)
                                         }
                                     }
                                 }
@@ -378,20 +407,19 @@ fun HubScreen(onBack: () -> Unit) {
                         }
                     }
                 } else if (hasAccess) {
-                    item { Text("No calendars were found on this phone yet. Add an account below.", style = PlaitType.body, color = plait.muted) }
+                    item { Text(stringResource(R.string.settings_no_calendars), style = PlaitType.body, color = plait.muted) }
                 }
 
                 }
 
-                fold(section, "add", "Add an account", "Google, Outlook, Exchange") {
-                item { FoldNote("Accounts are added in Android, so Plait never sees a password. Their calendars appear here by themselves.") }
+                fold(section, "add", R.string.settings_add_title, addSummary) {
+                item { FoldNote(stringResource(R.string.settings_add_note)) }
                 item {
                     HubCard {
-                        HubButton("Add a Google account", primary = true) { addAccount(arrayOf("com.google")) }
-                        HubButton("Add Outlook, Microsoft 365 or Exchange") { addAccount(null) }
+                        HubButton(stringResource(R.string.settings_add_google), primary = true) { addAccount(arrayOf("com.google")) }
+                        HubButton(stringResource(R.string.settings_add_outlook)) { addAccount(null) }
                         Text(
-                            "For Outlook: install the Outlook app and sign in there, or choose Exchange in the list Android shows. " +
-                                "For iCloud: use a calendar link below (iCloud has no sign-in Android can use).",
+                            stringResource(R.string.settings_add_help),
                             style = PlaitType.caption, color = plait.muted,
                         )
                     }
@@ -399,33 +427,31 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "import", "Import a calendar", "By link or from a file") {
-                item { FoldNote("A link keeps itself up to date. A file is a one-time copy.") }
+                fold(section, "import", R.string.settings_import_title, importSummary) {
+                item { FoldNote(stringResource(R.string.settings_import_note)) }
                 item {
                     HubCard {
                         HubField(
-                            url, { url = it; linkError = null }, "Paste a calendar link (https:// or webcal://)",
+                            url, { url = it; linkError = null }, stringResource(R.string.settings_import_link_hint),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { addLink() }),
-                            trailing = { HubBtn(if (Calendars.syncing) "Adding…" else "Add", addLink, style = ButtonStyle.Primary, size = ButtonSize.Small) },
+                            trailing = { HubBtn(stringResource(if (Calendars.syncing) R.string.settings_import_adding else R.string.common_add), addLink, style = ButtonStyle.Primary, size = ButtonSize.Small) },
                         )
                         linkError?.let { Text(it, style = PlaitType.caption, color = plait.signal) }
-                        HubButton("Import a .ics file") { pickFile.launch(arrayOf("text/calendar", "application/octet-stream", "text/plain", "*/*")) }
+                        HubButton(stringResource(R.string.settings_import_file)) { pickFile.launch(arrayOf("text/calendar", "application/octet-stream", "text/plain", "*/*")) }
                         fileNote?.let { Text(it, style = PlaitType.caption, color = plait.muted) }
                         Calendars.feeds.forEach { feed ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Box(Modifier.size(10.dp).background(feed.source.color(), CircleShape))
                                 Column(Modifier.weight(1f)) {
-                                    Text(feed.name, style = PlaitType.body, color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text(if (feed.url.startsWith("file://")) "File on this phone" else feed.source.label + " · " + Feeds.fallbackName(feed.url), style = PlaitType.caption, color = plait.muted, maxLines = 1)
+                                    Text(feed.name, style = PlaitType.body.userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(if (feed.url.startsWith("file://")) stringResource(R.string.settings_import_file_on_phone) else feed.source.label + " · " + Bidi.isolate(Feeds.fallbackName(feed.url)), style = PlaitType.caption, color = plait.muted, maxLines = 1)
                                 }
-                                ConfirmDeleteButton({ Calendars.removeFeed(context, feed) }, label = "Remove")
+                                ConfirmDeleteButton({ Calendars.removeFeed(context, feed) }, label = stringResource(R.string.common_remove))
                             }
                         }
                         Text(
-                            "Outlook: Outlook on the web → Settings → Calendar → Shared calendars → Publish → copy the ICS link. " +
-                                "iCloud: Calendar app → share → Public Calendar. Google: calendar Settings → Integrate calendar → Secret address in iCal format. " +
-                                "Anyone with a published link can read that calendar.",
+                            stringResource(R.string.settings_import_help),
                             style = PlaitType.caption, color = plait.muted,
                         )
                     }
@@ -433,46 +459,52 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "send", "Where new meetings are saved", sendSummary) {
-                item { FoldNote("What you create in Plait goes to the same place as everything else.") }
+                fold(section, "send", R.string.settings_send_title, sendSummary) {
+                item { FoldNote(stringResource(R.string.settings_send_note)) }
                 item {
                     HubCard {
                         Text(
-                            if (dest != null) "New meetings are saved to ${dest.name} (${dest.account}). Android syncs them to that account, so they show up in " +
-                                (when (dest.source) { app.plait.data.Source.Google -> "Google Calendar"; app.plait.data.Source.Outlook -> "Outlook"; app.plait.data.Source.ICloud -> "iCloud"; else -> "your calendar app" }) + " and invite your guests."
-                            else if (hasAccess) "No calendar on this phone can take new meetings yet. Add an account above, or keep them on this phone only."
-                            else "Allow calendar access first.",
+                            if (dest != null) stringResource(
+                                R.string.settings_send_dest, Bidi.isolate(dest.name), Bidi.isolate(dest.account),
+                                stringResource(when (dest.source) {
+                                    app.plait.data.Source.Google -> R.string.settings_send_google_calendar
+                                    app.plait.data.Source.Outlook -> R.string.settings_send_outlook
+                                    app.plait.data.Source.ICloud -> R.string.settings_send_icloud
+                                    else -> R.string.settings_send_your_calendar_app
+                                }),
+                            )
+                            else stringResource(if (hasAccess) R.string.settings_send_no_writable else R.string.settings_send_allow_first),
                             style = PlaitType.body, color = plait.text,
                         )
                         if (dest == null && hasAccess && canWrite) {
-                            HubButton("Create a calendar on this phone only") {
+                            HubButton(stringResource(R.string.settings_send_create_local)) {
                                 val id = DeviceWrite.ensureLocalCalendar(context)
                                 if (id != null) { Calendars.setDestination(context, id); Calendars.refreshDevice(context) }
-                                else Calendars.report("Couldn't create a calendar on this phone.")
+                                else Calendars.report(Txt.s(R.string.settings_send_create_failed))
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Add my notes to the event", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("After a voice note, the summary and follow-ups are written into the calendar event's description.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_send_notes_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_send_notes_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(Calendars.syncNotes, { Calendars.setSyncNotes(context, !Calendars.syncNotes) }, "Add notes to calendar events")
+                            PlaitSwitch(Calendars.syncNotes, { Calendars.setSyncNotes(context, !Calendars.syncNotes) }, stringResource(R.string.settings_send_notes_switch))
                         }
                     }
                 }
 
                 }
 
-                fold(section, "ai", "AI on this phone", aiSummary, badge = aiBadge) {
+                fold(section, "ai", R.string.settings_ai_title, aiSummary, badge = aiBadge) {
                 item {
                     var light by remember { mutableStateOf(app.plait.ai.Ai.lightAuto(context)) }
                     HubCard {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Lighter model for automatic writing", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Day summaries, prep and About use the smallest downloaded model, so a big one does not slow the phone. Questions and summaries you ask for still use your chosen model.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_ai_light_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_ai_light_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(light, { light = !light; app.plait.ai.Ai.setLightAuto(context, light) }, "Lighter model for automatic writing")
+                            PlaitSwitch(light, { light = !light; app.plait.ai.Ai.setLightAuto(context, light) }, stringResource(R.string.settings_ai_light_title))
                         }
                     }
                 }
@@ -480,8 +512,8 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "reminders", "Reminders and widget", remindersSummary) {
-                item { FoldNote("Alerts come from the phone's alarm clock, so they work with Plait closed.") }
+                fold(section, "reminders", R.string.settings_reminders_title, remindersSummary) {
+                item { FoldNote(stringResource(R.string.settings_reminders_note)) }
                 item {
                     HubCard {
                         var before by remember { mutableStateOf(app.plait.reminder.ReminderPrefs.before(context)) }
@@ -489,35 +521,35 @@ fun HubScreen(onBack: () -> Unit) {
                         var nudge by remember { mutableStateOf(app.plait.reminder.ReminderPrefs.nudge(context)) }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Before each meeting", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("A heads-up with a line about what it is for, and a Join button.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_reminders_before_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_reminders_before_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(before, { before = !before; app.plait.reminder.ReminderPrefs.setBefore(context, before) }, "Reminders before meetings")
+                            PlaitSwitch(before, { before = !before; app.plait.reminder.ReminderPrefs.setBefore(context, before) }, stringResource(R.string.settings_reminders_before_switch))
                         }
                         if (before) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(5, 10, 15, 30).forEach { m -> HubChip("$m min before", lead == m, { lead = m; app.plait.reminder.ReminderPrefs.setLead(context, m) }) }
+                            listOf(5, 10, 15, 30).forEach { m -> HubChip(pluralStringResource(R.plurals.settings_reminders_lead, m, m), lead == m, { lead = m; app.plait.reminder.ReminderPrefs.setLead(context, m) }) }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Evening note reminder", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("At 6:00 PM, if finished meetings have no notes.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_reminders_nudge_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_reminders_nudge_body, Bidi.isolate(app.plait.data.TimeFmt.clock(java.time.LocalTime.of(18, 0)))), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, "Evening note reminder")
+                            PlaitSwitch(nudge, { nudge = !nudge; app.plait.reminder.ReminderPrefs.setNudge(context, nudge) }, stringResource(R.string.settings_reminders_nudge_title))
                         }
-                        Text("Widget: press and hold the home screen, choose Widgets, then Plait. It comes in two sizes, 4×2 and 2×2, and shows the next meeting with a Join button.", style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.settings_reminders_widget), style = PlaitType.caption, color = plait.muted)
                     }
                 }
 
                 }
 
-                fold(section, "week", "Work week", app.plait.data.week.WorkWeek.label()) {
-                item { FoldNote("Your Evening brief on the last day of the work week sums up the week, and on days off with no meetings Plait offers a look at next week.") }
+                fold(section, "week", R.string.settings_week_title, weekSummary) {
+                item { FoldNote(stringResource(R.string.settings_week_note)) }
                 item {
                     HubCard {
-                        Text("First work day", style = PlaitType.bodyStrong, color = plait.text)
+                        Text(stringResource(R.string.settings_week_first_day), style = PlaitType.bodyStrong, color = plait.text)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             java.time.DayOfWeek.entries.forEach { d ->
-                                HubChip(d.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH), app.plait.data.week.WorkWeek.startDay == d, { app.plait.data.week.WorkWeek.set(context, d) })
+                                HubChip(d.getDisplayName(java.time.format.TextStyle.FULL, AppLocale.locale), app.plait.data.week.WorkWeek.startDay == d, { app.plait.data.week.WorkWeek.set(context, d) })
                             }
                         }
                     }
@@ -525,29 +557,29 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "appearance", "Appearance", appearanceSummary) {
+                fold(section, "appearance", R.string.settings_appearance_title, appearanceSummary) {
                 item {
                     HubCard {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Pure black in dark mode", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("True black background for OLED screens: deeper contrast, and the pixels switch off to save battery.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_amoled_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_amoled_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(app.plait.ui.theme.Appearance.amoled, { app.plait.ui.theme.Appearance.setAmoled(context, !app.plait.ui.theme.Appearance.amoled) }, "Pure black in dark mode")
+                            PlaitSwitch(app.plait.ui.theme.Appearance.amoled, { app.plait.ui.theme.Appearance.setAmoled(context, !app.plait.ui.theme.Appearance.amoled) }, stringResource(R.string.settings_amoled_title))
                         }
                     }
                 }
                 item {
                     HubCard {
-                        Text("Style", style = PlaitType.bodyStrong, color = plait.text)
-                        Text("Liquid Glass is translucent and refracts what is behind it. Material 3 Expressive is solid, tonal and bouncier.", style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.settings_style_title), style = PlaitType.bodyStrong, color = plait.text)
+                        Text(stringResource(R.string.settings_style_body), style = PlaitType.caption, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            HubChip("Liquid Glass", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Glass); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
-                            HubChip("Material 3 Expressive", app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Material); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
+                            HubChip(styleGlass, app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Glass, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Glass); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
+                            HubChip(styleMaterial, app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material, { app.plait.ui.theme.Appearance.setStyle(context, app.plait.ui.theme.UiStyle.Material); askRestart = app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle })
                         }
                         if (app.plait.ui.theme.Appearance.style != app.plait.ui.theme.Appearance.activeStyle) {
-                            Text("Restart Plait to finish switching the whole app to this style.", style = PlaitType.caption, color = plait.signal)
-                            HubBtn("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
+                            Text(stringResource(R.string.settings_style_restart_note), style = PlaitType.caption, color = plait.signal)
+                            HubBtn(stringResource(R.string.settings_restart_now), { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
                         }
                     }
                 }
@@ -555,54 +587,66 @@ fun HubScreen(onBack: () -> Unit) {
                     HubCard {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Glass effects", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Blur and refraction. Turn off for plain surfaces, which is lighter on mid-range phones.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_glass_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_glass_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(app.plait.ui.theme.Appearance.glass, { app.plait.ui.theme.Appearance.setGlass(context, !app.plait.ui.theme.Appearance.glass) }, "Glass effects")
+                            PlaitSwitch(app.plait.ui.theme.Appearance.glass, { app.plait.ui.theme.Appearance.setGlass(context, !app.plait.ui.theme.Appearance.glass) }, stringResource(R.string.settings_glass_title))
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Reduce animations", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("No looping skies, no bounce. Pages still slide a little so you can see where you went.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_calm_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_calm_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(app.plait.ui.theme.Appearance.calm, { app.plait.ui.theme.Appearance.setCalm(context, !app.plait.ui.theme.Appearance.calm) }, "Reduce animations")
+                            PlaitSwitch(app.plait.ui.theme.Appearance.calm, { app.plait.ui.theme.Appearance.setCalm(context, !app.plait.ui.theme.Appearance.calm) }, stringResource(R.string.settings_calm_title))
                         }
                     }
                 }
 
                 }
 
-                fold(section, "you", "You and backups", youSummary) {
-                item { FoldNote("Your name is used in greetings. A backup moves your notes and settings to another phone.") }
+                fold(section, "language", R.string.settings_language_title, languageNames.getValue(language)) {
+                item { FoldNote(languageNote) }
+                item {
+                    HubCard {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            languageNames.forEach { (tag, name) -> HubChip(name, language == tag, { if (tag != language) AppLocale.choose(context, tag) }) }
+                        }
+                    }
+                }
+
+                }
+
+                fold(section, "you", R.string.settings_you_title, youSummary) {
+                item { FoldNote(stringResource(R.string.settings_you_note)) }
                 item {
                     HubCard {
                         var name by remember { mutableStateOf(app.plait.data.Profile.name) }
-                        Text("Your name", style = PlaitType.bodyStrong, color = plait.text)
-                        HubField(name, { name = it; app.plait.data.Profile.setName(context, it) }, "What should Plait call you?")
-                        Text("This phone: ${app.plait.data.Profile.device}", style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.settings_you_name), style = PlaitType.bodyStrong, color = plait.text)
+                        HubField(name, { name = it; app.plait.data.Profile.setName(context, it) }, stringResource(R.string.settings_you_name_hint))
+                        Text(stringResource(R.string.settings_you_device, Bidi.isolate(app.plait.data.Profile.device)), style = PlaitType.caption, color = plait.muted)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Include recordings and photos", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Makes the file larger, but the audio and pictures come with it.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_backup_media_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_backup_media_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(includeMedia, { includeMedia = !includeMedia }, "Include recordings and photos")
+                            PlaitSwitch(includeMedia, { includeMedia = !includeMedia }, stringResource(R.string.settings_backup_media_title))
                         }
-                        Text("Passphrase (optional)", style = PlaitType.bodyStrong, color = plait.text)
-                        HubField(passphrase, { passphrase = it }, "Locks the file. Leave empty for none.", password = true)
-                        Text("With a passphrase the file is encrypted (AES-256). Nobody, including us, can recover it if you forget it.", style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.settings_backup_pass_title), style = PlaitType.bodyStrong, color = plait.text)
+                        HubField(passphrase, { passphrase = it }, stringResource(R.string.settings_backup_pass_hint), password = true)
+                        Text(stringResource(R.string.settings_backup_pass_body), style = PlaitType.caption, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             HubBtn(
-                                if (backupBusy) "Working…" else "Export backup",
+                                stringResource(if (backupBusy) R.string.common_working else R.string.settings_backup_export),
                                 { exportFile.launch("plait-backup-" + java.time.LocalDate.now() + ".zip") },
                                 style = ButtonStyle.Primary, enabled = !backupBusy,
                             )
-                            HubBtn("Notes as Markdown for a computer", { exportMarkdown.launch("plait-notes-" + java.time.LocalDate.now() + ".zip") }, style = ButtonStyle.Quiet, enabled = !backupBusy)
-                            HubBtn("Import backup", { importFile.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }, enabled = !backupBusy)
-                            pendingImport?.let { u -> HubBtn("Try again with this passphrase", { runImport(u) }, style = ButtonStyle.Primary, enabled = !backupBusy && passphrase.isNotEmpty()) }
+                            HubBtn(stringResource(R.string.settings_backup_markdown), { exportMarkdown.launch("plait-notes-" + java.time.LocalDate.now() + ".zip") }, style = ButtonStyle.Quiet, enabled = !backupBusy)
+                            HubBtn(stringResource(R.string.settings_backup_import), { importFile.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }, enabled = !backupBusy)
+                            pendingImport?.let { u -> HubBtn(stringResource(R.string.settings_backup_retry), { runImport(u) }, style = ButtonStyle.Primary, enabled = !backupBusy && passphrase.isNotEmpty()) }
                         }
                         backupNote?.let { Text(it, style = PlaitType.caption, color = plait.text) }
                         Text(
-                            "Importing only adds what this phone doesn't have; nothing here is replaced. Without a passphrase the file isn't encrypted, so keep it private.",
+                            stringResource(R.string.settings_backup_import_note),
                             style = PlaitType.caption, color = plait.muted,
                         )
                     }
@@ -610,22 +654,22 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "sync", "Sync between your phones", syncSummary) {
-                item { FoldNote("No Plait server. Pick a folder that a cloud app you already use keeps in step on your phones, such as Google Drive, Dropbox, Nextcloud or Syncthing. Plait puts only sealed files in it.") }
+                fold(section, "sync", R.string.settings_sync_title, syncSummary) {
+                item { FoldNote(stringResource(R.string.settings_sync_note)) }
                 item { SyncCard() }
 
                 }
 
-                fold(section, "diag", "Check this phone", "Self-check, log, frame rate") {
-                item { FoldNote("For testing on a real device. Everything stays on the phone unless you share it.") }
+                fold(section, "diag", R.string.settings_diag_title, diagSummary) {
+                item { FoldNote(stringResource(R.string.settings_diag_note)) }
                 item {
                     HubCard {
                         var checks by remember { mutableStateOf<List<app.plait.diag.Check>?>(null) }
                         var showLog by remember { mutableStateOf(false) }
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            HubBtn("Run self-check", { scope.launch { checks = app.plait.diag.SelfCheck.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            HubBtn(if (showLog) "Hide log" else "Show log", { showLog = !showLog }, size = ButtonSize.Small)
-                            HubBtn(if (app.plait.diag.FrameMonitor.enabled) "Hide frame stats" else "Show frame stats", { app.plait.diag.FrameMonitor.turn(!app.plait.diag.FrameMonitor.enabled) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                            HubBtn(stringResource(R.string.settings_diag_run), { scope.launch { checks = app.plait.diag.SelfCheck.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            HubBtn(stringResource(if (showLog) R.string.settings_diag_hide_log else R.string.settings_diag_show_log), { showLog = !showLog }, size = ButtonSize.Small)
+                            HubBtn(stringResource(if (app.plait.diag.FrameMonitor.enabled) R.string.settings_diag_hide_frames else R.string.settings_diag_show_frames), { app.plait.diag.FrameMonitor.turn(!app.plait.diag.FrameMonitor.enabled) }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                         }
                         checks?.forEach { c ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
@@ -637,14 +681,16 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                         }
                         if (showLog) {
-                            val log = remember(showLog) { app.plait.diag.Diag.read().ifBlank { "Nothing logged yet." } }
+                            val empty = stringResource(R.string.settings_diag_empty_log)
+                            val log = remember(showLog) { app.plait.diag.Diag.read().ifBlank { empty } }
                             Text(log.takeLast(2500), style = PlaitType.monoSmall, color = plait.text.copy(alpha = 0.8f))
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                HubBtn("Share log", {
+                                val shareLog = stringResource(R.string.settings_diag_share_log)
+                                HubBtn(shareLog, {
                                     val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, app.plait.diag.Diag.read())
-                                    runCatching { context.startActivity(android.content.Intent.createChooser(send, "Share log").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                                    runCatching { context.startActivity(android.content.Intent.createChooser(send, shareLog).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                                 }, size = ButtonSize.Small)
-                                HubBtn("Clear", { app.plait.diag.Diag.clear(); showLog = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                                HubBtn(stringResource(R.string.common_clear), { app.plait.diag.Diag.clear(); showLog = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                             }
                         }
                     }
@@ -652,63 +698,63 @@ fun HubScreen(onBack: () -> Unit) {
 
                 }
 
-                fold(section, "updates", "Updates and help", "Plait ${app.plait.data.update.Updater.currentVersion(context)}") {
-                item { FoldNote("Plait checks GitHub for a new version each time it opens and installs it when you say so. The check sends nothing about you.") }
+                fold(section, "updates", R.string.settings_updates_title, versionLabel) {
+                item { FoldNote(stringResource(R.string.settings_updates_note)) }
                 item {
                     HubCard {
                         val st = app.plait.data.update.Updater.state
                         var showUpdate by remember { mutableStateOf(false) }
                         var showNews by remember { mutableStateOf(false) }
-                        Text("Plait ${app.plait.data.update.Updater.currentVersion(context)}", style = PlaitType.bodyStrong, color = plait.text)
+                        Text(versionLabel, style = PlaitType.bodyStrong, color = plait.text)
                         Text(
                             when (st) {
-                                is app.plait.data.update.UpdateState.Checking -> "Checking…"
-                                is app.plait.data.update.UpdateState.UpToDate -> "You have the latest version."
-                                is app.plait.data.update.UpdateState.Available -> "Plait ${st.info.version} is ready to install."
-                                is app.plait.data.update.UpdateState.Downloading -> "Downloading Plait ${st.info.version}…"
-                                is app.plait.data.update.UpdateState.NeedsPermission -> "Waiting for permission to install."
-                                is app.plait.data.update.UpdateState.Installing -> "Installing…"
+                                is app.plait.data.update.UpdateState.Checking -> stringResource(R.string.common_checking)
+                                is app.plait.data.update.UpdateState.UpToDate -> stringResource(R.string.settings_update_latest)
+                                is app.plait.data.update.UpdateState.Available -> stringResource(R.string.settings_update_ready, Bidi.isolate(st.info.version))
+                                is app.plait.data.update.UpdateState.Downloading -> stringResource(R.string.settings_update_downloading, Bidi.isolate(st.info.version))
+                                is app.plait.data.update.UpdateState.NeedsPermission -> stringResource(R.string.settings_update_waiting)
+                                is app.plait.data.update.UpdateState.Installing -> stringResource(R.string.settings_update_installing)
                                 is app.plait.data.update.UpdateState.Failed -> st.reason
-                                else -> "Tap Check to look for a new version."
+                                else -> stringResource(R.string.settings_update_idle)
                             },
                             style = PlaitType.caption, color = plait.muted,
                         )
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading ||
                                 st is app.plait.data.update.UpdateState.NeedsPermission || (st is app.plait.data.update.UpdateState.Failed && st.info != null)
-                            if (waiting) HubBtn("Update", { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            else HubBtn("Check for updates", { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                            HubBtn("What's new", { showNews = true }, size = ButtonSize.Small)
-                            HubBtn("Take the tour", { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
+                            if (waiting) HubBtn(stringResource(R.string.settings_update_button), { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            else HubBtn(stringResource(R.string.settings_update_check), { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            HubBtn(stringResource(R.string.settings_update_whats_new), { showNews = true }, size = ButtonSize.Small)
+                            HubBtn(stringResource(R.string.settings_update_tour), { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             var auto by remember { mutableStateOf(app.plait.data.update.Updater.autoCheck(context)) }
                             Column(Modifier.weight(1f)) {
-                                Text("Check for updates by itself", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("When Plait opens. Off means you check by hand.", style = PlaitType.caption, color = plait.muted)
+                                Text(stringResource(R.string.settings_update_auto_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_update_auto_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(auto, { auto = !auto; app.plait.data.update.Updater.setAutoCheck(context, auto) }, "Check for updates by itself")
+                            PlaitSwitch(auto, { auto = !auto; app.plait.data.update.Updater.setAutoCheck(context, auto) }, stringResource(R.string.settings_update_auto_title))
                         }
                         if (showUpdate) UpdatePrompt(forceOpen = true) { showUpdate = false }
                         if (showNews) {
                             val news = remember { app.plait.data.update.WhatsNew.current(context) }
                             if (news != null) WhatsNewDialog(news) { showNews = false }
-                            else DetailDialog("What's new", { showNews = false }) { Text("The notes for this version aren't in this build.", style = PlaitType.body, color = plait.text) }
+                            else DetailDialog(stringResource(R.string.settings_update_whats_new), { showNews = false }) { Text(stringResource(R.string.settings_update_no_notes), style = PlaitType.body, color = plait.text) }
                         }
                     }
                 }
                 }
 
-                fold(section, "adv", "Advanced", "Read Google directly") {
-                item { FoldNote("Only if you set up Google Cloud yourself (see the README). The steps above need none of this.") }
+                fold(section, "adv", R.string.settings_adv_title, advSummary) {
+                item { FoldNote(stringResource(R.string.settings_adv_note)) }
                 item {
                     HubCard {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Column(Modifier.weight(1f)) {
-                                Text("Read Google directly", style = PlaitType.bodyStrong, color = plait.text)
-                                Text("Includes Meet links. Read only.", style = PlaitType.caption, color = plait.muted)
+                                Text(advSummary, style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_adv_body), style = PlaitType.caption, color = plait.muted)
                             }
-                            PlaitSwitch(Calendars.googleOn, { if (Calendars.googleOn) Calendars.disconnectGoogle(context) else googleSync() }, "Read Google directly")
+                            PlaitSwitch(Calendars.googleOn, { if (Calendars.googleOn) Calendars.disconnectGoogle(context) else googleSync() }, advSummary)
                         }
                     }
                 }
@@ -719,17 +765,16 @@ fun HubScreen(onBack: () -> Unit) {
             app.plait.ui.TopFade(Modifier.align(Alignment.TopCenter))
         }
         Box(Modifier.statusBarsPaddingCompat().padding(start = 18.dp, top = 12.dp)) {
-            GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", goBack, backdrop)
+            GlassIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back), goBack, backdrop)
         }
-        if (askRestart) DetailDialog("Restart to apply", { askRestart = false }) {
+        if (askRestart) DetailDialog(stringResource(R.string.settings_restart_title), { askRestart = false }) {
             Text(
-                "Plait builds the whole interface in one style, so it needs to start again to switch to " +
-                    (if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material) "Material 3 Expressive" else "Liquid Glass") + ".",
+                stringResource(R.string.settings_restart_body, if (app.plait.ui.theme.Appearance.style == app.plait.ui.theme.UiStyle.Material) styleMaterial else styleGlass),
                 style = PlaitType.body, color = plait.text,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                HubBtn("Restart now", { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
-                HubBtn("Later", { askRestart = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                HubBtn(stringResource(R.string.settings_restart_now), { app.plait.ui.material.restartApp(context) }, size = ButtonSize.Small, style = ButtonStyle.Primary)
+                HubBtn(stringResource(R.string.common_later), { askRestart = false }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
             }
         }
     }
@@ -738,8 +783,17 @@ fun HubScreen(onBack: () -> Unit) {
 @Composable
 private fun Modifier.statusBarsPaddingCompat(): Modifier = this.padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
 
-/** "1 event", "5 events". */
-internal fun countLabel(n: Int, noun: String): String = "$n $noun" + if (n == 1) "" else "s"
+/** "Added 2 voice notes, 1 email." after an import, "Saved a backup with ..." after an export. */
+internal fun backupSummary(r: BackupManager.Report, saved: Boolean): String {
+    val parts = listOfNotNull(
+        r.notes.takeIf { it > 0 }?.let { Txt.plural(R.plurals.settings_backup_voice_notes, it) },
+        r.memos.takeIf { it > 0 }?.let { Txt.plural(R.plurals.settings_backup_memos, it) },
+        r.emails.takeIf { it > 0 }?.let { Txt.plural(R.plurals.settings_backup_emails, it) },
+        r.feeds.takeIf { it > 0 }?.let { Txt.plural(R.plurals.settings_backup_feeds, it) },
+    )
+    return if (parts.isEmpty()) Txt.s(if (saved) R.string.settings_backup_saved_nothing else R.string.settings_backup_added_nothing)
+    else Txt.s(if (saved) R.string.settings_backup_saved else R.string.settings_backup_added, parts.joinToString(Txt.s(R.string.settings_list_separator)))
+}
 
 @Composable
 internal fun SectionTitle(title: String, detail: String) {
@@ -808,7 +862,7 @@ internal fun HubField(
 internal data class HubLook(val tone: GlassTone, val rotation: Int)
 internal val LocalHubLook = androidx.compose.runtime.compositionLocalOf { HubLook(GlassTone.Sky, 0) }
 
-internal val hubSectionIds = listOf("accounts", "add", "import", "send", "ai", "reminders", "week", "appearance", "you", "sync", "diag", "updates", "adv")
+internal val hubSectionIds = listOf("accounts", "add", "import", "send", "ai", "reminders", "week", "appearance", "language", "you", "sync", "diag", "updates", "adv")
 
 /** Neighbouring sections never share a tone. */
 internal fun hubTone(id: String): GlassTone = when (id) {
@@ -828,6 +882,7 @@ private fun hubIcon(id: String): ImageVector = when (id) {
     "reminders" -> Icons.Filled.Notifications
     "week" -> Icons.Filled.DateRange
     "appearance" -> Icons.Filled.Palette
+    "language" -> Icons.Filled.Language
     "you" -> Icons.Filled.Person
     "sync" -> Icons.Filled.Sync
     "diag" -> Icons.Filled.CheckCircle
@@ -835,14 +890,18 @@ private fun hubIcon(id: String): ImageVector = when (id) {
     else -> Icons.Filled.Tune
 }
 
-internal fun aiSummaryText(writing: String, voice: String?) = "Writing: $writing · Voice: ${voice ?: "none yet"}"
+internal fun aiSummaryText(writing: String, voice: String?) =
+    Txt.s(R.string.settings_ai_summary, Bidi.isolate(writing), voice?.let { Bidi.isolate(it) } ?: Txt.s(R.string.settings_ai_voice_none))
 
-internal fun remindersSummaryText(before: Boolean, leadMin: Int, nudge: Boolean) =
-    if (before) "$leadMin min before" + (if (nudge) " · evening reminder" else "") else "Off"
+internal fun remindersSummaryText(before: Boolean, leadMin: Int, nudge: Boolean): String {
+    if (!before) return Txt.s(R.string.common_off)
+    val lead = Txt.plural(R.plurals.settings_reminders_lead, leadMin)
+    return if (nudge) Txt.s(R.string.settings_reminders_summary_nudge, lead) else lead
+}
 
 /** The hub's AI row asks for the pair that works best, until either is on the phone. */
 internal fun aiRecommendedBadge(qwenInstalled: Boolean, turboInstalled: Boolean): String? =
-    if (!qwenInstalled && !turboInstalled) "Recommended: Qwen3 0.6B + Whisper Turbo" else null
+    if (!qwenInstalled && !turboInstalled) Txt.s(R.string.settings_ai_badge) else null
 
 @Composable
 private fun SyncCard() {
@@ -856,28 +915,28 @@ private fun SyncCard() {
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> if (uri != null) folder = uri }
     HubCard {
         if (connected) {
-            Text("Syncing" + (engine.folderName?.let { " with “$it”" } ?: ""), style = PlaitType.bodyStrong, color = plait.text)
+            Text(engine.folderName?.let { stringResource(R.string.settings_sync_with, Bidi.isolate(it)) } ?: stringResource(R.string.settings_sync_on), style = PlaitType.bodyStrong, color = plait.text)
             if (engine.status.isNotBlank()) Text(engine.status, style = PlaitType.caption, color = plait.accent)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Text("Include recordings and photos", style = PlaitType.bodyStrong, color = plait.text)
-                    Text("Bigger files, but audio and pictures follow you. Otherwise only text syncs.", style = PlaitType.caption, color = plait.muted)
+                    Text(stringResource(R.string.settings_backup_media_title), style = PlaitType.bodyStrong, color = plait.text)
+                    Text(stringResource(R.string.settings_sync_media_body), style = PlaitType.caption, color = plait.muted)
                 }
-                PlaitSwitch(media, { media = !media; engine.setIncludeMedia(context, media) }, "Sync recordings and photos")
+                PlaitSwitch(media, { media = !media; engine.setIncludeMedia(context, media) }, stringResource(R.string.settings_sync_media_switch))
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HubBtn(if (engine.running) "Syncing…" else "Sync now", { scope.launch { engine.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = !engine.running)
-                HubBtn("Stop syncing", { engine.disconnect(context); connected = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                HubBtn(stringResource(if (engine.running) R.string.common_syncing else R.string.settings_sync_now), { scope.launch { engine.run(context) } }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = !engine.running)
+                HubBtn(stringResource(R.string.settings_sync_stop), { engine.disconnect(context); connected = false }, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
-            Text("Plait syncs when it opens and after you save a note. Deleting something on one phone removes it on the others.", style = PlaitType.caption, color = plait.muted)
+            Text(stringResource(R.string.settings_sync_when), style = PlaitType.caption, color = plait.muted)
         } else {
-            Text("Set up on every phone with the same folder and the same passphrase. The passphrase encrypts the files; if you forget it they can't be opened.", style = PlaitType.caption, color = plait.muted)
-            HubBtn(if (folder == null) "Choose the sync folder" else "Folder chosen ✓", { pick.launch(null) }, size = ButtonSize.Small)
-            HubField(pass, { pass = it }, "Sync passphrase", password = true)
-            HubBtn("Start syncing", {
+            Text(stringResource(R.string.settings_sync_setup), style = PlaitType.caption, color = plait.muted)
+            HubBtn(stringResource(if (folder == null) R.string.settings_sync_choose_folder else R.string.settings_sync_folder_chosen), { pick.launch(null) }, size = ButtonSize.Small)
+            HubField(pass, { pass = it }, stringResource(R.string.settings_sync_pass_hint), password = true)
+            HubBtn(stringResource(R.string.settings_sync_start), {
                 folder?.let { engine.connect(context, it, pass); connected = true; scope.launch { engine.run(context) } }
             }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = folder != null && pass.length >= 6)
-            if (pass.isNotEmpty() && pass.length < 6) Text("Use at least 6 characters.", style = PlaitType.caption, color = plait.signal)
+            if (pass.isNotEmpty() && pass.length < 6) Text(stringResource(R.string.settings_sync_pass_short), style = PlaitType.caption, color = plait.signal)
         }
     }
 }
@@ -888,19 +947,19 @@ private fun SyncCard() {
  * the list). Only the open section's items are built.
  */
 private fun androidx.compose.foundation.lazy.LazyListScope.fold(
-    current: String?, id: String, title: String, summary: String, badge: String? = null,
+    current: String?, id: String, @androidx.annotation.StringRes title: Int, summary: String, badge: String? = null,
     content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit,
 ) {
     if (current == null) {
         item(key = "fold-$id", contentType = "fold") {
-            FoldHeader(id, title, summary, badge) { app.plait.ui.HomeState.hubSection = id }
+            FoldHeader(id, stringResource(title), summary, badge) { app.plait.ui.HomeState.hubSection = id }
         }
     } else if (current == id) {
         item(key = "page-$id") {
             Column(Modifier.rise(0), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     ToneIcon(hubIcon(id), hubTone(id), size = 48.dp)
-                    Text(title, style = PlaitType.dateTitle.copy(fontSize = 32.sp, lineHeight = 36.sp), color = plait.text, modifier = Modifier.weight(1f))
+                    Text(stringResource(title), style = PlaitType.dateTitle.copy(fontSize = 32.sp, lineHeight = 36.sp), color = plait.text, modifier = Modifier.weight(1f))
                 }
                 Text(summary, style = PlaitType.body, color = plait.muted)
             }
@@ -924,7 +983,7 @@ private fun FoldHeader(id: String, title: String, summary: String, badge: String
             Text(summary, style = PlaitType.caption, color = plait.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (badge != null) PlaitBadge(badge, BadgeKind.BestMatch, Modifier.padding(top = 4.dp))
         }
-        androidx.compose.material3.Icon(Icons.Filled.ChevronRight, "Open $title", tint = plait.muted, modifier = Modifier.size(26.dp))
+        androidx.compose.material3.Icon(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.common_open_item, title), tint = plait.muted, modifier = Modifier.size(26.dp))
     }
 }
 

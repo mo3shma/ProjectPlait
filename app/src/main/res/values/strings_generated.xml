@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Text Plait writes itself: the day brief, phases, recaps, week briefs, task due labels, prep and free-time text.
+     Owner: generated text (data/brief, data/week, data/tasks, data/prep, data/quotes, data/Agenda). Arabic twin in values-ar. -->
+<resources>
+    <!-- Kind of meeting, shown as a short tag on a meeting card. -->
+    <string name="gen_kind_one_on_one">1:1</string>
+    <string name="gen_kind_standup">Check-in</string>
+    <string name="gen_kind_review">Review</string>
+    <string name="gen_kind_planning">Planning</string>
+    <string name="gen_kind_interview">Interview</string>
+    <!-- Adjective: a meeting with people from another company. -->
+    <string name="gen_kind_external">External</string>
+    <string name="gen_kind_social">Social</string>
+    <string name="gen_kind_personal">Personal</string>
+    <string name="gen_kind_focus">Focus</string>
+    <string name="gen_kind_general">Meeting</string>
+
+    <!-- Chip on a recurring meeting. -->
+    <string name="gen_chip_repeats">Repeats</string>
+    <!-- Chip; %1$s is the other company's name taken from its email domain. -->
+    <string name="gen_chip_external_org">External · %1$s</string>
+    <string name="gen_chip_external_guests">External guests</string>
+    <plurals name="gen_chip_people">
+        <item quantity="one">%d person</item>
+        <item quantity="other">%d people</item>
+    </plurals>
+
+    <!-- %1$s is one or two first names. -->
+    <string name="gen_with">with %1$s</string>
+    <!-- %1$s is two first names, %2$d how many more guests there are. -->
+    <string name="gen_with_more">with %1$s +%2$d</string>
+    <!-- Separator between items of a list of names or days. -->
+    <string name="gen_list_sep">", "</string>
+    <!-- The last two items of a list: "Priya and Sam", "Monday, Tuesday and Friday". -->
+    <string name="gen_and">%1$s and %2$s</string>
+    <string name="gen_rsvp_accepted">%1$d of %2$d accepted</string>
+    <string name="gen_rsvp_declined">%d declined</string>
+    <!-- Guests who have not answered the invite yet. -->
+    <string name="gen_rsvp_waiting">%d waiting</string>
+
+    <!-- What a meeting seems to be about when the invite says nothing. Worded as guesses. -->
+    <string name="gen_guess_someone">someone</string>
+    <string name="gen_guess_one_on_one">A one-to-one with %1$s. The invite doesn\'t say what it\'s about.</string>
+    <plurals name="gen_guess_standup_people">
+        <item quantity="one">A regular check-in with %d person. No agenda was added, so expect updates and blockers.</item>
+        <item quantity="other">A regular check-in with %d people. No agenda was added, so expect updates and blockers.</item>
+    </plurals>
+    <string name="gen_guess_standup">A regular check-in. No agenda was added, so expect updates and blockers.</string>
+    <!-- %1$s is the meeting's topic, from its title. -->
+    <string name="gen_guess_review">Looks like a review of %1$s. The invite doesn\'t say more.</string>
+    <string name="gen_guess_planning">Looks like a planning session: %1$s. No agenda was added.</string>
+    <string name="gen_guess_interview_with">Looks like an interview with %1$s. Check the guest list for who is joining.</string>
+    <string name="gen_guess_interview">Looks like an interview. Check the guest list for who is joining.</string>
+    <!-- %1$s is the other company's name. -->
+    <string name="gen_guess_external_org">A meeting with people outside your organisation (%1$s). The invite doesn\'t say what it covers.</string>
+    <string name="gen_guess_external">A meeting with people outside your organisation. The invite doesn\'t say what it covers.</string>
+    <string name="gen_guess_social_with">Time with %1$s.</string>
+    <string name="gen_guess_social">Social time.</string>
+    <string name="gen_guess_personal">A personal appointment on your calendar.</string>
+    <string name="gen_guess_focus">Time set aside for focused work.</string>
+    <plurals name="gen_guess_general_people">
+        <item quantity="one">A meeting with %d person. The invite has no description.</item>
+        <item quantity="other">A meeting with %d people. The invite has no description.</item>
+    </plurals>
+    <string name="gen_guess_general">The invite has no description.</string>
+
+    <!-- Short warnings on a meeting in the day brief. -->
+    <string name="gen_flag_no_agenda">No agenda</string>
+    <string name="gen_flag_check_guests">Check who\'s joining</string>
+
+    <!-- Day brief headline and summary. %1$s is a meeting title, times look like "4:10 PM". -->
+    <string name="gen_brief_clear_headline">A clear day.</string>
+    <string name="gen_brief_clear_summary">Nothing on the calendar. A good day for deep work.</string>
+    <!-- Every meeting of the day is over. -->
+    <string name="gen_brief_wrap">That\'s a wrap.</string>
+    <!-- The user is in this meeting right now. -->
+    <string name="gen_brief_in_now">In %1$s now.</string>
+    <!-- %1$s is the meeting title, %2$d the minutes until it starts (under 15). -->
+    <plurals name="gen_brief_starts_in">
+        <item quantity="one">%1$s starts in %2$d min.</item>
+        <item quantity="other">%1$s starts in %2$d min.</item>
+    </plurals>
+    <string name="gen_brief_one_left">One meeting left.</string>
+    <!-- %1$s is the count, spelled out in English ("Three") and in digits in Arabic. -->
+    <plurals name="gen_brief_meetings_ahead">
+        <item quantity="one">%1$s meeting ahead.</item>
+        <item quantity="other">%1$s meetings ahead.</item>
+    </plurals>
+    <string name="gen_brief_all_day_only">Only all-day items today.</string>
+    <plurals name="gen_brief_done">
+        <item quantity="one">%d meeting done. Nothing else today.</item>
+        <item quantity="other">%d meetings done. Nothing else today.</item>
+    </plurals>
+    <string name="gen_brief_next_at">Next is %1$s at %2$s.</string>
+    <!-- How many of the meetings left are with other companies. -->
+    <plurals name="gen_brief_external">
+        <item quantity="one">%d with people outside your organisation.</item>
+        <item quantity="other">%d with people outside your organisation.</item>
+    </plurals>
+    <!-- %1$d meetings in a row with no break, from the time %2$s. -->
+    <plurals name="gen_brief_back_to_back">
+        <item quantity="one">%1$d back to back from %2$s.</item>
+        <item quantity="other">%1$d back to back from %2$s.</item>
+    </plurals>
+    <!-- No more meetings after this time. -->
+    <string name="gen_brief_free_from">Free from %1$s.</string>
+    <!-- %1$s and %2$s are times, %3$s a length like "1 h 30 min". -->
+    <string name="gen_brief_longest_break">Longest break %1$s–%2$s (%3$s).</string>
+    <!-- %1$s is a meeting title, %2$s a short warning such as "No agenda". -->
+    <string name="gen_brief_prep">Prep: %1$s — %2$s.</string>
+
+    <!-- Lengths of time: "45 min", "2 h", "1 h 30 min". -->
+    <plurals name="gen_dur_min">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d min</item>
+    </plurals>
+    <plurals name="gen_dur_h">
+        <item quantity="one">%d h</item>
+        <item quantity="other">%d h</item>
+    </plurals>
+    <!-- Hours then minutes: %1$s is "1 h", %2$s is "30 min". -->
+    <string name="gen_dur_h_min">%1$s %2$s</string>
+    <!-- Compact countdown on the Up next card: "1h", "1h 20m". -->
+    <plurals name="gen_countdown_h">
+        <item quantity="one">%dh</item>
+        <item quantity="other">%dh</item>
+    </plurals>
+    <plurals name="gen_countdown_m">
+        <item quantity="one">%dm</item>
+        <item quantity="other">%dm</item>
+    </plurals>
+
+    <!-- The three parts of the day on the home screen. -->
+    <string name="gen_phase_morning">Morning</string>
+    <string name="gen_phase_midday">Midday</string>
+    <string name="gen_phase_evening">Evening</string>
+    <string name="gen_greet_morning">Good morning</string>
+    <string name="gen_greet_afternoon">Good afternoon</string>
+    <string name="gen_greet_evening">Good evening</string>
+
+    <!-- Evening recap of the day. -->
+    <string name="gen_recap_no_meetings">No meetings today, so the whole day was yours.</string>
+    <!-- %1$s is a length of time, %2$d the meetings finished. -->
+    <plurals name="gen_recap_spent">
+        <item quantity="one">You spent %1$s in %2$d meeting.</item>
+        <item quantity="other">You spent %1$s in %2$d meetings.</item>
+    </plurals>
+    <!-- %1$s is a meeting title, %2$s its length. -->
+    <string name="gen_recap_longest">The longest was %1$s at %2$s.</string>
+    <plurals name="gen_recap_external">
+        <item quantity="one">%d was with people outside your organisation.</item>
+        <item quantity="other">%d were with people outside your organisation.</item>
+    </plurals>
+    <plurals name="gen_recap_still_to_come">
+        <item quantity="one">%d still to come.</item>
+        <item quantity="other">%d still to come.</item>
+    </plurals>
+    <plurals name="gen_recap_no_notes">
+        <item quantity="one">%d has no notes yet.</item>
+        <item quantity="other">%d have no notes yet.</item>
+    </plurals>
+    <string name="gen_recap_all_noted">Every finished meeting has a note.</string>
+
+    <!-- One line placing the user in the day. %1$s is a title, %2$s a time, %3$s a length of time until it starts. -->
+    <string name="gen_sense_nothing">Nothing is scheduled.</string>
+    <string name="gen_sense_in_until">In %1$s until %2$s.</string>
+    <string name="gen_sense_last_ended">Your last meeting ended at %1$s.</string>
+    <string name="gen_sense_first_up">First up: %1$s at %2$s, in %3$s.</string>
+    <string name="gen_sense_next">Next: %1$s at %2$s, in %3$s.</string>
+
+    <!-- Week recap and next-week preview. %1$s in gen_week_name is the user's first name; it is added to the end of a sentence. -->
+    <string name="gen_week_name">, %1$s</string>
+    <!-- %1$s is gen_week_name or nothing. -->
+    <string name="gen_week_done">That\'s your work week done%1$s.</string>
+    <string name="gen_week_clear">It was a clear week with no meetings.</string>
+    <!-- %1$s is a length of time, %2$s a weekday name. -->
+    <string name="gen_week_one_meeting">You had 1 meeting, %1$s long, on %2$s.</string>
+    <!-- %1$d meetings, %2$s their total length, %3$s a weekday name. Always 2 or more. -->
+    <plurals name="gen_week_meetings">
+        <item quantity="one">You had %1$d meeting, about %2$s in total, and %3$s was your busiest day.</item>
+        <item quantity="other">You had %1$d meetings, about %2$s in total, and %3$s was your busiest day.</item>
+    </plurals>
+    <!-- Part of a sentence, joined by gen_week_one_clause or gen_week_two_clauses. -->
+    <plurals name="gen_week_tasks_open">
+        <item quantity="one">%d task is still open</item>
+        <item quantity="other">%d tasks are still open</item>
+    </plurals>
+    <!-- Part of a sentence, joined by gen_week_one_clause or gen_week_two_clauses. -->
+    <plurals name="gen_week_no_notes">
+        <item quantity="one">%d meeting has no notes</item>
+        <item quantity="other">%d meetings have no notes</item>
+    </plurals>
+    <string name="gen_week_one_clause">%1$s.</string>
+    <string name="gen_week_two_clauses">%1$s and %2$s.</string>
+    <string name="gen_week_look">Worth a look before Monday.</string>
+    <!-- %1$s is gen_week_name or nothing. -->
+    <string name="gen_week_next_clear">Next week is completely clear%1$s.</string>
+    <!-- How busy next week is; goes into gen_week_next_one and gen_week_next_many. -->
+    <string name="gen_week_load_heavy">heavy</string>
+    <string name="gen_week_load_light">light</string>
+    <string name="gen_week_load_moderate">moderate</string>
+    <!-- %1$s is gen_week_load_*, %2$s gen_week_name or nothing, %3$s gen_week_first_line. -->
+    <string name="gen_week_next_one">Next week looks %1$s%2$s: just 1 meeting, %3$s.</string>
+    <!-- %1$s is a meeting title, %2$s a weekday, %3$s a time. -->
+    <string name="gen_week_first_line">%1$s on %2$s at %3$s</string>
+    <!-- %1$s is gen_week_load_*, %2$s gen_week_name or nothing, %3$d the meetings, %4$s gen_week_days. -->
+    <plurals name="gen_week_next_many">
+        <item quantity="one">Next week looks %1$s%2$s: %3$d meeting over %4$s.</item>
+        <item quantity="other">Next week looks %1$s%2$s: %3$d meetings over %4$s.</item>
+    </plurals>
+    <plurals name="gen_week_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <!-- %1$s is a weekday, %2$d its meetings. -->
+    <plurals name="gen_week_busiest">
+        <item quantity="one">%1$s is the busiest with %2$d meeting.</item>
+        <item quantity="other">%1$s is the busiest with %2$d meetings.</item>
+    </plurals>
+    <!-- %1$s is gen_week_first_line. -->
+    <string name="gen_week_first">The first one is %1$s.</string>
+    <!-- %1$s is gen_week_first_line, %2$s the days with no meetings (a list); the count is how many days. -->
+    <plurals name="gen_week_first_free">
+        <item quantity="one">The first one is %1$s, and %2$s is clear.</item>
+        <item quantity="other">The first one is %1$s, and %2$s are clear.</item>
+    </plurals>
+    <string name="gen_week_rest_clear">The rest of the week is clear.</string>
+    <!-- %1$s is a list of weekdays with no meetings; the count is how many days. -->
+    <plurals name="gen_week_free">
+        <item quantity="one">%1$s is clear.</item>
+        <item quantity="other">%1$s are clear.</item>
+    </plurals>
+
+    <!-- When a suggested task is due. -->
+    <string name="gen_due_none">No date</string>
+    <string name="gen_due_today">Today</string>
+    <string name="gen_due_tomorrow">Tomorrow</string>
+    <string name="gen_due_this_week">This week</string>
+    <string name="gen_due_next_week">Next week</string>
+    <!-- Due label of a task. -->
+    <plurals name="gen_overdue_days">
+        <item quantity="one">Overdue by %d day</item>
+        <item quantity="other">Overdue by %d days</item>
+    </plurals>
+    <plurals name="gen_overdue_hours">
+        <item quantity="one">Overdue by %d h</item>
+        <item quantity="other">Overdue by %d h</item>
+    </plurals>
+    <plurals name="gen_overdue_min">
+        <item quantity="one">Overdue by %d min</item>
+        <item quantity="other">Overdue by %d min</item>
+    </plurals>
+    <plurals name="gen_due_in_hours">
+        <item quantity="one">Due in %d h</item>
+        <item quantity="other">Due in %d h</item>
+    </plurals>
+    <plurals name="gen_due_in_min">
+        <item quantity="one">Due in %d min</item>
+        <item quantity="other">Due in %d min</item>
+    </plurals>
+    <!-- %1$s is a time. -->
+    <string name="gen_due_today_at">Due today %1$s</string>
+    <string name="gen_due_tomorrow_at">Due tomorrow %1$s</string>
+    <!-- %1$s is a short weekday, %2$s a time. -->
+    <string name="gen_due_weekday_at">Due %1$s %2$s</string>
+    <!-- %1$s short weekday, %2$d day of the month, %3$s short month, %4$s a time: "Due Mon 2 Nov, 5:00 PM". -->
+    <string name="gen_due_date_at">Due %1$s %2$d %3$s, %4$s</string>
+    <!-- How long ago a task was raised, lower case: it follows other text. -->
+    <string name="gen_ago_today">today</string>
+    <string name="gen_ago_yesterday">yesterday</string>
+    <plurals name="gen_ago_days">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+    <string name="gen_ago_last_week">last week</string>
+    <plurals name="gen_ago_weeks">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+
+    <!-- A free time slot: %1$s a date like "Mon 2 Nov", %2$s and %3$s times. -->
+    <string name="gen_slot_label">%1$s, %2$s – %3$s</string>
+    <!-- Start of a message the user sends to someone else; %1$s is the meeting title or gen_share_our_meeting. -->
+    <string name="gen_share_times">Would any of these times work for %1$s?</string>
+    <string name="gen_share_our_meeting">our meeting</string>
+    <string name="gen_share_times_end">Tell me which suits you and I\'ll send the invite.</string>
+    <!-- Title of a calendar block booked for a task; %1$s is the task. -->
+    <string name="gen_todo_title">To do: %1$s</string>
+
+    <!-- Meeting prep made without AI. %1$s is text from a note, the agenda or a follow-up. -->
+    <string name="gen_prep_last_time">Last time: %1$s</string>
+    <string name="gen_prep_agenda">Agenda: %1$s</string>
+    <string name="gen_prep_is_done">Is this done: %1$s</string>
+    <string name="gen_prep_goal_question">What is the goal of this meeting?</string>
+</resources>

@@ -1,5 +1,7 @@
 package app.plait.data.google
 
+import app.plait.R
+import app.plait.i18n.Txt
 import app.plait.data.CalEvent
 import app.plait.data.Rsvp
 import app.plait.data.device.MeetingDraft
@@ -103,7 +105,7 @@ class GoogleWrite(private val token: String) {
             val code = conn.responseCode
             if (code !in 200..299) {
                 val err = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                throw GoogleApiException(code, "Google Calendar returned $code. ${err.take(200)}")
+                throw GoogleApiException(code, Txt.s(R.string.gcal_http_error, code) + " " + err.take(200))
             }
             return conn.inputStream.bufferedReader().use { it.readText() }
         } finally {
@@ -122,10 +124,10 @@ object GoogleEventBody {
 
     /** Why a Meet link could not be made, in words for the person. */
     fun whyNoMeet(e: Throwable): String = when ((e as? GoogleApiException)?.code) {
-        401, 403 -> "Google refused to make a Meet link. The account may not allow it, or Calendar editing was not approved."
-        400 -> "Google can't add a Meet link to this calendar."
-        null -> "Couldn't reach Google to make a Meet link."
-        else -> "Google couldn't make a Meet link (error ${(e as GoogleApiException).code})."
+        401, 403 -> Txt.s(R.string.gcal_meet_refused)
+        400 -> Txt.s(R.string.gcal_meet_unsupported)
+        null -> Txt.s(R.string.gcal_meet_offline)
+        else -> Txt.s(R.string.gcal_meet_error, (e as GoogleApiException).code)
     }
 
     fun meet(requestId: String): JSONObject = JSONObject().put("conferenceData", conference(requestId))

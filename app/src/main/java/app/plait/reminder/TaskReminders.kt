@@ -6,6 +6,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import app.plait.R
+import app.plait.i18n.Txt
 import app.plait.data.TimeFmt
 import app.plait.data.tasks.Tasks
 import org.json.JSONArray
@@ -91,10 +93,10 @@ object TaskReminders {
         // Quiet beforehand; at the due time it uses the alerting channel so it can make a sound.
         val b = LiveAlert.builder(context, if (due) Reminders.CHANNEL else LiveAlert.CHANNEL, e.text, Reminders.open(context, e.eventId.ifBlank { null }, 2, code(e.id) + 3))
             .setOnlyAlertOnce(!due)
-            .setContentText("Due ${TimeFmt.clock(e.at)}" + (if (e.title.isNotBlank()) " · Follow-up from ${e.title}" else ""))
+            .setContentText(LiveLogic.taskLine(TimeFmt.clock(e.at), e.title))
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .addAction(0, "Done", pending(context, ACTION_DONE, e, 1))
-            .addAction(0, "Tomorrow", pending(context, ACTION_LATER, e, 2))
+            .addAction(0, Txt.s(R.string.common_done), pending(context, ACTION_DONE, e, 1))
+            .addAction(0, Txt.s(R.string.common_tomorrow), pending(context, ACTION_LATER, e, 2))
         runCatching { (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(code(e.id), b.build()) }
     }
 
@@ -117,11 +119,11 @@ object TaskReminders {
     fun label(at: Long, now: Long = System.currentTimeMillis(), zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String {
         val d = java.time.Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
         val today = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-        val day = when (d) {
-            today -> "Today"
-            today.plusDays(1) -> "Tomorrow"
-            else -> d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+        val clock = TimeFmt.clock(at, zone)
+        return when (d) {
+            today -> Txt.s(R.string.alert_task_today, clock)
+            today.plusDays(1) -> Txt.s(R.string.alert_task_tomorrow, clock)
+            else -> d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, app.plait.i18n.AppLocale.locale) + " " + clock
         }
-        return "$day ${TimeFmt.clock(at, zone)}"
     }
 }

@@ -3,7 +3,11 @@ package app.plait.widget
 import app.plait.data.CalEvent
 import app.plait.data.CallProvider
 import app.plait.data.Source
+import app.plait.R
 import app.plait.data.TimeFmt
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
@@ -96,7 +100,7 @@ data class WidgetModel(
     val joinTint: Int get() = look.argb
 
     companion object {
-        fun build(events: List<CalEvent>, now: Long, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = Locale.getDefault()): WidgetModel {
+        fun build(events: List<CalEvent>, now: Long, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = AppLocale.locale): WidgetModel {
             val day = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
             val midnight = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
             val short = java.text.SimpleDateFormat("EEE d", locale).apply { timeZone = java.util.TimeZone.getTimeZone(zone) }.format(java.util.Date(now))
@@ -112,32 +116,41 @@ data class WidgetModel(
                         "$d ${TimeFmt.clock(it.startMs, zone)}"
                     }
                     WidgetModel(
-                        date, "A clear day", nextWhen?.let { "Next: $it ${clean(f!!.title)}" } ?: "Nothing coming up", clearDay = true, nextChangeMs = minOf(midnight, boundary),
+                        date, Txt.s(R.string.wdg_clear_day), nextWhen?.let { nextFull(it, clean(f!!.title)) } ?: Txt.s(R.string.wdg_nothing_coming), clearDay = true, nextChangeMs = minOf(midnight, boundary),
                         titleLines = 1, dateShort = short, nextWhen = nextWhen, nextTitle = f?.let { clean(it.title) }, phase = phase,
                     )
                 }
             val rest = today.drop(1)
             val link = main.callLink?.url
-            val place = main.place.trim().takeIf { it.isNotEmpty() && !it.startsWith("http", true) } ?: if (link != null) "Online" else null
+            val place = main.place.trim().takeIf { it.isNotEmpty() && !it.startsWith("http", true) } ?: if (link != null) Txt.s(R.string.wdg_online) else null
             val running = main.startMs <= now
-            val footer = rest.firstOrNull()?.let {
-                "Then ${clean(it.title)} ${TimeFmt.clock(it.startMs, zone)}" + if (rest.size > 1) " · +${rest.size - 1} more" else ""
-            } ?: "Last one today"
+            val thenLine = rest.firstOrNull()?.let { Txt.s(R.string.wdg_then, Bidi.isolate(clean(it.title)), Bidi.isolate(TimeFmt.clock(it.startMs, zone))) }
+            val moreLine = if (rest.size > 1) Txt.s(R.string.wdg_more, rest.size - 1) else null
+            val footer = thenLine?.let { it + if (moreLine != null) " · $moreLine" else "" } ?: Txt.s(R.string.wdg_last_today)
             val title = clean(main.title)
             return WidgetModel(
-                date, title, (if (running) "Now · " else "") + TimeFmt.clock(main.startMs, zone) + " – " + TimeFmt.clock(main.endMs, zone),
+                date, title, (if (running) Txt.s(R.string.common_now) + " · " else "") + TimeFmt.clock(main.startMs, zone) + " – " + TimeFmt.clock(main.endMs, zone),
                 place, link, main.id, running, false, footer, if (title.length > ONE_LINE_MAX) 2 else 1, short,
                 TimeFmt.clock(main.startMs, zone), TimeFmt.clock(main.endMs, zone), rest.size, null, null,
                 minOf(boundary, if (running) main.endMs else main.startMs),
-                phase, today.size, rest.firstOrNull()?.let { "Then ${clean(it.title)} ${TimeFmt.clock(it.startMs, zone)}" },
-                if (rest.size > 1) "+${rest.size - 1} more" else null,
+                phase, today.size, thenLine, moreLine,
                 JoinLook.of(main.callLink?.provider, main.source),
             )
         }
 
-        /** "1:30 – 2:30 PM"; the first AM/PM is dropped when both are the same. */
-        fun range(start: String, end: String): String =
-            if (start.takeLast(2) == end.takeLast(2)) start.dropLast(3) + " – " + end else "$start – $end"
+        /** "1:30 – 2:30 PM" (Arabic "1:30 – 2:30 م"); the first AM/PM mark is dropped when both are the same. */
+        fun range(start: String, end: String): String {
+            val sep = if ('\u00A0' in end) '\u00A0' else ' ' // Arabic times keep their mark with a no-break space (TimeFmt)
+            val mark = end.substringAfterLast(sep, "")
+            return if (mark.isNotEmpty() && start.endsWith("$sep$mark")) start.dropLast(mark.length + 1) + " – " + end else "$start – $end"
+        }
+
+        /** "Next: Mon 9:00 AM Design review". */
+        private fun nextFull(whenText: String, title: String) = Txt.s(R.string.wdg_next_full, Bidi.isolate(whenText), Bidi.isolate(title))
+
+        private fun next(whenText: String) = Txt.s(R.string.wdg_next, Bidi.isolate(whenText))
+
+        private fun until(clock: String) = Txt.s(R.string.wdg_until, Bidi.isolate(clock))
 
         /** 20sp up to 16 characters, 18sp up to [ONE_LINE_MAX], then two lines at 16sp. */
         fun wideTitleSp(title: String): Int = if (title.length <= 16) 20 else if (title.length <= ONE_LINE_MAX) 18 else 16
@@ -149,18 +162,18 @@ data class WidgetModel(
          */
         fun smallLines(m: WidgetModel): SmallLines {
             if (m.clearDay) {
-                val full = m.nextWhen?.let { "Next: $it ${m.nextTitle}" }
+                val full = m.nextWhen?.let { nextFull(it, m.nextTitle.toString()) }
                 val line = when {
-                    m.nextWhen == null -> "Nothing coming up"
-                    full!!.length <= 22 -> full
-                    else -> "Next: ${m.nextWhen}"
+                    m.nextWhen == null -> Txt.s(R.string.wdg_nothing_coming)
+                    full!!.replace(Regex("[\u2066-\u2069]"), "").length <= 22 -> full
+                    else -> next(m.nextWhen)
                 }
                 return SmallLines(m.title, line, null, false, 2, titleSp = 20)
             }
             val join = m.joinUrl != null
             return SmallLines(
-                m.title, if (m.running) "until ${m.endClock}" else m.startClock,
-                if (m.running) "Now" else if (m.more > 0) "+${m.more} more" else null,
+                m.title, if (m.running) until(m.endClock) else m.startClock,
+                if (m.running) Txt.s(R.string.common_now) else if (m.more > 0) Txt.s(R.string.wdg_more, m.more) else null,
                 join, if (join) 2 else 3, if (m.running) 12 else if (join) 13 else 16, if (join) 14 else 16,
             )
         }
@@ -179,10 +192,10 @@ data class WidgetModel(
             val rest = m.thenLine != null
             return WideLines(
                 m.title, wideTitleSp(m.title), m.titleLines,
-                if (m.running) "until ${m.endClock}" else range(m.startClock, m.endClock), m.running,
+                if (m.running) until(m.endClock) else range(m.startClock, m.endClock), m.running,
                 if (m.title.length <= ONE_LINE_MAX) m.place else null, m.joinUrl != null,
-                when (m.count) { 0 -> null; 1 -> "1 meeting"; else -> "${m.count} meetings" },
-                m.thenLine, m.moreLine, if (rest) null else "Last one today",
+                if (m.count == 0) null else Txt.plural(R.plurals.common_meetings, m.count),
+                m.thenLine, m.moreLine, if (rest) null else Txt.s(R.string.wdg_last_today),
             )
         }
 
@@ -194,10 +207,10 @@ data class WidgetModel(
 
         /** What the 4x3 strip says: the next meeting, a running one, or why there is none. Join only with a call link. */
         fun quickLines(m: WidgetModel): QuickLines {
-            if (m.clearDay) return QuickLines(if (m.nextWhen != null) "Next: ${m.nextWhen}" else "Nothing coming up", m.title, false)
-            val time = if (m.running) "Now · until ${m.endClock}" else m.startClock
+            if (m.clearDay) return QuickLines(if (m.nextWhen != null) next(m.nextWhen) else Txt.s(R.string.wdg_nothing_coming), m.title, false)
+            val time = if (m.running) Txt.s(R.string.common_now) + " · " + until(m.endClock) else m.startClock
             // Without a call link the pill's room goes to what comes after.
-            return QuickLines(if (m.joinUrl != null) time else time + " · " + (m.thenLine ?: "Last one today"), m.title, m.joinUrl != null)
+            return QuickLines(if (m.joinUrl != null) time else time + " · " + (m.thenLine ?: Txt.s(R.string.wdg_last_today)), m.title, m.joinUrl != null)
         }
 
         const val ONE_LINE_MAX = 24
@@ -212,6 +225,6 @@ data class WidgetModel(
         const val QUICK_INNER_DP = 156.0
 
         /** One line of at most 100 characters; the view ellipsizes the rest. */
-        fun clean(title: String): String = title.replace(Regex("\\s+"), " ").trim().ifEmpty { "Untitled" }.let { if (it.length > 100) it.take(99).trimEnd() + "…" else it }
+        fun clean(title: String): String = title.replace(Regex("\\s+"), " ").trim().ifEmpty { Txt.s(R.string.common_untitled) }.let { if (it.length > 100) it.take(99).trimEnd() + "…" else it }
     }
 }

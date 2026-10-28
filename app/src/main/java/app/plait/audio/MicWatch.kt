@@ -44,10 +44,8 @@ class MicWatch(private val sources: Int, private val sampleRate: Int = SAMPLE_RA
 
     companion object {
         /** Shown on the record screen and kept on the note when Android blocked the microphone during a call. */
-        const val BLOCKED_IN_CALL = "Your phone blocked the microphone while the call was running. Android lets the call app keep the mic. " +
-            "Put the call on speaker and try again, or record with a second device, or use the call app's own recording."
+        val BLOCKED_IN_CALL: String get() = app.plait.i18n.Txt.s(app.plait.R.string.note_mic_blocked_call)
         /** The same, when no call was running: another app or the microphone switch took it. */
-        const val BLOCKED = "Your phone blocked the microphone, so only silence was recorded. Another app may be using it, " +
-            "or microphone access may be turned off in quick settings."
+        val BLOCKED: String get() = app.plait.i18n.Txt.s(app.plait.R.string.note_mic_blocked)
     }
 }

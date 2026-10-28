@@ -17,12 +17,12 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventRepeat
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +44,11 @@ import app.plait.ui.PlaitButton
 import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 import java.util.Calendar
+import androidx.compose.ui.res.stringResource
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
 
 /**
  * What you can do to a meeting. One you organise: edit its details, move it, cancel it (one occurrence or all). Someone
@@ -63,7 +68,7 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
     var pending by remember { mutableStateOf<(suspend (String) -> Unit)?>(null) }
 
     val finish: (Boolean, String, Boolean) -> Unit = { ok, msg, gone ->
-        Toast.makeText(context, if (ok) msg else "Couldn't change it. Try from the calendar app.", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, if (ok) msg else Txt.s(R.string.sheet_manage_failed), Toast.LENGTH_LONG).show()
         if (ok) { Calendars.refreshDevice(context); if (gone) onGone() }
     }
     // Google needs a token with permission to edit; the first time, Google shows its consent screen.
@@ -71,7 +76,7 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
         val token = app.plait.data.google.GoogleAuth.tokenFrom(context, r.data)
         val job = pending
         pending = null
-        if (token != null && job != null) scope.launch { job(token) } else Toast.makeText(context, "Permission to change the meeting wasn't given.", Toast.LENGTH_SHORT).show()
+        if (token != null && job != null) scope.launch { job(token) } else Toast.makeText(context, Txt.s(R.string.sheet_manage_no_permission), Toast.LENGTH_SHORT).show()
     }
     /** Runs a change on the right calendar: the phone's, or Google's with a write token. */
     fun run(msg: String, gone: Boolean = false, phone: () -> Boolean, web: (app.plait.data.google.GoogleWrite) -> Unit) {
@@ -89,7 +94,7 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
             }
         }
     }
-    val told = "Done. Guests are told."
+    val told = stringResource(R.string.sheet_manage_told)
     val reschedule = {
         // The phone's own date and time pickers; the meeting keeps its length.
         val c = Calendar.getInstance().apply { timeInMillis = ev.startMs }
@@ -97,60 +102,60 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
         android.app.DatePickerDialog(context, { _, y, m, d ->
             android.app.TimePickerDialog(context, { _, h, min ->
                 val start = Calendar.getInstance().apply { set(y, m, d, h, min, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
-                run("Moved. Guests are told.", phone = { EventEdit.reschedule(context, ev, start, start + length) }, web = { it.reschedule(ev, start, start + length) })
+                run(Txt.s(R.string.sheet_manage_moved), phone = { EventEdit.reschedule(context, ev, start, start + length) }, web = { it.reschedule(ev, start, start + length) })
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), android.text.format.DateFormat.is24HourFormat(context)).show()
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
     }
     fun ask(question: String, act: () -> Unit) { confirm = question to { act(); true } }
     val actions = buildList {
         if (manage) {
-            add(NoteAction("Edit details", Icons.Filled.Edit) { editing = true })
-            add(NoteAction(if (ev.recurring) "Reschedule this one" else "Reschedule", Icons.Filled.Schedule) { reschedule() })
+            add(NoteAction(stringResource(R.string.sheet_manage_edit), Icons.Filled.Edit) { editing = true })
+            add(NoteAction(stringResource(if (ev.recurring) R.string.sheet_manage_reschedule_one else R.string.sheet_manage_reschedule), Icons.Filled.Schedule) { reschedule() })
             if (ev.recurring) {
-                add(NoteAction("Cancel this one", Icons.Filled.Cancel, danger = true) {
-                    ask("Cancel this meeting on its date? The rest of the series stays.") { run(told, true, { EventEdit.cancelOccurrence(context, ev) }, { it.cancelOccurrence(ev) }) }
+                add(NoteAction(stringResource(R.string.sheet_manage_cancel_one), Icons.Filled.Cancel, danger = true) {
+                    ask(Txt.s(R.string.sheet_manage_cancel_one_q)) { run(told, true, { EventEdit.cancelOccurrence(context, ev) }, { it.cancelOccurrence(ev) }) }
                 })
-                add(NoteAction("Delete the whole series", Icons.Filled.DeleteForever, danger = true) {
-                    ask("Delete every meeting in this series? Guests get a cancellation.") { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = true) }) }
+                add(NoteAction(stringResource(R.string.sheet_manage_delete_series), Icons.Filled.DeleteForever, danger = true) {
+                    ask(Txt.s(R.string.sheet_manage_delete_series_q)) { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = true) }) }
                 })
             } else {
                 val withGuests = ev.guests.any { !it.self }
-                add(NoteAction(if (withGuests) "Cancel meeting" else "Delete", Icons.Filled.DeleteForever, danger = true) {
-                    ask(if (withGuests) "Cancel this meeting? Guests get a cancellation." else "Delete this meeting?") { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = false) }) }
+                add(NoteAction(stringResource(if (withGuests) R.string.sheet_manage_cancel_meeting else R.string.common_delete), Icons.Filled.DeleteForever, danger = true) {
+                    ask(Txt.s(if (withGuests) R.string.sheet_manage_cancel_q else R.string.sheet_manage_delete_q)) { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = false) }) }
                 })
             }
         } else if (hasSelf) {
             listOf(
-                Triple("Going", Icons.Filled.CheckCircle, app.plait.data.Rsvp.Accepted),
-                Triple("Maybe", Icons.Filled.HelpOutline, app.plait.data.Rsvp.Tentative),
-                Triple("Decline", Icons.Filled.Cancel, app.plait.data.Rsvp.Declined),
+                Triple(R.string.sheet_rsvp_answer_going to R.string.sheet_rsvp_done_going, Icons.Filled.CheckCircle, app.plait.data.Rsvp.Accepted),
+                Triple(R.string.sheet_rsvp_answer_maybe to R.string.sheet_rsvp_done_maybe, Icons.AutoMirrored.Filled.HelpOutline, app.plait.data.Rsvp.Tentative),
+                Triple(R.string.sheet_rsvp_answer_decline to R.string.sheet_rsvp_done_decline, Icons.Filled.Cancel, app.plait.data.Rsvp.Declined),
             ).forEach { (label, icon, answer) ->
-                add(NoteAction("Answer: $label", icon, danger = answer == app.plait.data.Rsvp.Declined) {
-                    run("Answered $label. The organizer is told.", phone = { EventEdit.respond(context, ev, answer) }, web = { it.respond(ev, answer) })
+                add(NoteAction(stringResource(label.first), icon, danger = answer == app.plait.data.Rsvp.Declined) {
+                    run(Txt.s(label.second), phone = { EventEdit.respond(context, ev, answer) }, web = { it.respond(ev, answer) })
                 })
             }
         }
-        if (!google) add(NoteAction("Open in calendar app", Icons.Filled.OpenInNew) { EventEdit.openInCalendar(context, ev) })
+        if (!google) add(NoteAction(stringResource(R.string.sheet_manage_open_calendar), Icons.AutoMirrored.Filled.OpenInNew) { EventEdit.openInCalendar(context, ev) })
     }
     // The menu closes as soon as something is picked; the whole thing ends once no follow-up dialog is open.
     var menuVisible by remember { mutableStateOf(true) }
-    if (menuVisible) ActionsDialog(if (manage) "Manage meeting" else "Your answer", actions, onDismiss = { menuVisible = false })
+    if (menuVisible) ActionsDialog(stringResource(if (manage) R.string.sheet_manage_title else R.string.sheet_manage_your_answer), actions, onDismiss = { menuVisible = false })
     androidx.compose.runtime.LaunchedEffect(menuVisible, editing, confirm, pending) { if (!menuVisible && !editing && confirm == null && pending == null) onDismiss() }
 
     if (editing) EditEventDialog(ev, canMeet = google && mine, onSave = { t, p, d, meet ->
-        run("Saved. Guests are told.", phone = { EventEdit.updateDetails(context, ev, t, p, d) }, web = {
+        run(Txt.s(R.string.sheet_manage_saved), phone = { EventEdit.updateDetails(context, ev, t, p, d) }, web = {
             it.updateDetails(ev, t, p, d)
             // The details are already saved; a Meet link that Google refuses must not undo that.
             if (meet) runCatching { it.addMeet(ev, java.util.UUID.randomUUID().toString()) }.onFailure { e ->
                 val why = app.plait.data.google.GoogleEventBody.whyNoMeet(e)
-                android.os.Handler(android.os.Looper.getMainLooper()).post { Toast.makeText(context, "$why Saved without a Meet link.", Toast.LENGTH_LONG).show() }
+                android.os.Handler(android.os.Looper.getMainLooper()).post { Toast.makeText(context, Txt.s(R.string.sheet_meet_failed, why), Toast.LENGTH_LONG).show() }
             }
         })
     }, onDismiss = { editing = false })
     confirm?.let { (question, act) ->
-        DetailDialog("Are you sure?", { confirm = null }) {
+        DetailDialog(stringResource(R.string.sheet_confirm_title), { confirm = null }) {
             Text(question, style = PlaitType.body, color = plait.text)
-            PlaitButton("Yes", { scope.launch { act() }; confirm = null }, modifier = Modifier.fillMaxWidth(), style = ButtonStyle.Danger)
+            PlaitButton(stringResource(R.string.common_yes), { scope.launch { act() }; confirm = null }, modifier = Modifier.fillMaxWidth(), style = ButtonStyle.Danger)
         }
     }
 }
@@ -167,31 +172,31 @@ private fun EditEventDialog(ev: CalEvent, canMeet: Boolean, onSave: (String, Str
     val parsed = if (callMode == 2) app.plait.data.CallLinkInput.parse(linkText) else null
     PlaitDialog(onDismissRequest = onDismiss) { PopIn {
         Column(Modifier.fillMaxWidth().popupSurface().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Edit meeting", style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
-            Field("Title", title, 1) { title = it }
-            Field("Place", place, 1) { place = it }
-            Field("Description", notes, 6) { notes = it }
-            Text("CALL LINK", style = PlaitType.monoSmall, color = plait.muted)
+            Text(stringResource(R.string.sheet_edit_title), style = PlaitType.section.copy(fontSize = 20.sp), color = plait.text)
+            Field(stringResource(R.string.common_title), title, 1) { title = it }
+            Field(stringResource(R.string.sheet_edit_place), place, 1) { place = it }
+            Field(stringResource(R.string.sheet_edit_description), notes, 6) { notes = it }
+            Text(stringResource(R.string.sheet_edit_call_link).uppercase(AppLocale.locale), style = PlaitType.monoSmall, color = plait.muted)
             androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                app.plait.ui.PlaitChip(if (has != null) "Keep ${has.provider.short}" else "None", callMode == 0, { callMode = 0 })
+                app.plait.ui.PlaitChip(if (has != null) stringResource(R.string.sheet_edit_keep, has.provider.short) else stringResource(R.string.sheet_edit_none), callMode == 0, { callMode = 0 })
                 // A meeting that already has a call keeps it: the location and Google's own link are read before anything added here.
-                if (has == null && canMeet) app.plait.ui.PlaitChip("Google Meet", callMode == 1, { callMode = 1 })
-                if (has == null) app.plait.ui.PlaitChip("Add link", callMode == 2, { callMode = 2 })
+                if (has == null && canMeet) app.plait.ui.PlaitChip(stringResource(R.string.sheet_google_meet), callMode == 1, { callMode = 1 })
+                if (has == null) app.plait.ui.PlaitChip(stringResource(R.string.sheet_edit_add_link), callMode == 2, { callMode = 2 })
             }
             if (callMode == 2) {
-                Field("Teams, Zoom or Webex link (https)", linkText, 1) { linkText = it }
+                Field(stringResource(R.string.sheet_edit_link_hint), linkText, 1) { linkText = it }
                 (parsed as? app.plait.data.CallLinkInput.Parsed.Bad)?.takeIf { linkText.isNotBlank() }?.let { Text(it.reason, style = PlaitType.caption, color = plait.signal) }
                 (parsed as? app.plait.data.CallLinkInput.Parsed.Ok)?.let {
-                    Text(it.provider?.let { p -> "${p.label} link" } ?: "A link. Join only shows for Meet, Zoom, Teams and Webex links.", style = PlaitType.caption, color = plait.muted)
+                    Text(it.provider?.let { p -> stringResource(R.string.sheet_edit_link_of, p.label) } ?: stringResource(R.string.sheet_edit_link_other), style = PlaitType.caption, color = plait.muted)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlaitButton("Save", {
+                PlaitButton(stringResource(R.string.common_save), {
                     val ok = parsed as? app.plait.data.CallLinkInput.Parsed.Ok
                     val (p2, n2) = if (ok != null) app.plait.data.CallLinkInput.place(ok.url, place.trim(), notes.trim()) else place.trim() to notes.trim()
                     onSave(title.trim(), p2, n2, callMode == 1); onDismiss()
                 }, style = ButtonStyle.Primary, size = ButtonSize.Small, enabled = title.isNotBlank() && (callMode != 2 || parsed is app.plait.data.CallLinkInput.Parsed.Ok))
-                PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.common_cancel), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
             }
         }
     } }
@@ -200,10 +205,10 @@ private fun EditEventDialog(ev: CalEvent, canMeet: Boolean, onSave: (String, Str
 @Composable
 private fun Field(label: String, value: String, lines: Int, onChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label.uppercase(), style = PlaitType.monoSmall, color = plait.muted)
+        Text(label.uppercase(AppLocale.locale), style = PlaitType.monoSmall, color = plait.muted)
         BasicTextField(
             value = value, onValueChange = onChange, singleLine = lines == 1, maxLines = lines,
-            textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
+            textStyle = PlaitType.body.copy(color = plait.text).userText(), cursorBrush = SolidColor(plait.accent),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner -> Box(Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(20.dp)).background(plait.surface).padding(horizontal = 16.dp, vertical = 13.dp)) { inner() } },
         )

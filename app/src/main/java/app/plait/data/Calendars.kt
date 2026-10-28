@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.plait.data.device.DeviceCalendar
+import app.plait.R
+import app.plait.i18n.Txt
 import app.plait.reminder.Reminders
 import app.plait.data.google.CalEventJson
 import app.plait.data.google.GoogleApiException
@@ -103,12 +105,12 @@ object Calendars {
     fun find(id: String): CalEvent? = if (id.isEmpty()) FREE_NOTE else events.firstOrNull { it.id == id } ?: orphan(id)
 
     /** Stands in for "no meeting" when something that needs an event (the recorder) is used from the Notes tab. */
-    val FREE_NOTE = CalEvent("", "", "", "Voice note", Source.Other, "Not linked to a meeting")
+    val FREE_NOTE: CalEvent get() = CalEvent("", "", "", Txt.s(R.string.common_voice_note), Source.Other, Txt.s(R.string.settings_cal_not_linked))
 
     /** A meeting that exists only as shared notes (the receiver's calendar has no copy): built from the notes' title and time. */
     private fun orphan(id: String): CalEvent? {
         val n = NoteStore.peek()?.notes?.firstOrNull { it.eventId == id } ?: return null
-        return CalEvent(id, TimeFmt.stamp(n.createdAt).substringAfter(", "), "", n.title.ifBlank { "Shared notes" }, Source.Other, "Shared notes", startMs = n.createdAt, endMs = n.createdAt + 1)
+        return CalEvent(id, TimeFmt.clock(n.createdAt), "", n.title.ifBlank { Txt.s(R.string.settings_cal_shared_notes) }, Source.Other, Txt.s(R.string.settings_cal_shared_notes), startMs = n.createdAt, endMs = n.createdAt + 1)
     }
 
     fun report(text: String?) {
@@ -140,7 +142,7 @@ object Calendars {
                 prefs(app).edit().putBoolean("device_on", true).putLong("last_sync", now).apply()
                 Reminders.scheduleAsync(app, force = false)
             }.onFailure {
-                message = "Couldn't read the phone's calendars."
+                message = Txt.s(R.string.settings_cal_read_failed)
             }
         }
     }
@@ -220,12 +222,12 @@ object Calendars {
             withContext(Dispatchers.IO) { runCatching { file(context, "events_cache.json").writeText(CalEventJson.encode(fetched)) } }
         } catch (e: GoogleApiException) {
             message = when (e.code) {
-                401 -> "Google signed you out. Tap sync to sign in again."
-                403 -> "Google Calendar access is switched off for this app. Enable the Calendar API in Google Cloud."
+                401 -> Txt.s(R.string.settings_cal_google_signed_out)
+                403 -> Txt.s(R.string.settings_cal_google_api_off)
                 else -> e.message
             }
         } catch (e: java.io.IOException) {
-            message = "Couldn't reach Google. Showing your last synced events."
+            message = Txt.s(R.string.settings_cal_google_unreachable)
         } finally {
             syncing = false
         }
@@ -242,8 +244,8 @@ object Calendars {
 
     /** Adds a calendar link. Returns an error message to show, or null on success. */
     suspend fun addFeed(context: Context, rawUrl: String): String? {
-        val url = Feeds.normalize(rawUrl) ?: return "That doesn't look like a calendar link. It should start with https:// or webcal://."
-        if (feeds.any { it.url == url }) return "That calendar is already added."
+        val url = Feeds.normalize(rawUrl) ?: return Txt.s(R.string.settings_cal_bad_link)
+        if (feeds.any { it.url == url }) return Txt.s(R.string.settings_cal_already_added)
         syncing = true
         try {
             val (name, events) = withContext(Dispatchers.IO) { fetchFeed(url) }
@@ -256,7 +258,7 @@ object Calendars {
         } catch (e: FeedException) {
             return e.message
         } catch (e: java.io.IOException) {
-            return "Couldn't reach that link. Check it and your connection."
+            return Txt.s(R.string.settings_cal_link_unreachable)
         } finally {
             syncing = false
         }
@@ -264,7 +266,7 @@ object Calendars {
 
     /** Imports a calendar file (.ics). It is kept on the phone and shown like any other calendar. */
     suspend fun importFile(context: Context, fileName: String, text: String): String? {
-        if (!text.contains("BEGIN:VCALENDAR", ignoreCase = true)) return "That file isn't a calendar (.ics) file."
+        if (!text.contains("BEGIN:VCALENDAR", ignoreCase = true)) return Txt.s(R.string.settings_cal_not_ics)
         val (from, to) = window(System.currentTimeMillis())
         val key = "file://" + fileName
         val result = withContext(Dispatchers.Default) {
@@ -274,7 +276,7 @@ object Calendars {
         feedEvents = feedEvents + (key to result.events)
         lastSyncMs = System.currentTimeMillis()
         persistFeeds(context)
-        return if (result.events.isEmpty()) "Imported, but no events fall in the next six months." else null
+        return if (result.events.isEmpty()) Txt.s(R.string.settings_cal_import_empty) else null
     }
 
     /** Adds calendar links from a backup that this phone does not have yet. Their events load on the next refresh. */
@@ -310,7 +312,7 @@ object Calendars {
             }
             feedEvents = updated
             lastSyncMs = System.currentTimeMillis()
-            message = if (failed > 0) "$failed calendar link${if (failed > 1) "s" else ""} couldn't be refreshed. Showing the last copy." else null
+            message = if (failed > 0) Txt.plural(R.plurals.settings_cal_links_failed, failed) else null
             // Encoding every linked event and writing the file took the main thread when Home refreshed on arrival.
             withContext(Dispatchers.IO) { persistFeeds(context) }
         } finally {
@@ -320,7 +322,7 @@ object Calendars {
 
     private fun fetchFeed(url: String): Pair<String?, List<CalEvent>> {
         val text = IcsClient.fetch(url)
-        if (!text.contains("BEGIN:VCALENDAR", ignoreCase = true)) throw FeedException("That link isn't a calendar feed.")
+        if (!text.contains("BEGIN:VCALENDAR", ignoreCase = true)) throw FeedException(Txt.s(R.string.settings_cal_not_feed))
         val (from, to) = window(System.currentTimeMillis())
         val feedSource = Feeds.sourceFor(url)
         val result = IcsParser.parse(text, feedSource, ZoneId.systemDefault(), from, to, Feeds.fallbackName(url))

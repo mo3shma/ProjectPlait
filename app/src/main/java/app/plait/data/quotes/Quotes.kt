@@ -1,5 +1,7 @@
 package app.plait.data.quotes
 
+import app.plait.i18n.AppLocale
+
 data class Quote(val text: String, val author: String)
 
 object Quotes {
@@ -74,14 +76,70 @@ object Quotes {
     )
 
     /**
+     * For the Arabic app: well-known Arabic proverbs (credited to no one), lines of classical and modern Arabic poetry, and
+     * faithful translations of sayings from [all], each with the author it is commonly credited to.
+     */
+    val arabic: List<Quote> = listOf(
+        Quote("من جدّ وجد، ومن زرع حصد.", "مثل عربي"),
+        Quote("الوقت كالسيف، إن لم تقطعه قطعك.", "مثل عربي"),
+        Quote("خير الكلام ما قلّ ودلّ.", "مثل عربي"),
+        Quote("لا تؤجّل عمل اليوم إلى الغد.", "مثل عربي"),
+        Quote("في التأنّي السلامة، وفي العجلة الندامة.", "مثل عربي"),
+        Quote("أول الغيث قطرة.", "مثل عربي"),
+        Quote("العلم في الصغر كالنقش على الحجر.", "مثل عربي"),
+        Quote("الصبر مفتاح الفرج.", "مثل عربي"),
+        Quote("لكل مجتهد نصيب.", "مثل عربي"),
+        Quote("الأفعال أبلغ من الأقوال.", "مثل عربي"),
+        Quote("درهم وقاية خير من قنطار علاج.", "مثل عربي"),
+        Quote("يدٌ واحدة لا تصفّق.", "مثل عربي"),
+        Quote("ما ضاع حقٌّ وراءه مُطالب.", "مثل عربي"),
+        Quote("من سار على الدرب وصل.", "مثل عربي"),
+        Quote("من تأنّى نال ما تمنّى.", "مثل عربي"),
+        Quote("إذا كان الكلام من فضة، فالسكوت من ذهب.", "مثل عربي"),
+        Quote("الحاجة أمّ الاختراع.", "مثل عربي"),
+        Quote("الوقت من ذهب.", "مثل عربي"),
+        Quote("لا تكن ليّنًا فتُعصر، ولا يابسًا فتُكسر.", "مثل عربي"),
+        Quote("من طلب العلا سهر الليالي.", "مثل عربي"),
+        Quote("على قدر أهل العزم تأتي العزائم.", "المتنبي"),
+        Quote("إذا غامرتَ في شرفٍ مَرومِ، فلا تقنعْ بما دون النجومِ.", "المتنبي"),
+        Quote("ما كلّ ما يتمنّى المرء يدركه، تجري الرياح بما لا تشتهي السفن.", "المتنبي"),
+        Quote("وما نيلُ المطالب بالتمنّي، ولكن تُؤخذ الدنيا غِلابا.", "أحمد شوقي"),
+        Quote("ومن يتهيّب صعود الجبال، يعش أبد الدهر بين الحُفر.", "أبو القاسم الشابي"),
+        Quote("كن جميلًا ترَ الوجود جميلا.", "إيليا أبو ماضي"),
+        Quote("لا يأس مع الحياة، ولا حياة مع اليأس.", "مصطفى كامل"),
+        Quote("رحلة الألف ميل تبدأ بخطوة.", "لاو تزو"),
+        Quote("الكفاءة أن تؤدي الأمور بطريقة صحيحة، والفعالية أن تؤدي الأمور الصحيحة.", "بيتر دركر"),
+        Quote("الأمر الأهم هو أن يبقى الأمر الأهم هو الأهم.", "ستيفن كوفي"),
+        Quote("التركيز يعني أن تقول لا.", "ستيف جوبز"),
+        Quote("تحديد ما لن تفعله لا يقل أهمية عن تحديد ما ستفعله.", "ستيف جوبز"),
+        Quote("البساطة قد تكون أصعب من التعقيد.", "ستيف جوبز"),
+        Quote("لم أفشل، بل وجدت 10,000 طريقة لا تنجح.", "توماس إديسون"),
+        Quote("العبقرية واحد بالمئة إلهام وتسعة وتسعون بالمئة جهد.", "توماس إديسون"),
+        Quote("لا شيء صعب حقًّا إذا قسّمته إلى مهام صغيرة.", "هنري فورد"),
+        Quote("في قلب الصعوبة تكمن الفرصة.", "ألبرت أينشتاين"),
+        Quote("لا شيء في الحياة يدعو إلى الخوف، إنما يدعو إلى الفهم.", "ماري كوري"),
+        Quote("يتمدّد العمل ليملأ الوقت المتاح لإنجازه.", "سيريل نورثكوت باركنسون"),
+        Quote("العقل وُجد لتوليد الأفكار، لا لتخزينها.", "ديفيد ألن"),
+        Quote("يمكنك فعل أي شيء، لكن ليس كل شيء.", "ديفيد ألن"),
+        Quote("الانضباط هو الجسر بين الأهداف والإنجاز.", "جيم رون"),
+        Quote("كل دقيقة في التخطيط توفّر عشر دقائق في التنفيذ.", "براين تريسي"),
+        Quote("لا يلزمك أن تكون عظيمًا لتبدأ، لكن يلزمك أن تبدأ لتكون عظيمًا.", "زيغ زيغلار"),
+        Quote("كن سريعًا، ولكن لا تتعجّل.", "جون وودن"),
+    )
+
+    /** The list for the app's language. */
+    private val list: List<Quote> get() = if (AppLocale.isRtl) arabic else all
+
+    /**
      * Same slot on consecutive days steps by a stride coprime with the list size, so 7 days never
      * repeat; slots sit a third of the list apart.
      */
     fun pick(dayEpoch: Long, slot: Int): Quote {
-        val n = all.size
-        return all[Math.floorMod(dayEpoch * STRIDE + slot * (n / 3L), n.toLong()).toInt()]
+        val l = list
+        val n = l.size
+        return l[Math.floorMod(dayEpoch * stride(n) + slot * (n / 3L), n.toLong()).toInt()]
     }
 
-    private val STRIDE: Long = (all.size / 3L..all.size).first { gcd(it, all.size.toLong()) == 1L }
+    private fun stride(n: Int): Long = (n / 3L..n).first { gcd(it, n.toLong()) == 1L }
     private tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
 }

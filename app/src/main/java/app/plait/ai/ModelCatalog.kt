@@ -1,5 +1,11 @@
 package app.plait.ai
 
+import androidx.annotation.StringRes
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+
 enum class ModelKind { Text, Speech, Search }
 
 /** Which on-phone runtime loads a text model: MediaPipe (.task files) or LiteRT-LM (.litertlm files, 64-bit phones only). */
@@ -10,14 +16,17 @@ data class ModelFile(val name: String, val url: String, val bytes: Long) {
     val sourceName: String get() = url.substringAfterLast('/')
 }
 
-/** One model the user can download. Sizes are exact, taken from the host, so what the hub says is what is downloaded. */
+/**
+ * One model the user can download. Sizes are exact, taken from the host, so what the hub says is what is downloaded.
+ * The words about it are resources, read in the app's language each time.
+ */
 data class ModelSpec(
     val id: String,
     val kind: ModelKind,
-    val title: String,
-    val blurb: String,
-    val strengths: String,
-    val limits: String,
+    @StringRes private val titleRes: Int,
+    @StringRes private val blurbRes: Int,
+    @StringRes private val strengthsRes: Int,
+    @StringRes private val limitsRes: Int,
     val license: String,
     val files: List<ModelFile>,
     /** Rough RAM the phone needs to run it comfortably, in GB, or 0 when small. */
@@ -26,6 +35,11 @@ data class ModelSpec(
     /** How good its writing is, compared with the other text models; the best installed one is used by default. */
     val quality: Int = 0,
 ) {
+    val title: String get() = Txt.s(titleRes)
+    val blurb: String get() = Txt.s(blurbRes)
+    val strengths: String get() = Txt.s(strengthsRes)
+    val limits: String get() = Txt.s(limitsRes)
+
     /** LiteRT-LM ships only for 64-bit phones. */
     val supported: Boolean get() = runtime == Runtime.MediaPipe || "arm64-v8a" in android.os.Build.SUPPORTED_ABIS.orEmpty()
 
@@ -36,11 +50,11 @@ data class ModelSpec(
 object ModelCatalog {
     private const val HF = "https://huggingface.co"
 
-    private fun whisper(size: String, blurb: String, strengths: String, limits: String, enc: Long, dec: Long, ram: Int): ModelSpec {
+    private fun whisper(size: String, title: Int, blurb: Int, strengths: Int, limits: Int, enc: Long, dec: Long, ram: Int): ModelSpec {
         val base = "$HF/csukuangfj/sherpa-onnx-whisper-$size/resolve/main"
         return ModelSpec(
-            id = "speech-whisper-$size", kind = ModelKind.Speech, title = "Whisper ${size.replaceFirstChar { it.uppercase() }}",
-            blurb = blurb, strengths = strengths, limits = limits, license = "MIT (OpenAI Whisper)",
+            id = "speech-whisper-$size", kind = ModelKind.Speech, titleRes = title,
+            blurbRes = blurb, strengthsRes = strengths, limitsRes = limits, license = "MIT (OpenAI Whisper)",
             files = listOf(
                 ModelFile("$size-encoder.int8.onnx", "$base/$size-encoder.int8.onnx", enc),
                 ModelFile("$size-decoder.int8.onnx", "$base/$size-decoder.int8.onnx", dec),
@@ -52,10 +66,8 @@ object ModelCatalog {
 
     val textModels = listOf(
         ModelSpec(
-            id = "text-qwen3-0.6b", kind = ModelKind.Text, title = "Qwen3 · 0.6B",
-            blurb = "The new small writing model. Smaller and smarter than Qwen 2.5 0.5B, good at following Plait's rules.",
-            strengths = "Quick and light. Runs well on phones with 4 GB of RAM.",
-            limits = "Short, plain answers. It can still miss nuance.",
+            id = "text-qwen3-0.6b", kind = ModelKind.Text, titleRes = R.string.ai_model_qwen3_06b_title,
+            blurbRes = R.string.ai_model_qwen3_06b_blurb, strengthsRes = R.string.ai_model_qwen3_06b_strengths, limitsRes = R.string.ai_model_qwen3_06b_limits,
             license = "Apache-2.0",
             files = listOf(
                 ModelFile("model.litertlm", "$HF/litert-community/Qwen3-0.6B-int4/resolve/main/qwen3_0.6b_nothink_q4_block32_ekv1280.litertlm", 347_251_840),
@@ -63,10 +75,8 @@ object ModelCatalog {
             ramGb = 4, runtime = Runtime.LiteRtLm, quality = 2,
         ),
         ModelSpec(
-            id = "text-qwen3-1.7b", kind = ModelKind.Text, title = "Qwen3 · 1.7B",
-            blurb = "A clear step up for summaries, prep and answers, at under 1 GB.",
-            strengths = "Better writing than the small models, and better with Arabic.",
-            limits = "Slower and warmer than the small ones; wants 6 GB of RAM.",
+            id = "text-qwen3-1.7b", kind = ModelKind.Text, titleRes = R.string.ai_model_qwen3_17b_title,
+            blurbRes = R.string.ai_model_qwen3_17b_blurb, strengthsRes = R.string.ai_model_qwen3_17b_strengths, limitsRes = R.string.ai_model_qwen3_17b_limits,
             license = "Apache-2.0",
             files = listOf(
                 ModelFile("model.litertlm", "$HF/litert-community/Qwen3-1.7B/resolve/main/Qwen3-1.7B_dynamic_wi4b32_afp32.litertlm", 977_184_032),
@@ -74,10 +84,8 @@ object ModelCatalog {
             ramGb = 6, runtime = Runtime.LiteRtLm, quality = 4,
         ),
         ModelSpec(
-            id = "text-gemma4-e2b", kind = ModelKind.Text, title = "Gemma 4 · E2B",
-            blurb = "Google's best small model. The most natural summaries and answers here, Arabic included.",
-            strengths = "Clearly the best writing of these models.",
-            limits = "A big download, and it wants 8 GB of RAM. Slow on older phones.",
+            id = "text-gemma4-e2b", kind = ModelKind.Text, titleRes = R.string.ai_model_gemma4_e2b_title,
+            blurbRes = R.string.ai_model_gemma4_e2b_blurb, strengthsRes = R.string.ai_model_gemma4_e2b_strengths, limitsRes = R.string.ai_model_gemma4_e2b_limits,
             license = "Apache-2.0",
             files = listOf(
                 ModelFile("model.litertlm", "$HF/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm", 2_588_147_712),
@@ -85,10 +93,8 @@ object ModelCatalog {
             ramGb = 8, runtime = Runtime.LiteRtLm, quality = 5,
         ),
         ModelSpec(
-            id = "text-qwen25-0.5b", kind = ModelKind.Text, title = "Qwen 2.5 · 0.5B",
-            blurb = "A small writing model. Quick, light on battery, fine for short summaries.",
-            strengths = "Fast on most phones with 4 GB of RAM.",
-            limits = "Plain summaries only. It misses nuance and can make things up.",
+            id = "text-qwen25-0.5b", kind = ModelKind.Text, titleRes = R.string.ai_model_qwen25_05b_title,
+            blurbRes = R.string.ai_model_qwen25_05b_blurb, strengthsRes = R.string.ai_model_qwen25_05b_strengths, limitsRes = R.string.ai_model_qwen25_05b_limits,
             license = "Apache-2.0",
             files = listOf(
                 ModelFile(
@@ -100,10 +106,8 @@ object ModelCatalog {
             ramGb = 4, quality = 1,
         ),
         ModelSpec(
-            id = "text-qwen25-1.5b", kind = ModelKind.Text, title = "Qwen 2.5 · 1.5B",
-            blurb = "A better writing model. Clearer summaries and follow-ups, and better with Arabic.",
-            strengths = "Noticeably better answers than the small one.",
-            limits = "Slower, warms the phone, wants 6 GB of RAM. Still smaller than cloud AI.",
+            id = "text-qwen25-1.5b", kind = ModelKind.Text, titleRes = R.string.ai_model_qwen25_15b_title,
+            blurbRes = R.string.ai_model_qwen25_15b_blurb, strengthsRes = R.string.ai_model_qwen25_15b_strengths, limitsRes = R.string.ai_model_qwen25_15b_limits,
             license = "Apache-2.0",
             files = listOf(
                 ModelFile(
@@ -117,18 +121,28 @@ object ModelCatalog {
     )
 
     val speechModels = listOf(
-        whisper("tiny", "Fast and light. Works on any phone.", "Quick on any phone. Handles many languages including Arabic.", "Mishears names and accents.", 12_937_772, 89_855_401, 3),
-        whisper("base", "A good balance of speed and accuracy.", "Better with accents and Arabic than Tiny.", "Takes a while on long notes on older phones.", 29_120_534, 130_672_026, 4),
-        whisper("small", "Understands accents and Arabic well. The best choice for most phones.", "Clearly better with names, accents and Arabic than Base.", "Needs 6 GB of RAM to be comfortable. Long notes take a minute or two.", 112_442_483, 262_226_114, 6),
-        whisper("turbo", "The most accurate transcripts, close to cloud services. For phones with 8 GB of RAM.", "Best with strong accents, mixed English and Arabic, names and jargon.", "A 1 GB download, and slow: a long note can take several minutes.", 674_716_297, 361_080_764, 8),
+        whisper(
+            "tiny", R.string.ai_model_whisper_tiny_title, R.string.ai_model_whisper_tiny_blurb, R.string.ai_model_whisper_tiny_strengths,
+            R.string.ai_model_whisper_tiny_limits, 12_937_772, 89_855_401, 3,
+        ),
+        whisper(
+            "base", R.string.ai_model_whisper_base_title, R.string.ai_model_whisper_base_blurb, R.string.ai_model_whisper_base_strengths,
+            R.string.ai_model_whisper_base_limits, 29_120_534, 130_672_026, 4,
+        ),
+        whisper(
+            "small", R.string.ai_model_whisper_small_title, R.string.ai_model_whisper_small_blurb, R.string.ai_model_whisper_small_strengths,
+            R.string.ai_model_whisper_small_limits, 112_442_483, 262_226_114, 6,
+        ),
+        whisper(
+            "turbo", R.string.ai_model_whisper_turbo_title, R.string.ai_model_whisper_turbo_blurb, R.string.ai_model_whisper_turbo_strengths,
+            R.string.ai_model_whisper_turbo_limits, 674_716_297, 361_080_764, 8,
+        ),
     )
 
     val searchModels = listOf(
         ModelSpec(
-            id = "search-use", kind = ModelKind.Search, title = "Meaning search",
-            blurb = "Lets search find notes by meaning, not only by the exact words.",
-            strengths = "Tiny and fast.",
-            limits = "English only. Arabic and other languages still use word search.",
+            id = "search-use", kind = ModelKind.Search, titleRes = R.string.ai_model_search_title,
+            blurbRes = R.string.ai_model_search_blurb, strengthsRes = R.string.ai_model_search_strengths, limitsRes = R.string.ai_model_search_limits,
             license = "Apache-2.0 (Google Universal Sentence Encoder)",
             files = listOf(
                 ModelFile(
@@ -144,10 +158,15 @@ object ModelCatalog {
 
     fun byId(id: String?): ModelSpec? = all.firstOrNull { it.id == id }
 
-    /** "547 MB", "1.6 GB". Decimal units, as phone storage settings show them. */
-    fun formatSize(bytes: Long): String = when {
-        bytes >= 1_000_000_000L -> "%.1f GB".format(java.util.Locale.ENGLISH, bytes / 1_000_000_000.0)
-        bytes >= 1_000_000L -> "${(bytes + 500_000) / 1_000_000} MB"
-        else -> "${(bytes + 500) / 1000} KB"
-    }
+    /**
+     * "547 MB", "1.6 GB". Decimal units, as phone storage settings show them. In Arabic the size is isolated so a sentence
+     * around it cannot turn it into "GB 1.6".
+     */
+    fun formatSize(bytes: Long): String = Bidi.isolate(
+        when {
+            bytes >= 1_000_000_000L -> "%.1f GB".format(AppLocale.locale, bytes / 1_000_000_000.0)
+            bytes >= 1_000_000L -> "${(bytes + 500_000) / 1_000_000} MB"
+            else -> "${(bytes + 500) / 1000} KB"
+        },
+    )
 }

@@ -1,5 +1,7 @@
 package app.plait.data.device
 
+import app.plait.R
+import app.plait.i18n.Txt
 import android.Manifest
 import android.content.ContentUris
 import android.content.ContentValues
@@ -27,7 +29,7 @@ object DeviceWrite {
 
     /** Saves [draft] into calendar [calId]. Guests are added as attendees so the account sends the invite. */
     fun insert(context: Context, calId: Long, draft: MeetingDraft, zone: ZoneId = ZoneId.systemDefault()): Result {
-        if (!hasPermission(context)) return Result.Failed("Plait needs permission to change your calendar.")
+        if (!hasPermission(context)) return Result.Failed(Txt.s(R.string.devcal_need_permission))
         draft.problem()?.let { return Result.Failed(it) }
         val resolver = context.contentResolver
         val values = ContentValues().apply {
@@ -50,8 +52,8 @@ object DeviceWrite {
         val uri = try {
             resolver.insert(CalendarContract.Events.CONTENT_URI, values)
         } catch (e: Exception) {
-            return Result.Failed(e.message ?: "The calendar refused the new meeting.")
-        } ?: return Result.Failed("The calendar refused the new meeting.")
+            return Result.Failed(e.message ?: Txt.s(R.string.devcal_refused))
+        } ?: return Result.Failed(Txt.s(R.string.devcal_refused))
         val eventId = ContentUris.parseId(uri)
 
         runCatching {
@@ -78,7 +80,7 @@ object DeviceWrite {
                 )
             }
         }
-        val name = DeviceCalendar.calendars(context).firstOrNull { it.id == calId }?.let { "${it.name} (${it.account})" } ?: "your calendar"
+        val name = DeviceCalendar.calendars(context).firstOrNull { it.id == calId }?.let { "${it.name} (${it.account})" } ?: Txt.s(R.string.devcal_your_calendar)
         return Result.Saved(eventId, name)
     }
 
@@ -114,7 +116,7 @@ object DeviceWrite {
             put(CalendarContract.Calendars.ACCOUNT_NAME, LOCAL_ACCOUNT)
             put(CalendarContract.Calendars.ACCOUNT_TYPE, CalendarContract.ACCOUNT_TYPE_LOCAL)
             put(CalendarContract.Calendars.NAME, "plait")
-            put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, "Plait (this phone only)")
+            put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, Txt.s(R.string.devcal_local_name))
             put(CalendarContract.Calendars.CALENDAR_COLOR, Color.parseColor("#2F6FD6"))
             put(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL, CalendarContract.Calendars.CAL_ACCESS_OWNER)
             put(CalendarContract.Calendars.OWNER_ACCOUNT, LOCAL_ACCOUNT)

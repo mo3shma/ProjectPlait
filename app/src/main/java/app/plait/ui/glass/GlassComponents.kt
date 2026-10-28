@@ -217,11 +217,13 @@ fun GlassTabBar(
         val padPx = with(density) { 4.dp.toPx() }
         val tabW = (constraints.maxWidth - 2 * padPx) / tabs.size
         val lastIndex = (tabs.size - 1).toFloat()
+        // Touches arrive in left-to-right pixels; in RTL the first tab is on the right.
+        val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
 
-        val gestures = Modifier.pointerInput(tabs.size, tabW) {
+        val gestures = Modifier.pointerInput(tabs.size, tabW, rtl) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                fun target(x: Float) = ((x - padPx) / tabW - 0.5f).coerceIn(0f, lastIndex)
+                fun target(x: Float) = (((if (rtl) size.width - x else x) - padPx) / tabW - 0.5f).coerceIn(0f, lastIndex)
                 scope.launch { press.animateTo(1f, lift) }
                 scope.launch { thumb.animateTo(target(down.position.x).roundToInt().toFloat(), settle) }
                 var lastX = down.position.x
@@ -369,6 +371,9 @@ fun GlassMorphMenu(
             pillShow.animateTo(1f, lift)
         }
     }
+    // The panel grows out of the button's corner: bottom right, or bottom left in RTL where the button sits at the left.
+    val originX = if (androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl) 0f else 1f
+    val closeMenu = androidx.compose.ui.res.stringResource(app.plait.R.string.common_close_menu)
     val rowPx = with(density) { app.plait.ui.ControlHeights.Large.toPx() }
     val padPx = with(density) { 8.dp.toPx() }
     val gestures = Modifier.pointerInput(Unit) {
@@ -420,7 +425,7 @@ fun GlassMorphMenu(
                         val s = 0.7f + 0.3f * t
                         scaleX = s; scaleY = s
                         alpha = t.coerceIn(0f, 1f)
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 1f)
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(originX, 1f)
                     }
                     .glassPanel(app.plait.ui.PanelShape, backdrop)
                     .padding(8.dp),
@@ -455,7 +460,7 @@ fun GlassMorphMenu(
                 .size(collapsedSize)
                 .liquidGlass(backdrop, tint = tint, interactive = true)
                 .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = { onExpandedChange(!expanded) })
-                .semantics { contentDescription = if (expanded) "Close menu" else collapsedDescription },
+                .semantics { contentDescription = if (expanded) closeMenu else collapsedDescription },
             contentAlignment = Alignment.Center,
         ) {
             Icon(collapsedIcon, contentDescription = null, tint = iconTint, modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = t * 45f })

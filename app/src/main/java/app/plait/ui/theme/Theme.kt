@@ -123,39 +123,72 @@ val LocalIsDark = staticCompositionLocalOf { true }
 
 /**
  * AR One Sans (SIL Open Font Licence 1.1) is the one typeface used everywhere in the app. It is a variable font with
- * weights 400 to 700, so lighter and heavier requests are mapped to the nearest end.
+ * weights 400 to 700, so lighter and heavier requests are mapped to the nearest end. It has Latin only: Arabic letters come
+ * from the phone's own Arabic font (system "sans-serif" fallback), chained behind it, so they never show as empty boxes.
  */
 @OptIn(ExperimentalTextApi::class)
 val OneSans = FontFamily(
     listOf(300, 400, 500, 600, 700, 800).map { w ->
-        Font(
+        if (android.os.Build.VERSION.SDK_INT >= 29) WeightedOneSans(FontWeight(w))
+        else Font(
             R.font.ar_one_sans, FontWeight(w),
             variationSettings = FontVariation.Settings(FontVariation.weight(w.coerceIn(400, 700))),
         )
     }
 )
+
+/**
+ * One weight of One Sans as a typeface that declares that weight, so the phone's Arabic font behind it is picked in the same
+ * weight. Loaded the usual way, a variable-font instance keeps weight 400 and every bold Arabic heading came out regular.
+ * The Latin letters are the same instance as before (same 'wght' value, no synthetic bold). Android 10+; older phones keep
+ * the plain resource font.
+ */
+@androidx.annotation.RequiresApi(29)
+private class WeightedOneSans(override val weight: FontWeight) :
+    androidx.compose.ui.text.font.AndroidFont(androidx.compose.ui.text.font.FontLoadingStrategy.Blocking, Loader, FontVariation.Settings()) {
+    override val style: androidx.compose.ui.text.font.FontStyle = androidx.compose.ui.text.font.FontStyle.Normal
+
+    private object Loader : TypefaceLoader {
+        override fun loadBlocking(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface {
+            val w = font.weight.weight
+            val file = android.graphics.fonts.Font.Builder(context.resources, R.font.ar_one_sans)
+                .setWeight(w).setFontVariationSettings("'wght' ${w.coerceIn(400, 700)}").build()
+            return android.graphics.Typeface.CustomFallbackBuilder(android.graphics.fonts.FontFamily.Builder(file).build())
+                .setStyle(android.graphics.fonts.FontStyle(w, android.graphics.fonts.FontStyle.FONT_SLANT_UPRIGHT))
+                .setSystemFallback("sans-serif").build()
+        }
+
+        override suspend fun awaitLoad(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont) = loadBlocking(context, font)
+    }
+}
 val Display = OneSans
 val Body = OneSans
 val Mono = OneSans
 
+/** Arabic letters join, so tracking would tear words apart: in the Arabic app a style drops its letter spacing. */
+private class Tracked(private val latin: TextStyle) : kotlin.properties.ReadOnlyProperty<Any?, TextStyle> {
+    private val arabic = latin.copy(letterSpacing = 0.sp)
+    override fun getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>) = if (app.plait.i18n.AppLocale.isRtl) arabic else latin
+}
+
 object PlaitType {
-    val heroNumber = TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 64.sp, lineHeight = 60.sp, letterSpacing = (-2.5).sp)
-    val dateTitle = TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 52.sp, lineHeight = 52.sp, letterSpacing = (-1.6).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
-    val title = TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 40.sp, lineHeight = 40.sp, letterSpacing = (-1.4).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
-    val section = TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 22.sp, lineHeight = 26.sp, letterSpacing = (-0.4).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
-    val cardTitle = TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 26.sp, lineHeight = 29.sp, letterSpacing = (-0.5).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
+    val heroNumber by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 64.sp, lineHeight = 60.sp, letterSpacing = (-2.5).sp))
+    val dateTitle by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 52.sp, lineHeight = 52.sp, letterSpacing = (-1.6).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
+    val title by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 40.sp, lineHeight = 40.sp, letterSpacing = (-1.4).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
+    val section by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 22.sp, lineHeight = 26.sp, letterSpacing = (-0.4).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
+    val cardTitle by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(700), fontSize = 26.sp, lineHeight = 29.sp, letterSpacing = (-0.5).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
     /** Page headline on the home brief. */
-    val headline = TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 46.sp, lineHeight = 44.sp, letterSpacing = (-2).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
+    val headline by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 46.sp, lineHeight = 44.sp, letterSpacing = (-2).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
     /** Meeting titles on brief cards. */
-    val cardHeadline = TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 32.sp, lineHeight = 32.sp, letterSpacing = (-1.1).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
-    val heroHeadline = TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 40.sp, lineHeight = 39.sp, letterSpacing = (-1.6).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
+    val cardHeadline by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 32.sp, lineHeight = 32.sp, letterSpacing = (-1.1).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
+    val heroHeadline by Tracked(TextStyle(fontFamily = Display, fontWeight = FontWeight(800), fontSize = 40.sp, lineHeight = 39.sp, letterSpacing = (-1.6).sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading))
     val body = TextStyle(fontFamily = Body, fontWeight = FontWeight(400), fontSize = 15.sp, lineHeight = 22.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph)
     val bodyStrong = TextStyle(fontFamily = Body, fontWeight = FontWeight(600), fontSize = 16.sp, lineHeight = 20.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
     val label = TextStyle(fontFamily = Body, fontWeight = FontWeight(600), fontSize = 14.sp, lineHeight = 18.sp)
     val caption = TextStyle(fontFamily = Body, fontWeight = FontWeight(500), fontSize = 13.sp, lineHeight = 17.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph)
-    val monoLabel = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 17.sp, letterSpacing = 0.4.sp)
+    val monoLabel by Tracked(TextStyle(fontFamily = Mono, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 17.sp, letterSpacing = 0.4.sp))
     val monoTime = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 20.sp)
-    val monoSmall = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 14.sp, letterSpacing = 0.3.sp)
+    val monoSmall by Tracked(TextStyle(fontFamily = Mono, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 14.sp, letterSpacing = 0.3.sp))
 }
 
 @Composable

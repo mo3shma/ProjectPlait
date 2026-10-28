@@ -1,5 +1,7 @@
 package app.plait.data.device
 
+import app.plait.R
+import app.plait.i18n.Txt
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -43,7 +45,7 @@ data class DeviceRow(
  * permission: no cloud project, no sign-in inside Plait.
  */
 object DeviceCalendar {
-    private val clock = TimeFmt.clock
+    private val clock get() = TimeFmt.clock
 
     fun hasPermission(context: Context): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
@@ -81,9 +83,9 @@ object DeviceCalendar {
         val location = row.location?.takeIf { it.isNotBlank() }
         val event = CalEvent(
             id = "d:${row.eventId}:${row.beginMs}",
-            time = if (row.allDay) "All day" else Instant.ofEpochMilli(start).atZone(zone).format(clock),
+            time = if (row.allDay) Txt.s(R.string.common_all_day) else Instant.ofEpochMilli(start).atZone(zone).format(clock),
             duration = if (row.allDay) "" else GoogleParser.formatDuration((end - start) / 60_000),
-            title = row.title?.takeIf { it.isNotBlank() } ?: "(No title)",
+            title = row.title?.takeIf { it.isNotBlank() } ?: Txt.s(R.string.gcal_no_title),
             source = source,
             place = "",
             location = location,

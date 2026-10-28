@@ -53,6 +53,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.userText
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import app.plait.audio.RecPhase
 import app.plait.audio.RecordingHub
 import app.plait.data.Calendars
@@ -130,17 +135,17 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
                     Box(Modifier.size(8.dp).background(plait.signal, CircleShape))
                     val marks = controller.bookmarksMs.size
                     val label = when {
-                        saving -> "Saving"
-                        paused -> "Paused"
-                        controller.phase == RecPhase.Failed -> "Can't record"
-                        marks > 0 -> "Recording · $marks bookmark" + if (marks > 1) "s" else ""
-                        else -> "Recording"
+                        saving -> stringResource(R.string.note_rec_saving)
+                        paused -> stringResource(R.string.note_rec_paused)
+                        controller.phase == RecPhase.Failed -> stringResource(R.string.note_rec_cant)
+                        marks > 0 -> pluralStringResource(R.plurals.note_rec_bookmarks, marks, marks)
+                        else -> stringResource(R.string.note_rec_recording)
                     }
                     Text(label, style = PlaitType.monoLabel.copy(fontSize = 14.sp), color = plait.signal)
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "%02d:%02d".format(seconds / 60, seconds % 60),
+                    String.format(AppLocale.locale, "%02d:%02d", seconds / 60, seconds % 60),
                     style = PlaitType.heroNumber.copy(fontSize = 96.sp, lineHeight = 96.sp, letterSpacing = (-4).sp, fontFeatureSettings = "tnum"),
                     color = plait.text,
                 )
@@ -157,7 +162,7 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
                 // While Android sends silence, nothing is being heard: the blocked message below says so instead.
                 if (granted && (controller.phase == RecPhase.Recording || paused) && controller.blocked == null) {
                     Text(
-                        if (paused) "Paused" else if (controller.speaking) "Hearing you" else "Listening. The words are written after you stop.",
+                        stringResource(if (paused) R.string.note_rec_paused else if (controller.speaking) R.string.note_rec_hearing else R.string.note_rec_listening),
                         style = PlaitType.monoSmall, color = if (controller.speaking && !paused) plait.signal else plait.muted,
                     )
                 }
@@ -170,8 +175,8 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Icon(Icons.Filled.Mic, null, tint = plait.muted, modifier = Modifier.size(32.dp))
-                    Text("Plait needs the microphone to record.", style = PlaitType.bodyStrong, color = plait.text, textAlign = TextAlign.Center)
-                    Text("Voice notes stay on your phone. Allow microphone access in Settings to continue.", style = PlaitType.body, color = plait.muted, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.note_rec_need_mic), style = PlaitType.bodyStrong, color = plait.text, textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.note_rec_mic_settings), style = PlaitType.body, color = plait.muted, textAlign = TextAlign.Center)
                 }
             }
             (controller.failure ?: controller.blocked)?.let {
@@ -189,7 +194,7 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
             verticalAlignment = Alignment.CenterVertically,
         ) {
             GlassIconButton(
-                Icons.Filled.Close, "Close recorder",
+                Icons.Filled.Close, stringResource(R.string.note_rec_close),
                 { if (controller.phase == RecPhase.Idle || controller.phase == RecPhase.Failed) { RecordingHub.finish(context, controller); onClose() } else finish() },
                 backdrop, variant = GlassVariant.Clear,
             )
@@ -199,7 +204,7 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Box(Modifier.size(8.dp).background(plait.google, CircleShape))
-                Text(controller.eventTitle, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(controller.eventTitle, style = PlaitType.caption.copy(fontWeight = FontWeight.SemiBold).userText(), color = plait.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
 
@@ -207,7 +212,7 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
         // tinted to mark it as primary. Spacing keeps the three shapes from touching.
         if (!granted && asked) {
             GlassPillButton(
-                label = "Open settings",
+                label = stringResource(R.string.note_rec_open_settings),
                 onClick = {
                     context.startActivity(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
@@ -227,16 +232,16 @@ fun RecordScreen(eventId: String, onClose: () -> Unit, onSaved: (String) -> Unit
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 GlassIconButton(
-                    Icons.Filled.Bookmark, "Add a bookmark", { controller.bookmark() }, backdrop,
+                    Icons.Filled.Bookmark, stringResource(R.string.note_rec_bookmark), { controller.bookmark() }, backdrop,
                     size = 64.dp, iconSize = 26.dp, variant = GlassVariant.Clear,
                 )
                 GlassIconButton(
-                    Icons.Filled.Stop, "Stop and save", { finish() }, backdrop,
+                    Icons.Filled.Stop, stringResource(R.string.note_rec_stop_save), { finish() }, backdrop,
                     size = 88.dp, iconSize = 32.dp, tint = plait.signal, iconTint = Color(0xFF0E1316),
                 )
                 GlassIconButton(
                     if (paused) Icons.Filled.PlayArrow else Icons.Filled.Pause,
-                    if (paused) "Resume recording" else "Pause recording",
+                    stringResource(if (paused) R.string.note_rec_resume else R.string.note_rec_pause),
                     { if (paused) controller.resume() else controller.pause() }, backdrop,
                     size = 64.dp, iconSize = 26.dp, variant = GlassVariant.Clear,
                 )

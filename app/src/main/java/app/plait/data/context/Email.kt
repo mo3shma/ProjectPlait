@@ -34,10 +34,11 @@ object EmailParser {
         if (looksLikeEml(text)) return parseEml(text)
         val lines = text.trim().lines()
         // "Subject: ..." and "From: ..." lines pasted above the body, without being a full header block.
-        fun find(name: String) = lines.take(12).firstOrNull { it.startsWith("$name:", ignoreCase = true) }?.substringAfter(':')?.trim()
-        val subject = subjectHint?.takeIf { it.isNotBlank() } ?: find("Subject") ?: ""
+        // Arabic mail apps write الموضوع / من / إلى.
+        fun find(vararg names: String) = lines.take(12).firstOrNull { l -> names.any { l.startsWith("$it:", ignoreCase = true) } }?.substringAfter(':')?.trim()
+        val subject = subjectHint?.takeIf { it.isNotBlank() } ?: find("Subject", "الموضوع") ?: ""
         return ParsedEmail(
-            subject = subject, from = find("From").orEmpty(), to = find("To").orEmpty(), dateMs = null,
+            subject = subject, from = find("From", "من").orEmpty(), to = find("To", "إلى", "الى").orEmpty(), dateMs = null,
             body = text.trim(),
         )
     }

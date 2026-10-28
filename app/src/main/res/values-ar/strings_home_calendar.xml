@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_tab_brief">الموجز</string>
+    <string name="home_tab_calendar">التقويم</string>
+    <string name="home_tab_notes">الملاحظات</string>
+    <string name="home_menu_new_meeting">اجتماع جديد</string>
+
+    <string name="home_refreshing_calendars">جارٍ تحديث التقويمات…</string>
+    <string name="home_refresh_calendars">تحديث التقويمات</string>
+    <string name="home_connect_calendars">ربط التقويمات</string>
+    <string name="home_has_call_link">يتضمن رابط مكالمة</string>
+    <string name="home_no_app_for_link">لا يوجد تطبيق يمكنه فتح هذا الرابط</string>
+    <string name="home_ai_on_this_phone">الذكاء الاصطناعي على هذا الهاتف</string>
+
+    <string name="home_setup_no_calendar_title">لم يُربط أي تقويم بعد</string>
+    <string name="home_setup_no_calendar_body">عند ربط تقويماتك يظهر يومك الفعلي هنا.</string>
+    <string name="home_setup_use_phone_calendars">استخدام تقويمات الهاتف</string>
+    <string name="home_setup_more_options">خيارات أخرى</string>
+    <string name="home_setup_none_found_title">لا توجد تقويمات على هذا الهاتف</string>
+    <string name="home_setup_none_found_body">عند إضافة حساب أو لصق رابط تقويم يظهر يومك الفعلي هنا.</string>
+    <string name="home_setup_add_account">إضافة حساب أو رابط</string>
+
+    <string name="home_greeting_name">%1$s، %2$s</string>
+    <plurals name="home_guests">
+        <item quantity="zero">لا ضيوف</item>
+        <item quantity="one">ضيف واحد</item>
+        <item quantity="two">ضيفان</item>
+        <item quantity="few">%d ضيوف</item>
+        <item quantity="many">%d ضيفًا</item>
+        <item quantity="other">%d ضيف</item>
+    </plurals>
+    <string name="home_no_notes_yet">لا ملاحظات بعد</string>
+
+    <string name="home_clear_day">يوم خالٍ.</string>
+    <plurals name="home_meetings_today">
+        <item quantity="zero">لا اجتماعات اليوم.</item>
+        <item quantity="one">اجتماع واحد اليوم.</item>
+        <item quantity="two">اجتماعان اليوم.</item>
+        <item quantity="few">%1$s اجتماعات اليوم.</item>
+        <item quantity="many">%1$s اجتماعًا اليوم.</item>
+        <item quantity="other">%1$s اجتماع اليوم.</item>
+    </plurals>
+    <string name="home_today_in_order">اليوم بالترتيب</string>
+
+    <string name="home_nothing_today">لا شيء اليوم.</string>
+    <string name="home_day_over">انتهى اليوم.</string>
+    <string name="home_nothing_done_yet">لم يُنجَز شيء بعد.</string>
+    <string name="home_done_to_go">انتهى %1$d، وبقي %2$d.</string>
+    <string name="home_section_done">المنتهية</string>
+    <string name="home_still_ahead">المتبقية</string>
+    <string name="home_so_far">حتى الآن: %1$s في الاجتماعات.</string>
+
+    <string name="home_quiet_day">يوم هادئ.</string>
+    <string name="home_in_meetings_headline">%1$s في الاجتماعات.</string>
+    <string name="home_day_in_numbers">اليوم بالأرقام</string>
+    <string name="home_tile_meetings_held">اجتماعات عُقدت</string>
+    <string name="home_tile_workday_share">من يوم عمل مدته 8 ساعات</string>
+    <string name="home_tile_longest">الأطول · %1$s</string>
+    <string name="home_tile_busiest_hour">أكثر ساعة انشغالًا</string>
+    <string name="home_time_by_kind">الوقت حسب النوع</string>
+    <string name="home_nothing_to_write">لا شيء لتدوينه بعد.</string>
+    <string name="home_all_caught_up">كل شيء مكتمل. لكل اجتماع منتهٍ ملاحظة.</string>
+    <string name="home_add_lines_hint">تُستحسن إضافة بضعة أسطر والتفاصيل حاضرة. الملاحظة الصوتية أو النص أو الصورة، كلها تفي بالغرض.</string>
+    <string name="home_add_note">إضافة ملاحظة</string>
+    <string name="home_n_more">+%1$d أخرى</string>
+
+    <string name="home_tomorrow_clear">الغد خالٍ.</string>
+    <plurals name="home_meetings_tomorrow">
+        <item quantity="zero">لا اجتماعات غدًا.</item>
+        <item quantity="one">اجتماع واحد غدًا.</item>
+        <item quantity="two">اجتماعان غدًا.</item>
+        <item quantity="few">%1$s اجتماعات غدًا.</item>
+        <item quantity="many">%1$s اجتماعًا غدًا.</item>
+        <item quantity="other">%1$s اجتماع غدًا.</item>
+    </plurals>
+    <string name="home_first_is">أولها %1$s في %2$s.</string>
+    <string name="home_free_tomorrow">لديك وقت فراغ مدته %1$s غدًا بدءًا من %2$s.</string>
+    <string name="home_hold_focus">حجزه وقتًا للتركيز</string>
+    <string name="home_focus_time_title">وقت التركيز</string>
+
+    <string name="home_att_title">يحتاج إلى انتباهك</string>
+    <string name="home_att_empty">لا شيء يحتاج إليك الآن.</string>
+    <string name="home_att_mark_done">تعليم كمنجز: %1$s</string>
+    <string name="home_att_suggested_ago">مقترح · %1$s</string>
+    <string name="home_att_suggested_from">مقترح من %1$s</string>
+    <string name="home_att_free_note">ملاحظة حرة · %1$s</string>
+    <string name="home_att_from">من %1$s · %2$s</string>
+
+    <string name="home_prep_title">التحضير</string>
+    <string name="home_prep_remember">للتذكّر</string>
+    <string name="home_prep_ask">للسؤال</string>
+    <string name="home_prep_failed">لم يصل أي رد. يمكن المحاولة بعد قليل.</string>
+    <string name="home_prep_writing_with">جارٍ الكتابة باستخدام %1$s…</string>
+    <string name="home_prep_write_with">الكتابة باستخدام %1$s</string>
+    <string name="home_prep_write_again">إعادة الكتابة</string>
+    <string name="home_prep_reset">إعادة الضبط</string>
+
+    <string name="home_since_title">منذ المرة السابقة</string>
+    <string name="home_since_decided">ما تقرّر</string>
+    <string name="home_since_still_open">ما زال مفتوحًا</string>
+    <string name="home_since_footer">من ملاحظاتك عن اجتماعات سابقة بالعنوان نفسه.</string>
+
+    <string name="home_share_body">إنشاء ملف أو رسالة عن هذا الاجتماع: سبب الاجتماع، وجدول الأعمال، والتحضير، والملاحظات، والمتابعات. يُنشأ على هذا الهاتف ولا يذهب إلا إلى حيث ترسله.</string>
+    <string name="home_share_hide_team">إخفاء خيارات الزميل</string>
+    <string name="home_share_send_team">إرسال ملاحظاتي إلى زميل</string>
+    <string name="home_share_team_body">يستورد الزميل الملف في Plait (المركز، استيراد نسخة احتياطية) فتظهر الملاحظات في نسخته من هذا الاجتماع مميّزة باسمك.</string>
+    <string name="home_share_attached_emails">الرسائل المرفقة</string>
+    <string name="home_share_recordings_photos">التسجيلات والصور</string>
+    <string name="home_share_passphrase">عبارة مرور لقفل الملف (اختيارية)</string>
+    <string name="home_share_mail_warning">الرسائل كلام أشخاص آخرين. لا تُضمَّن إلا إذا كانت مشاركتها مسموحة.</string>
+    <string name="home_share_send_file">إرسال ملف الملاحظات</string>
+
+    <string name="home_week_tile_meetings">اجتماعات</string>
+    <string name="home_week_tile_in_meetings">في الاجتماعات</string>
+    <string name="home_week_tile_busiest_day">أكثر يوم انشغالًا · %1$s</string>
+    <string name="home_week_tile_noted">اجتماعات دُوّنت</string>
+    <string name="home_week_tile_done_value">%1$d منجزة</string>
+    <string name="home_week_tile_tasks_open">مهام · %1$d مفتوحة</string>
+    <string name="home_week_day_clear">خالٍ</string>
+    <plurals name="home_week_day_line">
+        <item quantity="zero">%1$d اجتماع · أولها %2$s %3$s</item>
+        <item quantity="one">اجتماع واحد · في %2$s %3$s</item>
+        <item quantity="two">اجتماعان · أولهما %2$s %3$s</item>
+        <item quantity="few">%1$d اجتماعات · أولها %2$s %3$s</item>
+        <item quantity="many">%1$d اجتماعًا · أولها %2$s %3$s</item>
+        <item quantity="other">%1$d اجتماع · أولها %2$s %3$s</item>
+    </plurals>
+    <string name="home_written_by">كتبه %1$s</string>
+    <string name="home_write_again_desc">إعادة كتابة هذا</string>
+    <string name="home_week_your_work_week">أسبوع عملك</string>
+    <string name="home_week_done">انتهى الأسبوع.</string>
+    <string name="home_week_brief_next">موجز الأسبوع القادم</string>
+
+    <string name="cal_view_day">يوم</string>
+    <string name="cal_view_month">شهر</string>
+    <string name="cal_nothing_planned">لا شيء مخطط</string>
+    <string name="cal_free_day_body">يوم خالٍ. تظهر هنا الأحداث المضافة إلى تقويماتك.</string>
+    <string name="cal_month_desc">تقويم الشهر. يمكن النقر على يوم لعرض أحداثه.</string>
+    <plurals name="cal_events">
+        <item quantity="zero">لا أحداث</item>
+        <item quantity="one">حدث واحد</item>
+        <item quantity="two">حدثان</item>
+        <item quantity="few">%d أحداث</item>
+        <item quantity="many">%d حدثًا</item>
+        <item quantity="other">%d حدث</item>
+    </plurals>
+    <string name="cal_previous_day">اليوم السابق</string>
+    <string name="cal_next_day">اليوم التالي</string>
+</resources>

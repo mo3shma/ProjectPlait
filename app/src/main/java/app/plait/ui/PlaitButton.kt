@@ -125,7 +125,7 @@ fun PlaitButton(
  * into a red "Delete" that must be tapped again, and it goes back by itself after three seconds.
  */
 @Composable
-fun ConfirmDeleteButton(onConfirm: () -> Unit, modifier: Modifier = Modifier, label: String = "Delete") {
+fun ConfirmDeleteButton(onConfirm: () -> Unit, modifier: Modifier = Modifier, label: String = androidx.compose.ui.res.stringResource(app.plait.R.string.common_delete)) {
     var armed by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(armed) {
         if (armed) { kotlinx.coroutines.delay(3000); armed = false }

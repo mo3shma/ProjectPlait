@@ -17,6 +17,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:name=".PlaitApp"
+        android:localeConfig="@xml/locales_config"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -58,7 +60,7 @@
             android:name=".audio.RecordTileService"
             android:exported="true"
             android:icon="@drawable/ic_widget_mic"
-            android:label="Plait voice note"
+            android:label="@string/widget_label_tile"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
@@ -80,19 +82,19 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".widget.NextMeetingWidget" android:exported="true" android:label="Plait brief">
+        <receiver android:name=".widget.NextMeetingWidget" android:exported="true" android:label="@string/widget_label_wide">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next_info" />
         </receiver>
-        <receiver android:name=".widget.NextMeetingWidgetSmall" android:exported="true" android:label="Plait brief, small">
+        <receiver android:name=".widget.NextMeetingWidgetSmall" android:exported="true" android:label="@string/widget_label_small">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next_small_info" />
         </receiver>
-        <receiver android:name=".widget.NextMeetingWidgetQuick" android:exported="true" android:label="Plait quick add">
+        <receiver android:name=".widget.NextMeetingWidgetQuick" android:exported="true" android:label="@string/widget_label_quick">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

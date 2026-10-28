@@ -16,9 +16,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsDesignTest {
-    @Test fun thirteenSectionsAreUnique() {
-        assertEquals(13, hubSectionIds.size)
-        assertEquals(13, hubSectionIds.toSet().size)
+    @Test fun fourteenSectionsAreUnique() {
+        assertEquals(14, hubSectionIds.size)
+        assertEquals(14, hubSectionIds.toSet().size)
     }
 
     @Test fun neighbouringSectionsNeverShareATone() {

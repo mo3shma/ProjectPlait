@@ -1,5 +1,7 @@
 package app.plait.data.device
 
+import app.plait.R
+import app.plait.i18n.Txt
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -26,9 +28,9 @@ data class MeetingDraft(
 
     /** Null when the draft can be saved, otherwise what is wrong with it. */
     fun problem(): String? = when {
-        title.isBlank() -> "Give the meeting a title."
-        !allDay && durationMin <= 0 -> "The meeting needs a length."
-        guests.any { !MeetingGuests.valid(it) } -> "One of the guest addresses doesn't look right."
+        title.isBlank() -> Txt.s(R.string.devcal_need_title)
+        !allDay && durationMin <= 0 -> Txt.s(R.string.devcal_need_length)
+        guests.any { !MeetingGuests.valid(it) } -> Txt.s(R.string.devcal_bad_guest)
         else -> null
     }
 }

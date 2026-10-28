@@ -1,6 +1,8 @@
 package app.plait.ai
 
 import android.content.Context
+import app.plait.R
+import app.plait.i18n.Txt
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +30,7 @@ object LocalLlm {
     /** Wraps a plain prompt in the chat format the model was trained on. */
     fun chat(spec: ModelSpec, prompt: String, system: String? = null): String = when {
         spec.id.startsWith("text-qwen") ->
-            "<|im_start|>system\n${system ?: "You are a careful assistant. Answer only from the text you are given."}<|im_end|>\n" +
+            "<|im_start|>system\n${system ?: Txt.s(R.string.ai_llm_default_system)}<|im_end|>\n" +
                 "<|im_start|>user\n$prompt<|im_end|>\n<|im_start|>assistant\n"
         else -> if (system != null) "$system\n\n$prompt" else prompt
     }
@@ -70,7 +72,7 @@ object LocalLlm {
         val sampler = if (temperature != null) com.google.ai.edge.litertlm.SamplerConfig(20, 0.9, temperature.toDouble(), 7)
             else com.google.ai.edge.litertlm.SamplerConfig(40, 0.95, 0.7, 0)
         val config = com.google.ai.edge.litertlm.ConversationConfig(
-            systemInstruction = com.google.ai.edge.litertlm.Contents.of(system ?: "You are a careful assistant. Answer only from the text you are given."),
+            systemInstruction = com.google.ai.edge.litertlm.Contents.of(system ?: Txt.s(R.string.ai_llm_default_system)),
             samplerConfig = sampler,
             thinkingConfig = com.google.ai.edge.litertlm.ThinkingConfig(false),
         )

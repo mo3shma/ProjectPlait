@@ -1,5 +1,14 @@
 package app.plait.ui.screens
 
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.unit.LayoutDirection
 import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -280,7 +289,7 @@ internal fun BriefPage(
 
     // The on-device model can rewrite the morning summary in friendlier words. Only offered where it exists.
     var aiReady by remember { mutableStateOf(false) }
-    var aiLabel by remember { mutableStateOf("the AI on this phone") }
+    var aiLabel by remember { mutableStateOf(Txt.s(R.string.home_ai_on_this_phone)) }
     var aiBusy by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { app.plait.ai.AiPrefs.load(context); Ai.status(context).let { aiReady = it.ready; aiLabel = it.label } }
     // Quietly write the prep for the next meeting when it is under two hours away and an AI is switched on.
@@ -307,7 +316,7 @@ internal fun BriefPage(
     val join: (CalEvent) -> Unit = { ev ->
         val link = ev.callLink
         if (link == null) onOpenEvent(ev.id)
-        else if (!CallLinks.open(context, link)) Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+        else if (!CallLinks.open(context, link)) Toast.makeText(context, Txt.s(R.string.home_no_app_for_link), Toast.LENGTH_SHORT).show()
     }
 
 
@@ -428,6 +437,7 @@ private fun FeedCard(
     val latestExpand by rememberUpdatedState(onExpand)
     val expand: () -> Unit = remember { { at[0]?.let { latestExpand(it) } } }
     val press = remember { MutableInteractionSource() }
+    val showAll = stringResource(R.string.common_show_all)
     val squeeze = remember { Animatable(1f) }
     LaunchedEffect(press) {
         val spec = spring<Float>(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
@@ -440,7 +450,7 @@ private fun FeedCard(
         kind, phase, backdrop, nowMs, zone, skyActive = active, glassShape = CardGlassShapeOf,
         modifier = Modifier.fillMaxSize().onPlaced { at[0] = it }
             .graphicsLayer { scaleX = squeeze.value; scaleY = squeeze.value; alpha = if (hidden) 0f else 1f }
-            .clickable(interactionSource = press, indication = null, onClickLabel = "Show all", onClick = expand),
+            .clickable(interactionSource = press, indication = null, onClickLabel = showAll, onClick = expand),
     ) {
         val env = app.plait.ui.glass.LocalGlassEnv.current
         val dark = app.plait.ui.theme.LocalIsDark.current
@@ -508,7 +518,7 @@ private fun ExpandedFeedCard(
                 content()
             }
             GlassIconButton(
-                Icons.Filled.ExpandMore, "Close", close, backdrop,
+                Icons.Filled.ExpandMore, stringResource(R.string.common_close), close, backdrop,
                 Modifier.align(Alignment.TopEnd).padding(12.dp).graphicsLayer { alpha = card.progress.value.coerceIn(0f, 1f) },
                 size = app.plait.ui.ControlHeights.Medium, tint = cardGlass(), iconTint = LocalCardInk.current,
             )
@@ -549,19 +559,19 @@ private fun CalendarSetupCard(data: DayData, onOpenHub: () -> Unit, onAllowCalen
     val ink = LocalCardInk.current
     if (!Calendars.connected) {
         Column(Modifier.fillMaxWidth().fauxGlass(RoundedCornerShape(26.dp), cardGlass()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("No calendar connected yet", style = PlaitType.bodyStrong, color = ink)
-            Text("Connect your calendars and your real day shows up here.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
+            Text(stringResource(R.string.home_setup_no_calendar_title), style = PlaitType.bodyStrong, color = ink)
+            Text(stringResource(R.string.home_setup_no_calendar_body), style = PlaitType.body, color = ink.copy(alpha = 0.8f))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlaitButton("Use my phone's calendars", onAllowCalendar, style = ButtonStyle.Ink, size = ButtonSize.Small)
-                PlaitButton("More options", onOpenHub, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.home_setup_use_phone_calendars), onAllowCalendar, style = ButtonStyle.Ink, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.home_setup_more_options), onOpenHub, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
             }
         }
     } else if (data.events.isEmpty() && Calendars.deviceCals.isEmpty() && Calendars.feeds.isEmpty() && !Calendars.googleOn) {
         // Allowed to read calendars, but the phone has none: say so, instead of a card that claims a free day.
         Column(Modifier.fillMaxWidth().fauxGlass(RoundedCornerShape(26.dp), cardGlass()).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("No calendars found on this phone", style = PlaitType.bodyStrong, color = ink)
-            Text("Add an account, or paste a calendar link, and your real day shows up here.", style = PlaitType.body, color = ink.copy(alpha = 0.8f))
-            PlaitButton("Add an account or link", onOpenHub, style = ButtonStyle.Ink, size = ButtonSize.Small)
+            Text(stringResource(R.string.home_setup_none_found_title), style = PlaitType.bodyStrong, color = ink)
+            Text(stringResource(R.string.home_setup_none_found_body), style = PlaitType.body, color = ink.copy(alpha = 0.8f))
+            PlaitButton(stringResource(R.string.home_setup_add_account), onOpenHub, style = ButtonStyle.Ink, size = ButtonSize.Small)
         }
     }
 }
@@ -576,20 +586,28 @@ private fun CardHeader(phase: Phase, nowMs: Long, zone: ZoneId) {
     val t = Instant.ofEpochMilli(nowMs).atZone(zone)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(phase.icon(), null, tint = ink, modifier = Modifier.size(22.dp))
-        Text(phase.greeting + app.plait.data.Profile.firstName().let { if (it.isBlank()) "" else ", $it" }, style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        val name = app.plait.data.Profile.firstName()
         Text(
-            t.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()).uppercase() + " ${t.dayOfMonth} " +
-                t.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()).uppercase(),
+            if (name.isBlank()) phase.greeting else stringResource(R.string.home_greeting_name, phase.greeting, Bidi.isolate(name)),
+            style = PlaitType.bodyStrong.copy(fontSize = 17.sp), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+        )
+        Text(
+            t.format(app.plait.data.TimeFmt.fmt("EEE d MMM")).uppercase(AppLocale.locale),
             style = PlaitType.monoLabel, color = ink.copy(alpha = 0.65f),
         )
     }
     // Where the clock is between 06:00 and 22:00.
     val target = (((t.hour * 60 + t.minute) - 6 * 60) / (16f * 60f)).coerceIn(0f, 1f)
     val frac by androidx.compose.animation.core.animateFloatAsState(target, androidx.compose.animation.core.spring(dampingRatio = 0.7f, stiffness = 120f), label = "day-progress")
-    Canvas(Modifier.fillMaxWidth().height(8.dp)) {
+    Canvas(Modifier.fillMaxWidth().height(8.dp).mirrorInRtl()) {
         drawRoundRect(ink.copy(alpha = 0.14f), size = Size(size.width, size.height), cornerRadius = CornerRadius(size.height / 2))
         drawRoundRect(ink, size = Size((size.width * frac).coerceAtLeast(size.height), size.height), cornerRadius = CornerRadius(size.height / 2))
     }
+}
+
+/** Flips a drawing that runs from the start edge (a progress bar, a time strip) so it starts at the right in Arabic. */
+internal fun Modifier.mirrorInRtl(): Modifier = drawWithContent {
+    if (layoutDirection == LayoutDirection.Rtl) scale(-1f, 1f) { this@drawWithContent.drawContent() } else drawContent()
 }
 
 @Composable
@@ -627,7 +645,7 @@ private fun EventLine(
     val done = ev.endMs in 1..nowMs && !ev.allDay
     val live = ev.startMs in 1..nowMs && ev.endMs > nowMs
     val brief = data.briefs[ev.id]
-    val whenText = if (ev.allDay) "All day" else ev.time + (if (ev.endLabel.isNotBlank()) " – ${ev.endLabel}" else "")
+    val whenText = if (ev.allDay) stringResource(R.string.common_all_day) else ev.time + (if (ev.endLabel.isNotBlank()) " – ${ev.endLabel}" else "")
     val where = ev.callLink?.provider?.label ?: ev.place
     Column(
         Modifier.fillMaxWidth().heightIn(min = if (compact) 0.dp else 150.dp)
@@ -636,11 +654,11 @@ private fun EventLine(
     ) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                ev.title, style = PlaitType.cardTitle.copy(fontSize = 23.sp, lineHeight = 27.sp, fontWeight = FontWeight.Bold),
+                ev.title, style = PlaitType.cardTitle.copy(fontSize = 23.sp, lineHeight = 27.sp, fontWeight = FontWeight.Bold).userText(),
                 color = ink.copy(alpha = if (done) 0.6f else 1f), maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
             )
-            if (showStatus && done) Icon(Icons.Filled.CheckCircle, "Done", tint = ink.copy(alpha = 0.7f), modifier = Modifier.size(24.dp))
-            else if (live) Soft { Text("Now", style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = ink) }
+            if (showStatus && done) Icon(Icons.Filled.CheckCircle, stringResource(R.string.home_section_done), tint = ink.copy(alpha = 0.7f), modifier = Modifier.size(24.dp))
+            else if (live) Soft { Text(stringResource(R.string.common_now), style = PlaitType.monoSmall.copy(fontSize = 12.sp), color = ink) }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Filled.Schedule, null, tint = ink.copy(alpha = 0.75f), modifier = Modifier.size(16.dp))
@@ -649,7 +667,7 @@ private fun EventLine(
         }
         if (where.isNotBlank()) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(if (ev.callLink != null) Icons.Filled.Videocam else Icons.Filled.Place, null, tint = ink.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-            Text(where, style = PlaitType.caption, color = ink.copy(alpha = 0.75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(where, style = PlaitType.caption.userText(), color = ink.copy(alpha = 0.75f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val others = ev.guests.filter { !it.self }
         if (others.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -661,7 +679,7 @@ private fun EventLine(
                 }
             }
             Text(
-                brief?.withLine?.takeIf { it.isNotBlank() } ?: "${others.size} guest${if (others.size == 1) "" else "s"}",
+                brief?.withLine?.takeIf { it.isNotBlank() } ?: pluralStringResource(R.plurals.home_guests, others.size, others.size),
                 style = PlaitType.caption, color = ink.copy(alpha = 0.75f), maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
@@ -670,15 +688,16 @@ private fun EventLine(
         if (flag != null || noNotes) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 flag?.let { f -> Soft { Text(f, style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink) } }
-                if (noNotes) Soft { Text("No notes yet", style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink) }
+                if (noNotes) Soft { Text(stringResource(R.string.home_no_notes_yet), style = PlaitType.monoSmall.copy(fontSize = 11.sp), color = ink) }
             }
         }
         if (join != null && !done && ev.callLink != null) {
             val bd = LocalCardBackdrop.current
+            val joinLabel = stringResource(if (live) R.string.common_join_now else R.string.common_join)
             if (bd != null) app.plait.ui.glass.GlassPillButton(
-                label = if (live) "Join now" else "Join", onClick = { join(ev) }, backdrop = bd, icon = Icons.Filled.Videocam,
+                label = joinLabel, onClick = { join(ev) }, backdrop = bd, icon = Icons.Filled.Videocam,
                 tint = plait.accent, contentColor = plait.onAccent, height = 44.dp,
-            ) else PlaitButton(if (live) "Join now" else "Join", { join(ev) }, style = ButtonStyle.Primary, size = ButtonSize.Small, icon = Icons.Filled.Videocam)
+            ) else PlaitButton(joinLabel, { join(ev) }, style = ButtonStyle.Primary, size = ButtonSize.Small, icon = Icons.Filled.Videocam)
         }
     }
 }
@@ -694,7 +713,7 @@ private fun MorningCard(
 ) {
     val ink = LocalCardInk.current
     val n = data.stats.meetings
-    Headline(if (n == 0) "A clear day." else "${DayAnalytics.word(n)} meeting${if (n == 1) "" else "s"} today.")
+    Headline(if (n == 0) stringResource(R.string.home_clear_day) else pluralStringResource(R.plurals.home_meetings_today, n, countWord(n)))
     Body(data.sense)
     if (n == 0) QuoteBlock(Phase.Morning, FeedCardKind.Meetings)
     if (data.day.summary.isNotBlank()) Body(aiText ?: data.day.summary)
@@ -703,7 +722,7 @@ private fun MorningCard(
     Calendars.message?.let { Text(it, style = PlaitType.caption, color = ink) }
 
     if (data.events.isNotEmpty()) {
-        SectionLabel("Today in order")
+        SectionLabel(stringResource(R.string.home_today_in_order))
         val next = data.events.firstOrNull { !it.allDay && it.endMs > nowMs }
         data.events.forEach { ev -> EventLine(ev, data, nowMs, { onOpenEvent(ev.id) }, join = if (ev.id == next?.id) join else null) }
     }
@@ -718,10 +737,10 @@ private fun AfternoonCard(data: DayData, nowMs: Long, phase: Phase, onOpenEvent:
     val s = data.stats
     Headline(
         when {
-            s.meetings == 0 -> "Nothing on today."
-            s.left == 0 -> "That's the day."
-            s.done == 0 -> "Nothing done yet."
-            else -> "${s.done} done, ${s.left} to go."
+            s.meetings == 0 -> stringResource(R.string.home_nothing_today)
+            s.left == 0 -> stringResource(R.string.home_day_over)
+            s.done == 0 -> stringResource(R.string.home_nothing_done_yet)
+            else -> stringResource(R.string.home_done_to_go, s.done, s.left)
         }
     )
     Body(data.sense)
@@ -729,14 +748,14 @@ private fun AfternoonCard(data: DayData, nowMs: Long, phase: Phase, onOpenEvent:
     val doneEvents = data.events.filter { !it.allDay && it.endMs in 1..nowMs }
     val ahead = data.events.filter { !it.allDay && it.endMs > nowMs }
     if (doneEvents.isNotEmpty()) {
-        SectionLabel("Done")
+        SectionLabel(stringResource(R.string.home_section_done))
         doneEvents.forEach { EventLine(it, data, nowMs, { onOpenEvent(it.id) }) }
     }
     if (ahead.isNotEmpty()) {
-        SectionLabel("Still ahead")
+        SectionLabel(stringResource(R.string.home_still_ahead))
         ahead.forEachIndexed { i, ev -> EventLine(ev, data, nowMs, { onOpenEvent(ev.id) }, join = if (i == 0) join else null) }
     }
-    if (s.meetings > 0) Body("So far: ${DayAnalytics.span(s.minutesSoFar)} in meetings.")
+    if (s.meetings > 0) Body(stringResource(R.string.home_so_far, DayAnalytics.span(s.minutesSoFar)))
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -747,18 +766,18 @@ private fun AfternoonCard(data: DayData, nowMs: Long, phase: Phase, onOpenEvent:
 private fun DayCard(data: DayData, phase: Phase, full: Boolean, onOpenNotes: (String) -> Unit) {
     val ink = LocalCardInk.current
     val s = data.stats
-    Headline(if (s.meetings == 0) "A quiet day." else "${DayAnalytics.span(s.minutesSoFar)} in meetings.")
+    Headline(if (s.meetings == 0) stringResource(R.string.home_quiet_day) else stringResource(R.string.home_in_meetings_headline, DayAnalytics.span(s.minutesSoFar)))
     Body(DayAnalytics.recap(s))
     if (s.meetings == 0) QuoteBlock(phase, FeedCardKind.Day)
 
     if (s.meetings > 0) {
-        SectionLabel("The day in numbers")
+        SectionLabel(stringResource(R.string.home_day_in_numbers))
         // Two tiles to a row, each half the card wide, so no space is left empty.
         val tiles = listOfNotNull(
-            "${s.done}/${s.meetings}" to "meetings held",
-            "${DayAnalytics.workdayShare(s.minutesSoFar)}%" to "of an 8 h workday",
-            s.longest?.let { DayAnalytics.span((it.endMs - it.startMs) / 60_000) to "longest · " + it.title },
-            (s.busiestHour?.let { app.plait.data.TimeFmt.hour(it) } ?: "–") to "busiest hour",
+            "${s.done}/${s.meetings}" to stringResource(R.string.home_tile_meetings_held),
+            "${DayAnalytics.workdayShare(s.minutesSoFar)}%" to stringResource(R.string.home_tile_workday_share),
+            s.longest?.let { DayAnalytics.span((it.endMs - it.startMs) / 60_000) to stringResource(R.string.home_tile_longest, Bidi.isolate(it.title)) },
+            (s.busiestHour?.let { app.plait.data.TimeFmt.hour(it) } ?: "–") to stringResource(R.string.home_tile_busiest_hour),
         )
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             tiles.chunked(2).forEach { row ->
@@ -769,16 +788,16 @@ private fun DayCard(data: DayData, phase: Phase, full: Boolean, onOpenNotes: (St
             }
         }
         if (s.byKind.isNotEmpty()) {
-            SectionLabel("Time by kind")
+            SectionLabel(stringResource(R.string.home_time_by_kind))
             KindBar(s)
         }
     }
 
-    SectionLabel("Notes")
+    SectionLabel(stringResource(R.string.common_notes))
     if (s.missingNotes.isEmpty()) {
-        Body(if (s.done == 0) "Nothing to write up yet." else "All caught up. Every finished meeting has a note.")
+        Body(stringResource(if (s.done == 0) R.string.home_nothing_to_write else R.string.home_all_caught_up))
     } else {
-        Body("Add a few lines while it's fresh. A voice note, some text or a photo all count.")
+        Body(stringResource(R.string.home_add_lines_hint))
         val shown = if (full) s.missingNotes.size else 6
         s.missingNotes.take(shown).forEach { ev ->
             Row(
@@ -786,40 +805,41 @@ private fun DayCard(data: DayData, phase: Phase, full: Boolean, onOpenNotes: (St
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(ev.title, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold), color = ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(ev.title, style = PlaitType.bodyStrong.copy(fontWeight = FontWeight.Bold).userText(), color = ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(ev.time + if (ev.endLabel.isNotBlank()) " – ${ev.endLabel}" else "", style = PlaitType.monoSmall, color = ink.copy(alpha = 0.6f))
                 }
-                PlaitButton("Add note", { onOpenNotes(ev.id) }, style = ButtonStyle.Ink, size = ButtonSize.Small)
+                PlaitButton(stringResource(R.string.home_add_note), { onOpenNotes(ev.id) }, style = ButtonStyle.Ink, size = ButtonSize.Small)
             }
         }
-        if (s.missingNotes.size > shown) Text("+${s.missingNotes.size - shown} more", style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
+        if (s.missingNotes.size > shown) Text(stringResource(R.string.home_n_more, s.missingNotes.size - shown), style = PlaitType.caption, color = ink.copy(alpha = 0.7f))
     }
 }
 
 @Composable
 private fun TomorrowCard(phase: Phase, tomorrow: List<CalEvent>, zone: ZoneId, onOpenEvent: (String) -> Unit) {
     val context = LocalContext.current
-    SectionLabel("Tomorrow")
+    SectionLabel(stringResource(R.string.common_tomorrow))
     if (tomorrow.isEmpty()) {
-        Headline("Tomorrow is clear.")
+        Headline(stringResource(R.string.home_tomorrow_clear))
         QuoteBlock(phase, FeedCardKind.Tomorrow)
     } else {
         val first = tomorrow.first()
         val title = tidyTitle(first.title)
-        Headline("${DayAnalytics.word(tomorrow.size)} meeting${if (tomorrow.size == 1) "" else "s"} tomorrow.")
-        Body("First is $title at ${first.time}.")
-        PlaitButton("Open ${shortTitle(title)}", { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
+        Headline(pluralStringResource(R.plurals.home_meetings_tomorrow, tomorrow.size, countWord(tomorrow.size)))
+        Body(stringResource(R.string.home_first_is, Bidi.isolate(title), Bidi.isolate(first.time)))
+        PlaitButton(stringResource(R.string.common_open_item, Bidi.isolate(shortTitle(title))), { onOpenEvent(first.id) }, style = ButtonStyle.InkSoft, size = ButtonSize.Small)
     }
     // A suggestion only: nothing is added to the calendar until you tap.
     val focus = remember(tomorrow) {
         val dayStart = java.time.LocalDate.now().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        app.plait.data.prep.FocusTime.suggest(tomorrow.filter { !it.allDay }.map { it.startMs to it.endMs }, dayStart, 1, zone = zone).firstOrNull()
+        app.plait.data.prep.FocusTime.suggest(tomorrow.filter { !it.allDay }.map { it.startMs to it.endMs }, dayStart, 1, zone = zone, workDay = { app.plait.data.week.WorkWeek.isWorkDay(it) }).firstOrNull()
     }
     if (focus != null) {
-        Body("You have ${app.plait.data.prep.FocusTime.lengthLabel(focus)} free tomorrow from ${app.plait.data.TimeFmt.clock(focus.startMs, zone)}.")
+        Body(stringResource(R.string.home_free_tomorrow, app.plait.data.prep.FocusTime.lengthLabel(focus), Bidi.isolate(app.plait.data.TimeFmt.clock(focus.startMs, zone))))
+        val focusTitle = stringResource(R.string.home_focus_time_title)
         PlaitButton(
-            "Hold it as focus time",
-            { Toast.makeText(context, app.plait.data.device.Booking.book(context, "Focus time", focus, zone), Toast.LENGTH_LONG).show() },
+            stringResource(R.string.home_hold_focus),
+            { Toast.makeText(context, app.plait.data.device.Booking.book(context, focusTitle, focus, zone), Toast.LENGTH_LONG).show() },
             style = ButtonStyle.Ink, size = ButtonSize.Small,
         )
     }
@@ -839,7 +859,7 @@ private fun KindBar(s: DayStats) {
     val ink = LocalCardInk.current
     val total = s.byKind.sumOf { it.second }.coerceAtLeast(1)
     val tones = s.byKind.map { it.first.tone().bg }
-    Canvas(Modifier.fillMaxWidth().height(18.dp).clip(CircleShape)) {
+    Canvas(Modifier.fillMaxWidth().height(18.dp).clip(CircleShape).mirrorInRtl()) {
         drawRect(ink.copy(alpha = 0.1f))
         var x = 0f
         s.byKind.forEachIndexed { i, (_, m) ->
@@ -864,7 +884,8 @@ private fun DayStripOnCard(day: DayBrief, kinds: Map<String, MeetingKind>, nowMs
     val dayStart = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
     val nowFraction = ((nowMs - dayStart) / 60_000f - day.loadStartHour * 60f) / ((day.loadEndHour - day.loadStartHour) * 60f)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Canvas(Modifier.fillMaxWidth().height(26.dp)) {
+        // Mirrored with the hour labels under it, which a Row already swaps in Arabic.
+        Canvas(Modifier.fillMaxWidth().height(26.dp).mirrorInRtl()) {
             val h = size.height
             drawRoundRect(ink.copy(alpha = 0.1f), size = Size(size.width, h), cornerRadius = CornerRadius(h / 2))
             day.load.forEach { b ->
@@ -879,6 +900,9 @@ private fun DayStripOnCard(day: DayBrief, kinds: Map<String, MeetingKind>, nowMs
         }
     }
 }
+
+/** A meeting count for a headline: a word in English ("Three"), digits in Arabic, where number words change with the noun. */
+private fun countWord(n: Int): String = if (AppLocale.isRtl) n.toString() else DayAnalytics.word(n)
 
 /** A long meeting title cut at a word with "…", for a button label ("Open MOBIHITS & Mobizone…"). */
 internal fun shortTitle(title: String, max: Int = 26): String {

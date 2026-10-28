@@ -59,21 +59,30 @@ object Launch {
     }
 }
 
-/** Spatial (slide) and effects (fade) springs of the Material 3 Expressive motion scheme. */
+/** Spatial (slide) and effects (fade) springs of the Material 3 Expressive motion scheme. Slides are absolute, so RTL flips them. */
 private fun pageIn(dir: Int): EnterTransition {
     val calm = app.plait.ui.theme.Appearance.calm
+    val d = if (app.plait.i18n.AppLocale.isRtl) -dir else dir
     return slideInHorizontally(
         if (calm) tween(120) else androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 380f),
-    ) { dir * it / (if (calm) 20 else 4) } + fadeIn(if (calm) tween(100) else androidx.compose.animation.core.spring(stiffness = 1600f))
+    ) { d * it / (if (calm) 20 else 4) } + fadeIn(if (calm) tween(100) else androidx.compose.animation.core.spring(stiffness = 1600f))
 }
 private fun pageOut(dir: Int): ExitTransition {
     val calm = app.plait.ui.theme.Appearance.calm
+    val d = if (app.plait.i18n.AppLocale.isRtl) -dir else dir
     return slideOutHorizontally(
         if (calm) tween(120) else androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 380f),
-    ) { dir * it / (if (calm) 24 else 6) } + fadeOut(if (calm) tween(80) else androidx.compose.animation.core.spring(stiffness = 1600f))
+    ) { d * it / (if (calm) 24 else 6) } + fadeOut(if (calm) tween(80) else androidx.compose.animation.core.spring(stiffness = 1600f))
 }
 
 class MainActivity : ComponentActivity() {
+    /** Every screen is built in the app's language (see AppLocale), which also sets the layout direction. */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(newBase)
+        app.plait.i18n.AppLocale.refresh(newBase)
+        applyOverrideConfiguration(app.plait.i18n.AppLocale.overrideConfig())
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -100,6 +109,12 @@ class MainActivity : ComponentActivity() {
         Thread { runCatching { app.plait.ai.ModelCenter.refresh(applicationContext); app.plait.ai.ModelFinder.scanThisPhone(applicationContext); app.plait.ai.ModelCenter.resumePending(applicationContext) } }.start()
         Entrance.arrived()
         if (savedInstanceState == null) { ShareInbox.handle(this, intent); Launch.from(intent); app.plait.ui.WidgetLaunch.from(intent) }
+        // Create the note stores before the first draw: BriefHome reads their state, and a background thread
+        // (Calendars.refreshDevice -> Reminders.scheduleAll) could otherwise create them mid-composition and crash it.
+        app.plait.data.NoteStore.get(this); app.plait.data.memo.MemoStore.get(this)
+        // Same for the calendars: state first created inside the first composition shadows what refreshDevice writes from
+        // its thread meanwhile, so a cold start showed "No calendars found" until the next minute's refresh.
+        app.plait.data.Calendars.load(this); app.plait.data.Profile.load(this); app.plait.data.week.WorkWeek.load(this)
         setContent {
             PlaitTheme {
               ProvideGlassEnv {

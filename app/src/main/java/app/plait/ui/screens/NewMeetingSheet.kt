@@ -76,8 +76,15 @@ import app.plait.ui.theme.PlaitType
 import app.plait.ui.theme.plait
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import app.plait.R
+import app.plait.i18n.AppLocale
+import app.plait.i18n.Bidi
+import app.plait.i18n.Txt
+import app.plait.i18n.userText
 
 /**
  * Makes a new meeting and saves it to the calendar chosen in the hub. Android's sync then pushes it
@@ -125,13 +132,13 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
     val saveToPhone: (MeetingDraft, String?) -> Unit = { draft, note ->
         val calId = dest?.id ?: DeviceWrite.ensureLocalCalendar(context)
         if (calId == null) {
-            error = "No calendar to save to. Open the hub to add an account."
+            error = Txt.s(R.string.sheet_new_no_calendar)
             saving = false
         } else when (val r = DeviceWrite.insert(context, calId, draft)) {
             is DeviceWrite.Result.Saved -> {
                 Calendars.refreshDevice(context)
                 if (note == null) {
-                    Toast.makeText(context, "Saved to ${r.calendar}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, Txt.s(R.string.sheet_new_saved_to, Bidi.isolate(r.calendar)), Toast.LENGTH_LONG).show()
                     reset(); onDismiss()
                 } else { saving = false; doneNote = note }
             }
@@ -144,7 +151,7 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
     val saveWithMeet: (MeetingDraft) -> Unit = { draft ->
         val account = dest?.account.orEmpty()
         val job: suspend (String?) -> Unit = job@{ token ->
-            if (token == null) { saveToPhone(draft, "Calendar editing wasn't approved, so there is no Meet link. Saved without one."); return@job }
+            if (token == null) { saveToPhone(draft, Txt.s(R.string.sheet_new_meet_not_approved)); return@job }
             var why: String? = null
             val made = withContext(Dispatchers.IO) {
                 val w = GoogleWrite(token)
@@ -152,21 +159,21 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                     .recoverCatching { e -> why = GoogleEventBody.whyNoMeet(e); w.create(account, draft, java.time.ZoneId.systemDefault(), null) }
                     .getOrNull()
             }
-            if (made == null) { saveToPhone(draft, "${why ?: "Couldn't reach Google."} Saved to the phone's calendar without a Meet link."); return@job }
+            if (made == null) { saveToPhone(draft, Txt.s(R.string.sheet_new_meet_phone, why ?: Txt.s(R.string.sheet_new_google_unreachable))); return@job }
             runCatching { Calendars.sync(context, token) } // so Join shows right away
             val note = when {
-                why != null -> "$why Saved without a Meet link."
-                made.meetUrl == null -> "Saved. Google is still making the Meet link; Join appears after the next sync."
+                why != null -> Txt.s(R.string.sheet_meet_failed, why)
+                made.meetUrl == null -> Txt.s(R.string.sheet_new_meet_pending)
                 else -> null
             }
-            if (note == null) { Toast.makeText(context, "Saved with a Google Meet link", Toast.LENGTH_LONG).show(); reset(); onDismiss() }
+            if (note == null) { Toast.makeText(context, Txt.s(R.string.sheet_new_saved_meet), Toast.LENGTH_LONG).show(); reset(); onDismiss() }
             else { saving = false; doneNote = note }
         }
         scope.launch {
             when (val a = GoogleAuth.authorizeWrite(context)) {
                 is AuthOutcome.Token -> job(a.accessToken)
                 is AuthOutcome.NeedsConsent -> { pending = job; consent.launch(androidx.activity.result.IntentSenderRequest.Builder(a.pendingIntent).build()) }
-                is AuthOutcome.Failed -> saveToPhone(draft, "${a.reason} Saved without a Meet link.")
+                is AuthOutcome.Failed -> saveToPhone(draft, Txt.s(R.string.sheet_meet_failed, a.reason))
             }
         }
     }
@@ -209,15 +216,15 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                     Box(Modifier.size(width = 40.dp, height = 5.dp).background(plait.muted.copy(alpha = 0.5f), CircleShape))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("New meeting", style = PlaitType.section.copy(fontSize = 28.sp, lineHeight = 32.sp), color = plait.text)
-                    PlaitButton("Cancel", onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
+                    Text(stringResource(R.string.sheet_new_title), style = PlaitType.section.copy(fontSize = 28.sp, lineHeight = 32.sp), color = plait.text)
+                    PlaitButton(stringResource(R.string.common_cancel), onDismiss, style = ButtonStyle.Quiet, size = ButtonSize.Small)
                 }
 
                 // Quick add: type it in one line and Plait fills in the form below.
-                Field(quick, { quick = it }, "Type it: lunch with sam@acme.com friday 1pm for 1h")
+                Field(quick, { quick = it }, stringResource(R.string.sheet_new_quick_hint))
                 if (quick.isNotBlank()) {
                     PlaitButton(
-                        "Fill in the form",
+                        stringResource(R.string.sheet_new_fill),
                         {
                             val today = java.time.LocalDate.now()
                             val rules = app.plait.data.device.QuickAdd.parse(quick, today)
@@ -242,45 +249,46 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                         style = ButtonStyle.Primary, size = ButtonSize.Small,
                     )
                 }
-                Field(title, { title = it; error = null }, "Title", capitalize = true)
+                Field(title, { title = it; error = null }, stringResource(R.string.common_title), capitalize = true)
 
                 // When
-                val dayFmt = remember { DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()) }
+                val dayFmt = app.plait.data.TimeFmt.fmt("EEE d MMM")
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Stepper("‹") { date = date.minusDays(1) }
+                    // ‹ and › are bidi-mirrored characters: Arabic text already draws them flipped.
+                    Stepper("‹", stringResource(R.string.common_previous)) { date = date.minusDays(1) }
                     Text(date.format(dayFmt), style = PlaitType.bodyStrong, color = plait.text, modifier = Modifier.weight(1f))
-                    Stepper("›") { date = date.plusDays(1) }
+                    Stepper("›", stringResource(R.string.common_next)) { date = date.plusDays(1) }
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Pill("Today", date == LocalDate.now()) { date = LocalDate.now() }
-                    Pill("Tomorrow", date == LocalDate.now().plusDays(1)) { date = LocalDate.now().plusDays(1) }
-                    Pill("All day", allDay) { allDay = !allDay }
+                    Pill(stringResource(R.string.common_today), date == LocalDate.now()) { date = LocalDate.now() }
+                    Pill(stringResource(R.string.common_tomorrow), date == LocalDate.now().plusDays(1)) { date = LocalDate.now().plusDays(1) }
+                    Pill(stringResource(R.string.common_all_day), allDay) { allDay = !allDay }
                 }
                 if (!allDay) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Stepper("−") { startMin = (startMin - 15).mod(24 * 60) }
+                        Stepper("−", stringResource(R.string.sheet_new_earlier)) { startMin = (startMin - 15).mod(24 * 60) }
                         Text(app.plait.data.TimeFmt.clock(startMin), style = PlaitType.monoTime.copy(fontSize = 22.sp), color = plait.text, modifier = Modifier.weight(1f))
-                        Stepper("+") { startMin = (startMin + 15).mod(24 * 60) }
+                        Stepper("+", stringResource(R.string.sheet_new_later)) { startMin = (startMin + 15).mod(24 * 60) }
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(15, 30, 45, 60, 90, 120).forEach { m -> Pill(if (m < 60) "$m min" else if (m % 60 == 0) "${m / 60} h" else "1.5 h", duration == m) { duration = m } }
+                        listOf(15, 30, 45, 60, 90, 120).forEach { m -> Pill(if (m < 60) pluralStringResource(R.plurals.sheet_new_minutes, m, m) else if (m % 60 == 0) pluralStringResource(R.plurals.sheet_new_hours, m / 60, m / 60) else stringResource(R.string.sheet_new_hour_and_half), duration == m) { duration = m } }
                     }
                 }
 
                 // Find a time: gaps in your own calendars where this length fits.
-                PlaitButton(if (findOpen) "Hide free times" else "Find a time", { findOpen = !findOpen }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
+                PlaitButton(stringResource(if (findOpen) R.string.sheet_new_hide_free else R.string.sheet_new_find_time), { findOpen = !findOpen }, size = ButtonSize.Small, style = ButtonStyle.Quiet)
                 if (findOpen) {
                     val busy = remember(Calendars.events) { Calendars.events.filter { !it.allDay && it.endMs > it.startMs }.map { it.startMs to it.endMs } }
                     val slots = remember(busy, duration, findDays, allDay) {
-                        app.plait.data.prep.FreeTime.find(busy, System.currentTimeMillis(), findDays, duration.coerceAtLeast(15))
+                        app.plait.data.prep.FreeTime.find(busy, System.currentTimeMillis(), findDays, duration.coerceAtLeast(15), workDay = { app.plait.data.week.WorkWeek.isWorkDay(it) })
                     }
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surface).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Free for $duration min, 9 AM to 5 PM on weekdays, from your calendars.", style = PlaitType.caption, color = plait.muted)
+                        Text(pluralStringResource(R.plurals.sheet_new_free_for, duration, duration), style = PlaitType.caption, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PlaitChip("Next 7 days", findDays == 7, { findDays = 7 })
-                            PlaitChip("Next 14 days", findDays == 14, { findDays = 14 })
+                            PlaitChip(stringResource(R.string.sheet_new_next_7), findDays == 7, { findDays = 7 })
+                            PlaitChip(stringResource(R.string.sheet_new_next_14), findDays == 14, { findDays = 14 })
                         }
-                        if (slots.isEmpty()) Text("No free time of that length in that range.", style = PlaitType.body, color = plait.muted)
+                        if (slots.isEmpty()) Text(stringResource(R.string.sheet_new_no_free), style = PlaitType.body, color = plait.muted)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             slots.forEach { s ->
                                 val local = java.time.Instant.ofEpochMilli(s.startMs).atZone(java.time.ZoneId.systemDefault())
@@ -290,51 +298,52 @@ fun NewMeetingSheet(visible: Boolean, initialDate: LocalDate, onDismiss: () -> U
                                 })
                             }
                         }
-                        if (slots.isNotEmpty()) PlaitButton("Send these options", {
+                        val chooser = stringResource(R.string.sheet_new_send_options_chooser)
+                        if (slots.isNotEmpty()) PlaitButton(stringResource(R.string.sheet_new_send_options), {
                             val text = app.plait.data.prep.FreeTime.shareText(title, slots.take(4))
                             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text)
-                            runCatching { context.startActivity(android.content.Intent.createChooser(send, "Send time options").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                            runCatching { context.startActivity(android.content.Intent.createChooser(send, chooser).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                         }, size = ButtonSize.Small)
                     }
                 }
 
-                Field(guests, { guests = it; error = null }, "Guests (email addresses)", keyboard = KeyboardType.Email)
+                Field(guests, { guests = it; error = null }, stringResource(R.string.sheet_new_guests_hint), keyboard = KeyboardType.Email)
                 // Call link
-                Text("Call link", style = PlaitType.monoSmall, color = plait.muted)
+                Text(stringResource(R.string.sheet_edit_call_link), style = PlaitType.monoSmall, color = plait.muted)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Pill("None", callMode == 0) { callMode = 0; error = null }
-                    if (meetOk) Pill("Google Meet", callMode == 1) { callMode = 1; error = null }
-                    Pill("Add link", callMode == 2) { callMode = 2; error = null }
+                    Pill(stringResource(R.string.sheet_edit_none), callMode == 0) { callMode = 0; error = null }
+                    if (meetOk) Pill(stringResource(R.string.sheet_google_meet), callMode == 1) { callMode = 1; error = null }
+                    Pill(stringResource(R.string.sheet_edit_add_link), callMode == 2) { callMode = 2; error = null }
                 }
-                if (!meetOk) Text("Google Meet can be created for a Google calendar connected in the hub.", style = PlaitType.caption, color = plait.muted)
-                if (callMode == 1 && meetOk) Text("Google makes the link when the meeting is saved.", style = PlaitType.caption, color = plait.muted)
+                if (!meetOk) Text(stringResource(R.string.sheet_new_meet_needs_google), style = PlaitType.caption, color = plait.muted)
+                if (callMode == 1 && meetOk) Text(stringResource(R.string.sheet_new_meet_made_on_save), style = PlaitType.caption, color = plait.muted)
                 if (callMode == 2) {
-                    Field(linkText, { linkText = it; error = null }, "https:// Teams, Zoom or Webex link", keyboard = KeyboardType.Uri)
+                    Field(linkText, { linkText = it; error = null }, stringResource(R.string.sheet_new_link_hint), keyboard = KeyboardType.Uri)
                     (CallLinkInput.parse(linkText) as? CallLinkInput.Parsed.Ok)?.let {
-                        Text(it.provider?.let { p -> "${p.label} link" } ?: "A link. Join only shows for Meet, Zoom, Teams and Webex links.", style = PlaitType.caption, color = plait.muted)
+                        Text(it.provider?.let { p -> stringResource(R.string.sheet_edit_link_of, p.label) } ?: stringResource(R.string.sheet_edit_link_other), style = PlaitType.caption, color = plait.muted)
                     }
                 }
-                Field(place, { place = it }, "Place or call link")
-                Field(notes, { notes = it }, "Notes", capitalize = true, singleLine = false)
+                Field(place, { place = it }, stringResource(R.string.sheet_new_place_hint))
+                Field(notes, { notes = it }, stringResource(R.string.common_notes), capitalize = true, singleLine = false)
 
                 // Where it is saved
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(plait.surface).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Saved to", style = PlaitType.monoSmall, color = plait.muted)
+                    Text(stringResource(R.string.sheet_new_saved_to_label), style = PlaitType.monoSmall, color = plait.muted)
                     Text(
-                        dest?.let { "${it.name} · ${it.account}" } ?: if (DeviceCalendar.hasPermission(context)) "A calendar on this phone only" else "Allow calendar access to choose",
+                        dest?.let { Bidi.isolate(it.name) + " · " + Bidi.isolate(it.account) } ?: stringResource(if (DeviceCalendar.hasPermission(context)) R.string.sheet_new_local_only else R.string.sheet_new_allow_to_choose),
                         style = PlaitType.bodyStrong, color = plait.text,
                     )
                     Text(
-                        if (dest != null && dest.accountType != "LOCAL") "Android syncs it to ${dest.source.label}, and guests get an invite." else "It stays on this phone until you add an account.",
+                        if (dest != null && dest.accountType != "LOCAL") stringResource(R.string.sheet_new_syncs_to, dest.source.label) else stringResource(R.string.sheet_new_stays_local),
                         style = PlaitType.caption, color = plait.muted,
                     )
-                    PlaitButton("Change in the hub", onOpenHub, style = ButtonStyle.Secondary, size = ButtonSize.Small)
+                    PlaitButton(stringResource(R.string.sheet_new_change_hub), onOpenHub, style = ButtonStyle.Secondary, size = ButtonSize.Small)
                 }
 
                 error?.let { Text(it, style = PlaitType.caption, color = plait.signal) }
                 doneNote?.let { Text(it, style = PlaitType.caption, color = plait.text) }
-                if (doneNote != null) HubButton("Done", primary = true, onClick = { reset(); onDismiss() })
-                else HubButton(if (!canWrite) "Allow saving to calendar" else if (saving) "Saving…" else "Save meeting", primary = true, onClick = save)
+                if (doneNote != null) HubButton(stringResource(R.string.common_done), primary = true, onClick = { reset(); onDismiss() })
+                else HubButton(stringResource(if (!canWrite) R.string.sheet_new_allow_saving else if (saving) R.string.sheet_new_saving else R.string.sheet_new_save), primary = true, onClick = save)
                 Spacer(Modifier.height(6.dp))
             }
         }
@@ -351,7 +360,7 @@ private fun nextHalfHour(): Int {
 private fun Field(value: String, onChange: (String) -> Unit, hint: String, capitalize: Boolean = false, singleLine: Boolean = true, keyboard: KeyboardType = KeyboardType.Text) {
     BasicTextField(
         value = value, onValueChange = onChange, singleLine = singleLine,
-        textStyle = PlaitType.body.copy(color = plait.text), cursorBrush = SolidColor(plait.accent),
+        textStyle = PlaitType.body.copy(color = plait.text).userText(), cursorBrush = SolidColor(plait.accent),
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboard,
             capitalization = if (capitalize) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
@@ -370,8 +379,8 @@ private fun Field(value: String, onChange: (String) -> Unit, hint: String, capit
 }
 
 @Composable
-private fun Stepper(label: String, onClick: () -> Unit) {
-    Box(Modifier.size(44.dp).clip(CircleShape).background(plait.surface).pressable(onClick), contentAlignment = Alignment.Center) {
+private fun Stepper(label: String, description: String, onClick: () -> Unit) {
+    Box(Modifier.size(44.dp).clip(CircleShape).background(plait.surface).pressable(onClick).semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
         Text(label, style = PlaitType.section, color = plait.text)
     }
 }
