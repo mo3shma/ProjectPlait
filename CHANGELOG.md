@@ -13,6 +13,8 @@ What changed in each version of Plait, newest first.
 - Leaving a screen within 5 seconds of deleting a note now makes the delete final, where before the note came back.
 - Widgets lost their time-of-day backgrounds.
 
+## 0.31.0: Plait speaks Arabic
+
 - **Plait now speaks Arabic.** Every screen, menu, setting, notification and widget is available in Arabic, laid out right to left. Buttons, tabs, arrows, swipes and the calendar all flip to match.
 - **Choose your language.** Open Settings → Language and pick System default, English or العربية. Plait also appears in Android's own per-app language settings.
 - **Your day, in Arabic.** The day brief, meeting summaries, prep, follow-ups, reminders and shared documents are written in Arabic, with Western digits (0-9) for dates, times and counts.
