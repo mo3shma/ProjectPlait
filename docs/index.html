@@ -96,6 +96,7 @@ h2{font-size:clamp(34px,5vw,68px);max-width:14em}
 .chip.k3{--cc:#3fc489;left:-28%;bottom:22%;animation-delay:-3.5s}
 .chip.k4{--cc:#f0b43a;right:-26%;bottom:12%;animation-delay:-.5s}
 @keyframes float{to{transform:translate(8px,-14px)}}
+.lead .short{display:none}
 .scrollhint{position:absolute;left:50%;bottom:104px;width:26px;height:44px;margin-left:-13px;border-radius:14px;border:2px solid currentColor;opacity:.45;color:var(--ink)}
 .scrollhint::after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:currentColor;animation:wheel 1.8s infinite}
 @keyframes wheel{0%{transform:translateY(0);opacity:1}100%{transform:translateY(16px);opacity:0}}
@@ -209,16 +210,21 @@ footer a{color:var(--ink)}
 
 @media (max-width:900px){
   .welcome{grid-template-columns:1fr;align-content:start;gap:14px;padding:84px var(--m) 0;height:100svh;min-height:600px;text-align:left}
-  .wcopy h1{font-size:clamp(46px,14vw,84px)}
   .wcopy .lead{font-size:16px;margin-top:12px;max-width:34ch}
   .wcta{margin-top:18px}.wcta .btn.soft{display:none}
   .wcta .btn{min-height:52px}
-  .phone{height:min(60svh,560px)}
   .stage{gap:12px}
-  .chip{padding:8px 12px 8px 10px;font-size:12px}.chip b{font-size:13px}.chip small{font-size:11px}
-  .chip.k1{left:-14%;top:16%}.chip.k2{right:-14%;top:38%}.chip.k3,.chip.k4{display:none}
   .scrollhint{display:none}
-  .strands{-webkit-mask-image:linear-gradient(180deg,transparent 34%,#000 60%);mask-image:linear-gradient(180deg,transparent 34%,#000 60%)}
+ .wcopy h1{font-size:clamp(40px,11.2vw,76px);text-wrap:balance}
+  .wcopy .lead .long{display:none}.wcopy .lead .short{display:inline}
+  .strands{-webkit-mask-image:linear-gradient(180deg,transparent 52%,#000 74%);mask-image:linear-gradient(180deg,transparent 52%,#000 74%)}
+  .chip{display:none}
+  .seg button{padding:8px 16px;font-size:14px}
+  .phone{height:min(54svh,540px)}
+  .toggle button{font-size:16px;padding:10px 22px}
+  .dock{background:color-mix(in srgb,var(--card) 94%,transparent);padding:5px;gap:2px}
+  .dock a{min-width:54px;padding:7px 8px 6px;font-size:11px;gap:1px}.dock a svg{width:22px;height:22px}
+  .fabbtn{width:56px;height:56px}.fabbtn svg{width:24px;height:24px}
   .demo,.split,.priv,.looks{grid-template-columns:1fr}
   .agenda,.widgets{justify-self:stretch;max-width:none}
   .bento{grid-template-columns:1fr}
@@ -226,7 +232,6 @@ footer a{color:var(--ink)}
   .tile .shot{width:78%}
   .steps{grid-template-columns:1fr 1fr}
   .film{border-radius:28px}
-  .dock a{min-width:62px;padding:8px 8px 7px}
   .wtop .btn{display:none}
 }
 @media (max-width:520px){.steps{grid-template-columns:1fr}.dock a span{font-size:11px}}
@@ -257,7 +262,7 @@ footer a{color:var(--ink)}
 
   <div class="wcopy">
     <h1 aria-label="Every calendar, one day."><span style="--w:0">Every</span> <span style="--w:1">calendar,</span> <span style="--w:2">one</span> <span style="--w:3">day.</span></h1>
-    <p class="lead">An Android calendar that merges Google, Outlook, Exchange, iCloud and calendar links into one agenda, briefs you on every meeting, and keeps your notes and AI on your phone.</p>
+    <p class="lead"><span class="long">An Android calendar that merges Google, Outlook, Exchange, iCloud and calendar links into one agenda, briefs you on every meeting, and keeps your notes and AI on your phone.</span><span class="short">Every account in one agenda. Your notes and AI stay on your phone.</span></p>
     <div class="wcta">
       <a class="btn fab" id="dl" href="../../releases/latest/download/plait.apk">Download for Android</a>
       <a class="btn soft" href="trailer.html">Watch the trailer</a>
@@ -385,7 +390,7 @@ footer a{color:var(--ink)}
     <p class="lead" id="looksP"></p>
     <div class="toggle" role="group" aria-label="Choose the look"><button aria-pressed="true" data-look="glass">Glass</button><button aria-pressed="false" data-look="material">Material</button></div>
   </div>
-  <div class="pic"><img src="screenshots/01-home-morning.jpg" alt="Home in the Glass look" loading="lazy"><img src="screenshots/06-calendar.jpg" alt="The month calendar" loading="lazy"></div>
+  <div class="pic"><img src="screenshots/01-home-morning.jpg" data-glass="screenshots/01-home-morning.jpg" data-material="screenshots/material-home.jpg" alt="Home in the Glass look" loading="lazy"><img src="screenshots/06-calendar.jpg" data-glass="screenshots/06-calendar.jpg" data-material="screenshots/material-calendar.jpg" alt="The month calendar in the Glass look" loading="lazy"></div>
 </div>
 
 <section id="built">
@@ -507,11 +512,15 @@ footer a{color:var(--ink)}
   };
   const tail = ' Both follow light and dark mode, with pure black for OLED screens and a reduce-animations option.';
   p.textContent = text.glass + tail;
+  // Material screenshots are used only once the files exist, so the toggle never shows a broken image.
+  const ok = new Map();
+  sec.querySelectorAll('.pic img').forEach(im => { const t = new Image(); t.onload = () => ok.set(im.dataset.material, true); t.src = im.dataset.material; });
   sec.querySelectorAll('[data-look]').forEach(b => b.addEventListener('click', () => {
     sec.querySelectorAll('[data-look]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     sec.classList.toggle('material', b.dataset.look === 'material');
     word.textContent = b.dataset.look === 'glass' ? 'Glass' : 'Material';
     p.textContent = text[b.dataset.look] + tail;
+    sec.querySelectorAll('.pic img').forEach(im => { im.src = ok.get(im.dataset.material) && b.dataset.look === 'material' ? im.dataset.material : im.dataset.glass; });
   }));
 })();
 
