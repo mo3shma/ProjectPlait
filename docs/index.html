@@ -249,6 +249,29 @@ body::before{content:"";position:fixed;inset:-15%;z-index:-1;pointer-events:none
 .acc[aria-pressed="true"]{box-shadow:inset 1.5px 1.5px 0 var(--edge),inset -1px -1px 0 var(--edge2),inset 0 0 14px var(--edge2),0 8px 18px -10px rgba(0,0,0,.3)}
 .lens .row .join,.lens .wd .jn,.lens .seg button[aria-pressed="true"]{-webkit-backdrop-filter:blur(3px) url(#lens) saturate(1.7);backdrop-filter:blur(3px) url(#lens) saturate(1.7)}
 
+
+/* ---------- bold, big cards that fill their space ---------- */
+.zero{min-height:600px;padding:36px;justify-content:space-between}
+.zero{container-type:size;align-self:start;position:sticky;top:24px;height:min(calc(100svh - 150px),760px);min-height:460px}
+.zero .n{font-size:min(150cqw,66cqh);line-height:.72;letter-spacing:-.07em;margin:-.02em 0 0 -.05em}
+.zero p{font-size:clamp(34px,11cqw,60px);line-height:1;font-weight:700;letter-spacing:-.04em;max-width:10ch}
+.tile{min-height:320px;padding:30px;gap:14px}
+.tile h3{font-size:clamp(30px,2.9vw,42px);font-weight:700;letter-spacing:-.035em;line-height:1.02}
+.tile p{font-size:clamp(17px,1.35vw,20px);line-height:1.4;color:color-mix(in srgb,var(--ink) 82%,transparent)}
+.tile.tall{min-height:760px}
+.pill{font-size:16px;padding:11px 20px}
+.panel{padding:34px}.panel h3{font-size:clamp(30px,2.8vw,40px);font-weight:700;letter-spacing:-.035em}
+.eng{font-size:18px;padding:18px 22px}.eng b{font-weight:700}
+ol.harness li{font-size:18px;padding:18px 22px;color:color-mix(in srgb,var(--ink) 80%,transparent)}
+.perm{padding:26px}.perm div{padding:16px 18px}.perm b{font-size:16px;font-weight:700}.perm span{font-size:16px;color:color-mix(in srgb,var(--ink) 80%,transparent)}
+.step{min-height:360px;padding:30px}.step p{font-size:clamp(22px,2vw,28px);font-weight:700;letter-spacing:-.025em;line-height:1.12}.step small{font-size:15px}.step .n{width:52px;height:52px;font-size:20px}
+.agenda{padding:32px}.agenda .ttl{font-size:30px;font-weight:700}.row b{font-size:17px}
+.tbl td,.tbl th{font-size:17px}.tbl td:first-child{font-weight:700}
+@media (max-width:900px){
+  .zero{container-type:normal;position:static;height:auto;min-height:480px}.zero .n{font-size:min(62vw,300px)}.zero p{font-size:clamp(28px,8vw,44px)}
+  .tile.tall{min-height:0}.tile{min-height:0}
+}
+
 /* ---------- app dock ---------- */
 .dockwrap{position:fixed;z-index:50;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;padding:0 14px;pointer-events:none}
 .dock{pointer-events:auto;display:flex;gap:4px;padding:6px;border-radius:999px;}
