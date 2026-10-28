@@ -232,6 +232,23 @@ body::before{content:"";position:fixed;inset:-15%;z-index:-1;pointer-events:none
 .toggle button[aria-pressed="true"]{box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45),0 6px 14px -6px rgba(0,0,0,.35)}
 .lens .btn,.lens .acc,.lens .pill,.lens .toggle{-webkit-backdrop-filter:blur(5px) url(#lens) saturate(1.7) brightness(1.04);backdrop-filter:blur(5px) url(#lens) saturate(1.7) brightness(1.04)}
 
+
+/* ---------- every button gets the dock / download-arrow treatment ---------- */
+.btn.fab{background:var(--fab);box-shadow:inset 2px 2px 0 rgba(255,255,255,.45),inset -2px -2px 0 rgba(0,0,0,.12),0 16px 32px -10px rgba(0,0,0,.35);-webkit-backdrop-filter:none;backdrop-filter:none}
+.btn.soft{background:var(--glass);color:var(--ink);box-shadow:inset 1.5px 1.5px 0 var(--edge),inset -1px -1px 0 var(--edge2),inset 0 0 22px var(--edge2),0 14px 34px -14px rgba(0,0,0,.28)}
+.row .join,.wd .jn,.pill.sel,.toggle button[aria-pressed="true"],.looks.material .toggle button[aria-pressed="true"],.seg button[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--indigo) 82%,transparent);color:var(--bg);
+  -webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);
+  box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.55),inset -1px -1px 0 rgba(255,255,255,.18),inset 0 0 14px rgba(255,255,255,.18),0 8px 18px -8px rgba(0,0,0,.4)}
+.seg button[aria-pressed="true"]{color:#fff}
+.welcome[data-mode="2"] .seg button[aria-pressed="true"]{color:#0d0e13}
+.looks.material .toggle button[aria-pressed="true"]{background:rgba(255,255,255,.88);color:#2d3a8c}
+.wd .jn{background:rgba(22,24,31,.78);color:#fff}
+.acc,.pill,.toggle button,.seg button{transition:transform .2s,background .3s,box-shadow .3s}
+.acc:hover,.pill:hover,.btn.soft:hover{transform:translateY(-1px)}
+.acc[aria-pressed="true"]{box-shadow:inset 1.5px 1.5px 0 var(--edge),inset -1px -1px 0 var(--edge2),inset 0 0 14px var(--edge2),0 8px 18px -10px rgba(0,0,0,.3)}
+.lens .row .join,.lens .wd .jn,.lens .seg button[aria-pressed="true"]{-webkit-backdrop-filter:blur(3px) url(#lens) saturate(1.7);backdrop-filter:blur(3px) url(#lens) saturate(1.7)}
+
 /* ---------- app dock ---------- */
 .dockwrap{position:fixed;z-index:50;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;padding:0 14px;pointer-events:none}
 .dock{pointer-events:auto;display:flex;gap:4px;padding:6px;border-radius:999px;}
