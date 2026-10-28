@@ -8,6 +8,8 @@ import app.plait.widget.JoinLook
 import app.plait.widget.NextMeetingWidget
 import app.plait.widget.NextMeetingWidgetQuick
 import app.plait.widget.NextMeetingWidgetSmall
+import app.plait.widget.TasksWidget
+import app.plait.widget.MonthWidget
 import app.plait.widget.WidgetModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,9 +65,9 @@ class WidgetQuickTest {
         assertEquals("Nothing coming up", none.top); assertEquals("A clear day", none.title); assertFalse(none.showJoin)
     }
 
-    @Test fun updateAllCoversAllThreeProviders() {
+    @Test fun updateAllCoversAllFiveProviders() {
         assertEquals(
-            listOf(NextMeetingWidget::class.java, NextMeetingWidgetSmall::class.java, NextMeetingWidgetQuick::class.java),
+            listOf(NextMeetingWidget::class.java, NextMeetingWidgetSmall::class.java, NextMeetingWidgetQuick::class.java, TasksWidget::class.java, MonthWidget::class.java),
             NextMeetingWidget.providers,
         )
     }

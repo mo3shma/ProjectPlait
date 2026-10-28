@@ -2,7 +2,16 @@
 
 What changed in each version of Plait, newest first.
 
-## 0.31.0: Plait speaks Arabic
+## 0.32.0: new widgets, undo, backup reminders
+
+- **Two new widgets.** A tasks widget shows your open tasks and lets you start a new list. A month widget shows the whole month, rings today and puts a dot under days with meetings. Both can be resized.
+- **One look for every widget.** All five widgets share the same style in light and dark. In Settings → Widgets choose Clear, Soft or Solid, follow Plait or your phone's colours (Android 12 and up), and turn the Join button, the "what comes next today" line and the month dots on or off.
+- **A first-run setup.** On a new install, pick your language first, then get the recommended voice and AI models in one tap with their sizes shown. A Wi-Fi-only switch keeps big downloads off mobile data, and Plait says plainly what works without a model.
+- **Undo for more things.** Cancelling a meeting, deleting a series and dismissing a suggested task can now be undone for a few seconds.
+- **Backup reminders.** Plait reminds you when your last backup is over 30 days old. You can also turn on a scheduled backup in Settings: an encrypted copy is saved to your sync folder about once a week, when you open and leave the app.
+- **Reduce transparency.** A new switch in Settings makes glass panels solid. Several small buttons are now easier to tap.
+- Leaving a screen within 5 seconds of deleting a note now makes the delete final, where before the note came back.
+- Widgets lost their time-of-day backgrounds.
 
 - **Plait now speaks Arabic.** Every screen, menu, setting, notification and widget is available in Arabic, laid out right to left. Buttons, tabs, arrows, swipes and the calendar all flip to match.
 - **Choose your language.** Open Settings → Language and pick System default, English or العربية. Plait also appears in Android's own per-app language settings.

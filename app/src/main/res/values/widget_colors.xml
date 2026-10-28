@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget ink: the host resolves these when it inflates, so values-night/widget_colors.xml flips them with the phone's day/night. -->
+<resources>
+    <color name="widget_ink">#FF1B2230</color>
+    <color name="widget_ink_soft">#B31B2230</color>
+</resources>

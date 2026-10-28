@@ -16,4 +16,16 @@
     <string name="widget_tile_task_list">Task list</string>
     <!-- 4×3 widget button: start a new written note. -->
     <string name="widget_tile_text_note">Text note</string>
+    <string name="widget_description_tasks">Your open tasks from checklists, with one tap to start a new list. 3×2, resizable.</string>
+    <string name="widget_description_month">The month at a glance, with a dot under each day that has meetings. 4×4, resizable.</string>
+    <!-- Widget picker names of the tasks and month widgets. -->
+    <string name="widget_label_tasks">Plait tasks</string>
+    <string name="widget_label_month">Plait month</string>
+    <string name="widget_tasks_title">Tasks</string>
+    <string name="widget_tasks_empty">No open tasks</string>
+    <plurals name="widget_tasks_more">
+        <item quantity="one">+%d more task</item>
+        <item quantity="other">+%d more tasks</item>
+    </plurals>
+    <string name="wdg_preview_month">October 2026</string>
 </resources>

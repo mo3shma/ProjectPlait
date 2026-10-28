@@ -75,7 +75,8 @@ fun ProvideGlassEnv(content: @Composable () -> Unit) {
     val glassOn = app.plait.ui.theme.Appearance.glass
     val material = app.plait.ui.theme.Appearance.activeStyle == app.plait.ui.theme.UiStyle.Material
     val calm = app.plait.ui.theme.Appearance.calm
-    val env = remember(context, glassOn, material, calm) {
+    val reduceTransparency = app.plait.ui.theme.Appearance.solid
+    val env = remember(context, glassOn, material, calm, reduceTransparency) {
         val resolver = context.contentResolver
         val animScale = runCatching {
             Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
@@ -85,7 +86,7 @@ fun ProvideGlassEnv(content: @Composable () -> Unit) {
         }.getOrDefault(false)
         GlassEnv(
             reduceMotion = animScale == 0f || calm,
-            solid = highContrast || Build.VERSION.SDK_INT < Build.VERSION_CODES.S || !glassOn || material,
+            solid = highContrast || reduceTransparency || Build.VERSION.SDK_INT < Build.VERSION_CODES.S || !glassOn || material,
             material = material,
         )
     }

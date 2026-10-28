@@ -176,4 +176,6 @@
     <string name="ai_example_day">Tuesday</string>
     <!-- The person using the app, as the recipient of the example email. -->
     <string name="ai_example_you">You</string>
+
+    <string name="ai_dl_wifi_only">Waiting for Wi-Fi. Wi-Fi only is on; connect to Wi-Fi or turn it off in Settings, AI.</string>
 </resources>

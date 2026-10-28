@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_ink">#FFFFFFFF</color>
+    <color name="widget_ink_soft">#C7FFFFFF</color>
+</resources>

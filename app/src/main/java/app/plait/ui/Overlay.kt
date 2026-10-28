@@ -148,4 +148,4 @@ fun PlaitDialog(onDismissRequest: () -> Unit, fullScreen: Boolean = false, conte
 
 
 @Composable
-fun glassOverlayWanted(): Boolean = app.plait.ui.theme.Appearance.glass && !LocalGlassEnv.current.material
+fun glassOverlayWanted(): Boolean = app.plait.ui.theme.Appearance.glass && !app.plait.ui.theme.Appearance.solid && !LocalGlassEnv.current.material

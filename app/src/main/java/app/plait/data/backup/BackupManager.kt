@@ -28,6 +28,7 @@ object BackupManager {
         val out = context.contentResolver.openOutputStream(uri) ?: throw java.io.IOException("Couldn't write to that location.")
         val sink = if (passphrase.isNotEmpty()) app.plait.data.crypto.Crypt.encrypt(out, passphrase.toCharArray()) else out
         sink.use { Backup.write(it, data, media) }
+        AutoBackup.markDone(context)
         return Report(data.notes.size, data.memos.size, data.emails.size, settings.feeds.size, media.count { it.second.exists() }, true)
     }
 

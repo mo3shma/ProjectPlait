@@ -91,11 +91,19 @@ class MainActivity : ComponentActivity() {
         app.plait.ui.WidgetLaunch.from(intent)
     }
 
+    // Fallback for launchers that do not re-inflate widgets on a day/night flip: rebuild them (uiMode is handled here, so no recreate).
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val ctx = applicationContext
+        Thread { runCatching { app.plait.widget.NextMeetingWidget.updateAll(ctx) } }.start()
+    }
+
     override fun onStop() {
         super.onStop()
         // The widget shows the same day as the app; bring it up to date whenever you leave.
         val ctx = applicationContext
         Thread { runCatching { app.plait.widget.NextMeetingWidget.updateAll(ctx) } }.start()
+        Thread { runCatching { app.plait.data.backup.AutoBackup.runIfDue(ctx) } }.start()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -75,6 +75,8 @@ object Appearance {
     var glass by androidx.compose.runtime.mutableStateOf(true); private set
     /** Fewer and shorter animations; nothing loops. */
     var calm by androidx.compose.runtime.mutableStateOf(false); private set
+    /** "Reduce transparency": plain solid surfaces everywhere, the same fallback high text contrast uses. */
+    var solid by androidx.compose.runtime.mutableStateOf(false); private set
     private var loaded = false
 
     private fun prefs(c: android.content.Context) = c.getSharedPreferences("plait", android.content.Context.MODE_PRIVATE)
@@ -90,11 +92,13 @@ object Appearance {
         val low = (context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager).isLowRamDevice
         glass = p.getBoolean("glass", false)
         calm = p.getBoolean("calm", low)
+        solid = p.getBoolean("solid", false)
     }
 
     fun setAmoled(context: android.content.Context, on: Boolean) { amoled = on; prefs(context).edit().putBoolean("amoled", on).apply() }
     fun setStyle(context: android.content.Context, v: UiStyle) { style = v; prefs(context).edit().putString("style", v.name).apply() }
     fun setGlass(context: android.content.Context, on: Boolean) { glass = on; prefs(context).edit().putBoolean("glass", on).apply() }
+    fun setSolid(context: android.content.Context, on: Boolean) { solid = on; prefs(context).edit().putBoolean("solid", on).apply() }
     fun setCalm(context: android.content.Context, on: Boolean) { calm = on; prefs(context).edit().putBoolean("calm", on).apply() }
 }
 

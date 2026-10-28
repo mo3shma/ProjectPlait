@@ -264,6 +264,14 @@ private fun StorageNote() {
         style = PlaitType.caption, color = plait.muted,
     )
     if (ModelCenter.isMetered(context)) Text(stringResource(R.string.settings_ai_metered), style = PlaitType.caption, color = plait.signal)
+    var wifiOnly by remember { mutableStateOf(ModelCenter.wifiOnly(context)) }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_wifi_only_title), style = PlaitType.bodyStrong, color = plait.text)
+            Text(stringResource(R.string.settings_wifi_only_body), style = PlaitType.caption, color = plait.muted)
+        }
+        PlaitSwitch(wifiOnly, { wifiOnly = !wifiOnly; ModelCenter.setWifiOnly(context, wifiOnly) }, stringResource(R.string.settings_wifi_only_title))
+    }
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -56,7 +56,7 @@ import app.plait.i18n.userText
  * Google (which asks once for permission to change events). Anything destructive asks first.
  */
 @Composable
-internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -> Unit) {
+internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -> Unit, undo: UndoDelete? = null) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val google = ev.id.startsWith("g:")
@@ -107,21 +107,26 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
     }
     fun ask(question: String, act: () -> Unit) { confirm = question to { act(); true } }
+    // Cancelling or deleting waits five seconds with an Undo bar (the calendar is only changed when it runs out).
+    val undoKey = "ev" + ev.id
+    fun final(label: String, act: (gone: Boolean) -> Unit) {
+        if (undo == null) act(true) else undo.delete(undoKey, label) { act(!undo.leaving) }
+    }
     val actions = buildList {
         if (manage) {
             add(NoteAction(stringResource(R.string.sheet_manage_edit), Icons.Filled.Edit) { editing = true })
             add(NoteAction(stringResource(if (ev.recurring) R.string.sheet_manage_reschedule_one else R.string.sheet_manage_reschedule), Icons.Filled.Schedule) { reschedule() })
             if (ev.recurring) {
                 add(NoteAction(stringResource(R.string.sheet_manage_cancel_one), Icons.Filled.Cancel, danger = true) {
-                    ask(Txt.s(R.string.sheet_manage_cancel_one_q)) { run(told, true, { EventEdit.cancelOccurrence(context, ev) }, { it.cancelOccurrence(ev) }) }
+                    ask(Txt.s(R.string.sheet_manage_cancel_one_q)) { final(Txt.s(R.string.sheet_manage_undo_cancelled)) { g -> run(told, g, { EventEdit.cancelOccurrence(context, ev) }, { it.cancelOccurrence(ev) }) } }
                 })
                 add(NoteAction(stringResource(R.string.sheet_manage_delete_series), Icons.Filled.DeleteForever, danger = true) {
-                    ask(Txt.s(R.string.sheet_manage_delete_series_q)) { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = true) }) }
+                    ask(Txt.s(R.string.sheet_manage_delete_series_q)) { final(Txt.s(R.string.sheet_manage_undo_series)) { g -> run(told, g, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = true) }) } }
                 })
             } else {
                 val withGuests = ev.guests.any { !it.self }
                 add(NoteAction(stringResource(if (withGuests) R.string.sheet_manage_cancel_meeting else R.string.common_delete), Icons.Filled.DeleteForever, danger = true) {
-                    ask(Txt.s(if (withGuests) R.string.sheet_manage_cancel_q else R.string.sheet_manage_delete_q)) { run(told, true, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = false) }) }
+                    ask(Txt.s(if (withGuests) R.string.sheet_manage_cancel_q else R.string.sheet_manage_delete_q)) { final(Txt.s(if (withGuests) R.string.sheet_manage_undo_cancelled else R.string.sheet_manage_undo_deleted)) { g -> run(told, g, { EventEdit.delete(context, ev) }, { it.delete(ev, wholeSeries = false) }) } }
                 })
             }
         } else if (hasSelf) {
@@ -140,7 +145,7 @@ internal fun ManageMeetingMenu(ev: CalEvent, onDismiss: () -> Unit, onGone: () -
     // The menu closes as soon as something is picked; the whole thing ends once no follow-up dialog is open.
     var menuVisible by remember { mutableStateOf(true) }
     if (menuVisible) ActionsDialog(stringResource(if (manage) R.string.sheet_manage_title else R.string.sheet_manage_your_answer), actions, onDismiss = { menuVisible = false })
-    androidx.compose.runtime.LaunchedEffect(menuVisible, editing, confirm, pending) { if (!menuVisible && !editing && confirm == null && pending == null) onDismiss() }
+    androidx.compose.runtime.LaunchedEffect(menuVisible, editing, confirm, pending, undo?.isHidden(undoKey)) { if (!menuVisible && !editing && confirm == null && pending == null && undo?.isHidden(undoKey) != true) onDismiss() }
 
     if (editing) EditEventDialog(ev, canMeet = google && mine, onSave = { t, p, d, meet ->
         run(Txt.s(R.string.sheet_manage_saved), phone = { EventEdit.updateDetails(context, ev, t, p, d) }, web = {

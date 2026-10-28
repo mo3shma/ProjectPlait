@@ -710,8 +710,8 @@ private fun DaySheet(state: CalendarState, events: List<CalEvent>, nowMs: Long, 
                     )
                     Text(if (list.isEmpty()) stringResource(R.string.cal_nothing_planned) else pluralStringResource(R.plurals.cal_events, list.size, list.size), style = PlaitType.caption, color = plait.muted)
                 }
-                CircleIconButton(Icons.AutoMirrored.Filled.NavigateBefore, stringResource(R.string.cal_previous_day), { state.select(date.minusDays(1)) }, plait.surface, plait.text, size = 44.dp)
-                CircleIconButton(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.cal_next_day), { state.select(date.plusDays(1)) }, plait.surface, plait.text, size = 44.dp)
+                CircleIconButton(Icons.AutoMirrored.Filled.NavigateBefore, stringResource(R.string.cal_previous_day), { state.select(date.minusDays(1)) }, plait.surface, plait.text, size = 48.dp)
+                CircleIconButton(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.cal_next_day), { state.select(date.plusDays(1)) }, plait.surface, plait.text, size = 48.dp)
             }
             if (list.isEmpty()) {
                 EmptyDay(Modifier.padding(horizontal = 18.dp, vertical = 6.dp))

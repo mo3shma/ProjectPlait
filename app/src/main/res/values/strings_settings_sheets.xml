@@ -536,4 +536,55 @@
     <string name="sheet_new_allow_saving">Allow saving to calendar</string>
     <string name="sheet_new_saving">Saving…</string>
     <string name="sheet_new_save">Save meeting</string>
+
+    <!-- ===== 0.32: first run, backup reminder, reduce transparency ===== -->
+    <string name="settings_solid_title">Reduce transparency</string>
+    <string name="settings_solid_body">Plain solid surfaces instead of glass. Easier to read.</string>
+    <string name="settings_firstrun_lang_title">Choose your language</string>
+    <string name="settings_firstrun_models_title">Speech and summaries on your phone</string>
+    <string name="settings_firstrun_models_body">Two small models turn voice notes into text and write summaries on the phone itself. Nothing is sent to a server.</string>
+    <!-- A model name, then its download size, e.g. "Whisper Base, 160 MB". -->
+    <string name="settings_firstrun_model_row">%1$s, %2$s</string>
+    <string name="settings_firstrun_download">Download both (%1$s)</string>
+    <string name="settings_firstrun_downloading">Downloading. It carries on in the background.</string>
+    <string name="settings_firstrun_continue">Continue</string>
+    <string name="settings_firstrun_nomodel_title">Without a model</string>
+    <string name="settings_firstrun_nomodel_body">Your calendar, day briefs, reminders, written and photo notes, checklists and audio-only voice notes all work. Voice notes are not turned into text and there are no AI summaries until a model is installed. You can add them later in Settings.</string>
+    <string name="settings_wifi_only_title">Download on Wi-Fi only</string>
+    <string name="settings_wifi_only_body">Large downloads wait until you are on Wi-Fi, so mobile data is not used.</string>
+    <string name="settings_backup_never">You have not backed up your notes yet.</string>
+    <plurals name="settings_backup_old">
+        <item quantity="one">Your last backup was %1$d day ago.</item>
+        <item quantity="other">Your last backup was %1$d days ago.</item>
+    </plurals>
+    <string name="settings_backup_last">Last backup: %1$s</string>
+    <string name="settings_backup_auto_title">Scheduled backup</string>
+    <string name="settings_backup_auto_body">About once a week, when you open Plait, an encrypted backup is saved into your sync folder. It uses your sync passphrase.</string>
+    <string name="settings_backup_auto_needs_sync">Set up folder sync first (Settings, Sync).</string>
+    <string name="settings_backup_remind_title">Time for a backup</string>
+    <string name="settings_backup_remind_now">Back up now</string>
+    <string name="settings_backup_remind_where">Settings, You, has Back up.</string>
+    <string name="settings_backup_remind_done">Backup saved to your sync folder.</string>
+    <string name="settings_backup_remind_failed">The backup could not be saved.</string>
+    <string name="sheet_manage_undo_cancelled">Meeting cancelled</string>
+    <string name="sheet_manage_undo_deleted">Meeting deleted</string>
+    <string name="sheet_manage_undo_series">Series deleted</string>
+    <string name="note_task_dismissed">Task dismissed</string>
+    <!-- ===== Settings: widgets ===== -->
+    <string name="settings_widgets_title">Widgets</string>
+    <string name="settings_widgets_note">How the Plait widgets look and what they show. A change reaches every widget on your home screen.</string>
+    <!-- Summary row: "%1$s" is the panel (Clear, Soft or Solid), "%2$s" the colours (Plait or Wallpaper). -->
+    <string name="settings_widgets_summary">%1$s panel, %2$s colours</string>
+    <string name="settings_widgets_panel">Panel</string>
+    <string name="settings_widgets_panel_clear">Clear</string>
+    <string name="settings_widgets_panel_soft">Soft</string>
+    <string name="settings_widgets_panel_solid">Solid</string>
+    <string name="settings_widgets_colours">Colours</string>
+    <string name="settings_widgets_colours_plait">Plait</string>
+    <string name="settings_widgets_colours_wallpaper">Wallpaper</string>
+    <string name="settings_widgets_colours_note">Wallpaper takes your phone\'s Material You colours on Android 12 and up. Light or dark always follows the phone.</string>
+    <string name="settings_widgets_shows">What they show</string>
+    <string name="settings_widgets_join">Join button</string>
+    <string name="settings_widgets_later">What comes next today</string>
+    <string name="settings_widgets_dots">Dots on days with meetings</string>
 </resources>

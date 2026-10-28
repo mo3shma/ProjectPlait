@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -152,6 +153,9 @@ class UndoDelete {
     private var pending by mutableStateOf<Pending?>(null)
     private class Pending(val key: String, val label: String, val commit: () -> Unit)
 
+    /** True while the screen is going away and the pending delete is being committed: a commit must not navigate then. */
+    var leaving = false; private set
+
     fun isHidden(key: String) = key in hidden
 
     /** [label] is the whole message shown beside Undo, e.g. "Deleted note". */
@@ -168,6 +172,8 @@ class UndoDelete {
     @Composable
     fun Host(modifier: Modifier = Modifier) {
         val p = pending
+        // Leaving the screen within the five seconds makes the delete final instead of dropping it.
+        DisposableEffect(Unit) { onDispose { pending?.let { leaving = true; finish(it); leaving = false } } }
         LaunchedEffect(p) { if (p != null) { delay(5000); if (pending === p) finish(p) } }
         AnimatedVisibility(
             visible = p != null, modifier = modifier,
@@ -325,7 +331,7 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                         Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items[i] = item.copy(done = !item.done) }, lift = 2.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items[i] = item.copy(done = !item.done) }, lift = 2.dp), contentAlignment = Alignment.Center) {
                             Icon(
                                 if (item.done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, stringResource(if (item.done) R.string.note_item_done else R.string.note_item_not_done),
                                 tint = if (item.done) plait.accent else plait.muted, modifier = Modifier.size(22.dp),
@@ -336,11 +342,11 @@ fun ChecklistDialog(title: String, initial: List<app.plait.data.memo.Checklist.I
                             textStyle = PlaitType.body.copy(color = plait.text, textDirection = TextDirection.Content), cursorBrush = SolidColor(plait.accent),
                             modifier = Modifier.weight(1f),
                         )
-                        Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items.removeAt(i) }, lift = 2.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).pressable({ items.removeAt(i) }, lift = 2.dp), contentAlignment = Alignment.Center) {
                             Icon(Icons.Filled.Close, stringResource(R.string.note_remove_task), tint = plait.muted, modifier = Modifier.size(20.dp))
                         }
                     }
-                    if (!item.done) DueChip(item.dueMs, { items[i] = items[i].copy(dueMs = it) }, Modifier.padding(start = 46.dp, bottom = 6.dp))
+                    if (!item.done) DueChip(item.dueMs, { items[i] = items[i].copy(dueMs = it) }, Modifier.padding(start = 54.dp, bottom = 6.dp))
                     }
                 }
             }

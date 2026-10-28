@@ -495,4 +495,57 @@
     <string name="sheet_new_allow_saving">السماح بالحفظ في التقويم</string>
     <string name="sheet_new_saving">جارٍ الحفظ…</string>
     <string name="sheet_new_save">حفظ الاجتماع</string>
+
+    <!-- ===== 0.32: first run, backup reminder, reduce transparency ===== -->
+    <string name="settings_solid_title">تقليل الشفافية</string>
+    <string name="settings_solid_body">أسطح صلبة عادية بدل الزجاج، وأسهل في القراءة.</string>
+    <string name="settings_firstrun_lang_title">اختيار اللغة</string>
+    <string name="settings_firstrun_models_title">الكلام والملخصات على هاتفك</string>
+    <string name="settings_firstrun_models_body">نموذجان صغيران يحوّلان الملاحظات الصوتية إلى نص ويكتبان الملخصات على الهاتف نفسه. لا يُرسل شيء إلى أي خادم.</string>
+    <!-- A model name, then its download size, e.g. "Whisper Base, 160 MB". -->
+    <string name="settings_firstrun_model_row">%1$s، %2$s</string>
+    <string name="settings_firstrun_download">تنزيل الاثنين (%1$s)</string>
+    <string name="settings_firstrun_downloading">جارٍ التنزيل، ويستمر في الخلفية.</string>
+    <string name="settings_firstrun_continue">متابعة</string>
+    <string name="settings_firstrun_nomodel_title">من دون نموذج</string>
+    <string name="settings_firstrun_nomodel_body">يعمل التقويم وملخصات اليوم والتذكيرات والملاحظات المكتوبة والمصوّرة وقوائم المهام والملاحظات الصوتية بالصوت فقط. لا تتحول الملاحظات الصوتية إلى نص ولا توجد ملخصات بالذكاء الاصطناعي إلى أن يُثبَّت نموذج. يمكن إضافتها لاحقًا من الإعدادات.</string>
+    <string name="settings_wifi_only_title">التنزيل عبر Wi-Fi فقط</string>
+    <string name="settings_wifi_only_body">تنتظر التنزيلات الكبيرة حتى الاتصال بشبكة Wi-Fi، فلا تُستهلك بيانات الجوال.</string>
+    <string name="settings_backup_never">لم تُنشأ نسخة احتياطية لملاحظاتك بعد.</string>
+    <plurals name="settings_backup_old">
+        <item quantity="zero">آخر نسخة احتياطية كانت اليوم.</item>
+        <item quantity="one">آخر نسخة احتياطية كانت منذ يوم واحد.</item>
+        <item quantity="two">آخر نسخة احتياطية كانت منذ يومين.</item>
+        <item quantity="few">آخر نسخة احتياطية كانت منذ %1$d أيام.</item>
+        <item quantity="many">آخر نسخة احتياطية كانت منذ %1$d يومًا.</item>
+        <item quantity="other">آخر نسخة احتياطية كانت منذ %1$d يوم.</item>
+    </plurals>
+    <string name="settings_backup_last">آخر نسخة احتياطية: %1$s</string>
+    <string name="settings_backup_auto_title">نسخ احتياطي مجدول</string>
+    <string name="settings_backup_auto_body">تُحفظ نسخة احتياطية مشفّرة في مجلد المزامنة مرة كل أسبوع تقريبًا عند فتح Plait، وتستخدم عبارة مرور المزامنة.</string>
+    <string name="settings_backup_auto_needs_sync">يلزم إعداد مزامنة المجلد أولًا (الإعدادات، المزامنة).</string>
+    <string name="settings_backup_remind_title">حان وقت النسخ الاحتياطي</string>
+    <string name="settings_backup_remind_now">نسخ احتياطي الآن</string>
+    <string name="settings_backup_remind_where">يوجد النسخ الاحتياطي في الإعدادات، ثم «أنت».</string>
+    <string name="settings_backup_remind_done">حُفظت النسخة الاحتياطية في مجلد المزامنة.</string>
+    <string name="settings_backup_remind_failed">تعذّر حفظ النسخة الاحتياطية.</string>
+    <string name="sheet_manage_undo_cancelled">أُلغي الاجتماع</string>
+    <string name="sheet_manage_undo_deleted">حُذف الاجتماع</string>
+    <string name="sheet_manage_undo_series">حُذفت السلسلة</string>
+    <string name="note_task_dismissed">تم تجاهل المهمة</string>
+    <string name="settings_widgets_title">الودجات</string>
+    <string name="settings_widgets_note">شكل ودجات Plait وما تعرضه. أي تغيير يصل إلى كل ودجة على شاشتك الرئيسية.</string>
+    <string name="settings_widgets_summary">لوحة %1$s، وألوان %2$s</string>
+    <string name="settings_widgets_panel">اللوحة</string>
+    <string name="settings_widgets_panel_clear">شفافة</string>
+    <string name="settings_widgets_panel_soft">ناعمة</string>
+    <string name="settings_widgets_panel_solid">معتمة</string>
+    <string name="settings_widgets_colours">الألوان</string>
+    <string name="settings_widgets_colours_plait">Plait</string>
+    <string name="settings_widgets_colours_wallpaper">الخلفية</string>
+    <string name="settings_widgets_colours_note">تأخذ «الخلفية» ألوان Material You من هاتفك في أندرويد 12 فما فوق. الفاتح أو الداكن يتبع الهاتف دائمًا.</string>
+    <string name="settings_widgets_shows">ما تعرضه</string>
+    <string name="settings_widgets_join">زر الانضمام</string>
+    <string name="settings_widgets_later">ما يأتي بعد ذلك اليوم</string>
+    <string name="settings_widgets_dots">نقاط تحت الأيام التي فيها اجتماعات</string>
 </resources>

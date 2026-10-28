@@ -253,11 +253,16 @@ fun LaunchCards() {
         Updater.checkInBackground(context)
     }
     when (WhatsNew.show) {
-        WhatsNew.Show.Tour -> OnboardingTour { WhatsNew.tourDone(context) }
+        WhatsNew.Show.Tour -> {
+            val prefs = context.getSharedPreferences("plait", android.content.Context.MODE_PRIVATE)
+            var setupDone by remember { mutableStateOf(prefs.getBoolean("firstrun_setup_done", false)) }
+            if (setupDone) OnboardingTour { WhatsNew.tourDone(context) }
+            else FirstRunSetup { prefs.edit().putBoolean("firstrun_setup_done", true).apply(); setupDone = true }
+        }
         WhatsNew.Show.News -> {
             val news = remember { WhatsNew.current(context) }
             if (news != null) WhatsNewDialog(news) { WhatsNew.newsSeen(context) } else WhatsNew.newsSeen(context)
         }
-        WhatsNew.Show.Nothing -> UpdatePrompt()
+        WhatsNew.Show.Nothing -> { UpdatePrompt(); BackupReminder() }
     }
 }

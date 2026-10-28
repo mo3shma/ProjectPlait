@@ -234,7 +234,7 @@ fun EventScreen(eventId: String, startTab: Int = 0, onBack: () -> Unit, onRecord
                 GlassIconButton(Icons.Filled.EditCalendar, stringResource(R.string.meet_manage_meeting), { manageOpen = true }, backdrop)
             }
         }
-        if (manageOpen) ManageMeetingMenu(ev, onDismiss = { manageOpen = false }, onGone = onBack)
+        if (manageOpen) ManageMeetingMenu(ev, onDismiss = { manageOpen = false }, onGone = onBack, undo = undo)
 
         // Functional layer: primary actions
         Row(
@@ -374,13 +374,13 @@ internal fun RealNoteCard(note: SavedNote, store: NoteStore, onLongPress: () -> 
             Spacer(Modifier.height(10.dp))
             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                CircleIconButton(Icons.Filled.Replay10, stringResource(R.string.note_back_10), { player.skip(-NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+                CircleIconButton(Icons.Filled.Replay10, stringResource(R.string.note_back_10), { player.skip(-NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 48.dp)
                 PlaitButton(
                     NotePlayer.label(player.speed),
                     { speedPrefs.edit().putFloat("play_speed", player.cycleSpeed()).apply() },
                     size = ButtonSize.Small,
                 )
-                CircleIconButton(Icons.Filled.Forward10, stringResource(R.string.note_forward_10), { player.skip(NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 44.dp)
+                CircleIconButton(Icons.Filled.Forward10, stringResource(R.string.note_forward_10), { player.skip(NotePlayer.SKIP_MS) }, plait.surfaceHigh, plait.text, size = 48.dp)
             }
             }
         }

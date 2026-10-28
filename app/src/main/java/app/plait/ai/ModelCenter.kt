@@ -97,6 +97,10 @@ object ModelCenter {
     fun isMetered(context: Context): Boolean =
         (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
 
+    /** "Download on Wi-Fi only": a download that starts on a metered network is held back, with a note, instead of using mobile data. */
+    fun wifiOnly(context: Context): Boolean = prefs(context).getBoolean("models_wifi_only", false)
+    fun setWifiOnly(context: Context, on: Boolean) { prefs(context).edit().putBoolean("models_wifi_only", on).apply() }
+
     fun download(context: Context, spec: ModelSpec) {
         if (jobs[spec.id]?.isActive == true) return
         val app = context.applicationContext
@@ -104,6 +108,7 @@ object ModelCenter {
         if (isInstalled(app, spec.id) || adopt(app, spec)) return
         runCatching { ModelFinder.scanThisPhone(app) }
         if (isInstalled(app, spec.id)) return
+        if (wifiOnly(app) && isMetered(app)) { states[spec.id] = ModelState.Failed(Txt.s(R.string.ai_dl_wifi_only)); return }
         val root = dir(app, spec.id).also { it.mkdirs() }
         val needed = spec.bytes - spec.files.sumOf { File(root, it.name + ".part").length() }
         if (root.usableSpace < needed + 50_000_000L) {

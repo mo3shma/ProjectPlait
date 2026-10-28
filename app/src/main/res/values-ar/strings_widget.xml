@@ -10,4 +10,19 @@
     <string name="widget_label_quick">إضافة سريعة في Plait</string>
     <string name="widget_tile_task_list">قائمة مهام</string>
     <string name="widget_tile_text_note">ملاحظة نصية</string>
+    <string name="widget_description_tasks">مهامك المفتوحة من القوائم، مع نقرة واحدة لبدء قائمة جديدة. &#x2066;3×2&#x2069;، قابل لتغيير الحجم.</string>
+    <string name="widget_description_month">الشهر بنظرة واحدة، مع نقطة تحت كل يوم فيه اجتماعات. &#x2066;4×4&#x2069;، قابل لتغيير الحجم.</string>
+    <string name="widget_label_tasks">مهام Plait</string>
+    <string name="widget_label_month">شهر Plait</string>
+    <string name="widget_tasks_title">المهام</string>
+    <string name="widget_tasks_empty">لا توجد مهام مفتوحة</string>
+    <plurals name="widget_tasks_more">
+        <item quantity="zero">+%d مهمة أخرى</item>
+        <item quantity="one">+مهمة أخرى</item>
+        <item quantity="two">+مهمتان أخريان</item>
+        <item quantity="few">+%d مهام أخرى</item>
+        <item quantity="many">+%d مهمة أخرى</item>
+        <item quantity="other">+%d مهمة أخرى</item>
+    </plurals>
+    <string name="wdg_preview_month">أكتوبر ٢٠٢٦</string>
 </resources>

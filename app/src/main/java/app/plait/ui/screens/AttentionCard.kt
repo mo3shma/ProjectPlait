@@ -115,9 +115,9 @@ private fun AttentionRow(item: AttentionItem, nowMs: Long, ink: Color, onOpenEve
     val markDone = stringResource(R.string.home_att_mark_done, Bidi.isolate(item.text))
     Row(Modifier.fillMaxWidth().alpha(if (quiet) 0.7f else 1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         if (item.kind == AttentionItem.Kind.Open) {
-            // A 40.dp touch area around the 28.dp ring.
+            // A 48.dp touch area around the 28.dp ring.
             Box(
-                Modifier.size(40.dp).clip(CircleShape)
+                Modifier.size(48.dp).clip(CircleShape)
                     .clickable(role = Role.Button) { AttentionTasks.tick(context, item) }
                     .semantics { contentDescription = markDone },
                 contentAlignment = Alignment.Center,

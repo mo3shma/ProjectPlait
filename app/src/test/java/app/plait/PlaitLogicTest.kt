@@ -45,6 +45,25 @@ class CallLinksTest {
         assertEquals(CallProvider.Zoom, link?.provider)
     }
 
+    @Test fun bareHostIsMatchedAndNormalisedToHttps() {
+        assertEquals("https://meet.google.com/abc-defg-hij", CallLinks.find("meet.google.com/abc-defg-hij")?.url)
+        assertEquals(CallProvider.Zoom, CallLinks.find("acme.zoom.us/j/123?pwd=a")?.provider)
+        assertEquals("https://acme.zoom.us/j/123?pwd=a", CallLinks.find("acme.zoom.us/j/123?pwd=a")?.url)
+        assertEquals("https://teams.microsoft.com/meet/987?p=a", CallLinks.find("teams.microsoft.com/meet/987?p=a")?.url)
+        assertEquals(CallProvider.Webex, CallLinks.find("acme.webex.com/meet/jo")?.provider)
+    }
+
+    @Test fun bareHostWithoutMeetingPathDoesNotMatch() {
+        assertNull(CallLinks.find("zoom.us"))
+        assertNull(CallLinks.find("meet.google.com"))
+        assertNull(CallLinks.find("see teams.microsoft.com or acme.webex.com for details"))
+        assertNull(CallLinks.find("notmeet.google.com/abc-defg-hij"))
+    }
+
+    @Test fun fullUrlIsUnchanged() {
+        assertEquals("https://meet.google.com/abc-defg-hij", CallLinks.find("https://meet.google.com/abc-defg-hij")?.url)
+    }
+
     @Test fun noLinkReturnsNull() {
         assertNull(CallLinks.find(null, "", "Lunch at Sourdough & Co. https://example.com/menu"))
     }

@@ -52,8 +52,11 @@ import app.plait.ui.theme.plait
 internal fun SuggestedTasksCard(ev: CalEvent) {
     val context = LocalContext.current
     LaunchedEffect(Unit) { TaskIdeas.load(context) }
-    val ideas = TaskIdeas.items.filter { it.eventId == ev.id }
-    if (ideas.isEmpty()) return
+    val undo = remember { UndoDelete() }
+    val all = TaskIdeas.items.filter { it.eventId == ev.id }
+    val ideas = all.filter { !undo.isHidden(it.id) }
+    if (all.isEmpty()) return
+    if (ideas.isEmpty()) { undo.Host(Modifier.fillMaxWidth()); return }
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val add: (List<TaskIdea>) -> Unit = { list ->
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -80,11 +83,13 @@ internal fun SuggestedTasksCard(ev: CalEvent) {
                     Text(dueMs?.let { AttentionTasks.dueLabel(it, now) } ?: stringResource(R.string.note_tasks_no_due, app.plait.i18n.Bidi.isolate(TaskReminders.label(TaskSuggester.remindAt(idea.due, now)))), style = PlaitType.caption, color = plait.muted)
                 }
                 PlaitButton(stringResource(R.string.common_add), { add(listOf(idea)) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
-                IconButton(onClick = { TaskIdeas.decide(context, idea) }) {
+                val dismissed = stringResource(R.string.note_task_dismissed)
+                IconButton(onClick = { undo.delete(idea.id, dismissed) { TaskIdeas.decide(context, idea) } }, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Filled.Close, stringResource(R.string.common_dismiss), tint = plait.muted)
                 }
             }
         }
+        undo.Host(Modifier.fillMaxWidth())
         if (ideas.size > 1) PlaitButton(stringResource(R.string.note_tasks_add_all, ideas.size), { add(ideas) }, style = ButtonStyle.Secondary, size = ButtonSize.Small)
     }
 }

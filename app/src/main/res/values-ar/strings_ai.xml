@@ -144,4 +144,6 @@
     <string name="ai_example_second_name">ليلى</string>
     <string name="ai_example_day">الثلاثاء</string>
     <string name="ai_example_you">أنت</string>
+
+    <string name="ai_dl_wifi_only">في انتظار Wi-Fi. خيار Wi-Fi فقط مفعّل؛ يمكن الاتصال بشبكة Wi-Fi أو إيقافه من الإعدادات، ثم الذكاء الاصطناعي.</string>
 </resources>

@@ -232,7 +232,7 @@ internal fun MemoSummary(memo: Memo) {
             memo.aiBy?.let { app.plait.ui.PlaitBadge(it) }
             androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
             if (upToDate) Text(stringResource(R.string.meet_up_to_date), style = PlaitType.caption, color = plait.muted)
-            else if (busy == null) CircleIconButton(Icons.Filled.Refresh, stringResource(R.string.note_summarise_again), run, app.plait.ui.GlassTone.Lavender.deep, plait.text, size = 32.dp, iconSize = 18.dp)
+            else if (busy == null) CircleIconButton(Icons.Filled.Refresh, stringResource(R.string.note_summarise_again), run, app.plait.ui.GlassTone.Lavender.deep, plait.text, size = 48.dp, iconSize = 18.dp)
         }
         Text(memo.ai, style = PlaitType.body.userText(), color = plait.text, modifier = Modifier.fillMaxWidth())
     } else if (busy == null && app.plait.data.memo.MemoAi.worthAnalysing(memo)) {
@@ -278,7 +278,7 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).pressable({ renaming = true }, lift = 2.dp),
             )
             Text(stringResource(R.string.common_n_of_m, done, items.size), style = PlaitType.monoSmall, color = plait.muted)
-            CircleIconButton(Icons.Filled.Edit, stringResource(R.string.note_rename_checklist), { renaming = true }, plait.surfaceHigh, plait.text, size = 32.dp, iconSize = 16.dp)
+            CircleIconButton(Icons.Filled.Edit, stringResource(R.string.note_rename_checklist), { renaming = true }, plait.surfaceHigh, plait.text, size = 48.dp, iconSize = 16.dp)
         }
         if (renaming) RenameDialog(memo.title.orEmpty(), onSave = { t ->
             memos.update(memo.copy(title = t.trim().ifEmpty { null }))
@@ -321,7 +321,7 @@ internal fun ChecklistCard(memo: Memo, memos: MemoStore, onLongPress: () -> Unit
                     }
                 },
             )
-            CircleIconButton(Icons.Filled.Add, stringResource(R.string.note_add_item), { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }, plait.accent, plait.onAccent, size = 44.dp, iconSize = 20.dp)
+            CircleIconButton(Icons.Filled.Add, stringResource(R.string.note_add_item), { if (draft.isNotBlank()) { save(app.plait.data.memo.Checklist.add(memo.text, draft)); draft = "" } }, plait.accent, plait.onAccent, size = 48.dp, iconSize = 20.dp)
         }
     }
 }

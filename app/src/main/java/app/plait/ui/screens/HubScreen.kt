@@ -97,6 +97,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.layout.FlowRow
+import app.plait.data.backup.AutoBackup
 import app.plait.data.backup.BackupManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -186,7 +187,7 @@ fun HubScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val backdrop = rememberLayerBackdrop()
-    remember(context) { Calendars.load(context); app.plait.data.Profile.load(context); app.plait.data.week.WorkWeek.load(context) }
+    remember(context) { Calendars.load(context); app.plait.data.Profile.load(context); app.plait.data.week.WorkWeek.load(context); app.plait.widget.WidgetPrefs.load(context) }
     val calendarAccess = rememberCalendarAccess()
     val googleSync = rememberGoogleSync()
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -306,6 +307,19 @@ fun HubScreen(onBack: () -> Unit) {
     val advSummary = stringResource(R.string.settings_adv_google)
     val versionLabel = stringResource(R.string.settings_updates_version, app.plait.data.update.Updater.currentVersion(context))
     val weekSummary = app.plait.data.week.WorkWeek.label()
+    val panelNames = listOf(
+        app.plait.widget.WidgetOpacity.Clear to stringResource(R.string.settings_widgets_panel_clear),
+        app.plait.widget.WidgetOpacity.Soft to stringResource(R.string.settings_widgets_panel_soft),
+        app.plait.widget.WidgetOpacity.Solid to stringResource(R.string.settings_widgets_panel_solid),
+    )
+    val colourNames = listOf(
+        app.plait.widget.WidgetTheme.Plait to stringResource(R.string.settings_widgets_colours_plait),
+        app.plait.widget.WidgetTheme.Wallpaper to stringResource(R.string.settings_widgets_colours_wallpaper),
+    )
+    val widgetsSummary = stringResource(
+        R.string.settings_widgets_summary,
+        panelNames.first { it.first == app.plait.widget.WidgetPrefs.opacity }.second, colourNames.first { it.first == app.plait.widget.WidgetPrefs.theme }.second,
+    )
 
     val section = app.plait.ui.HomeState.hubSection
     val goBack: () -> Unit = { if (section != null) app.plait.ui.HomeState.hubSection = null else onBack() }
@@ -599,6 +613,43 @@ fun HubScreen(onBack: () -> Unit) {
                             }
                             PlaitSwitch(app.plait.ui.theme.Appearance.calm, { app.plait.ui.theme.Appearance.setCalm(context, !app.plait.ui.theme.Appearance.calm) }, stringResource(R.string.settings_calm_title))
                         }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_solid_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_solid_body), style = PlaitType.caption, color = plait.muted)
+                            }
+                            PlaitSwitch(app.plait.ui.theme.Appearance.solid, { app.plait.ui.theme.Appearance.setSolid(context, !app.plait.ui.theme.Appearance.solid) }, stringResource(R.string.settings_solid_title))
+                        }
+                    }
+                }
+
+                }
+
+                fold(section, "widgets", R.string.settings_widgets_title, widgetsSummary) {
+                item { FoldNote(stringResource(R.string.settings_widgets_note)) }
+                item {
+                    HubCard {
+                        val widgets = app.plait.widget.WidgetPrefs
+                        Text(stringResource(R.string.settings_widgets_panel), style = PlaitType.bodyStrong, color = plait.text)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            panelNames.forEach { (o, name) -> HubChip(name, widgets.opacity == o, { widgets.setOpacity(context, o) }) }
+                        }
+                        Text(stringResource(R.string.settings_widgets_colours), style = PlaitType.bodyStrong, color = plait.text)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colourNames.forEach { (t, name) -> HubChip(name, widgets.theme == t, { widgets.setTheme(context, t) }) }
+                        }
+                        Text(stringResource(R.string.settings_widgets_colours_note), style = PlaitType.caption, color = plait.muted)
+                        Text(stringResource(R.string.settings_widgets_shows), style = PlaitType.bodyStrong, color = plait.text)
+                        listOf(
+                            Triple(R.string.settings_widgets_join, widgets.showJoin, { v: Boolean -> widgets.setShowJoin(context, v) }),
+                            Triple(R.string.settings_widgets_later, widgets.showLater, { v: Boolean -> widgets.setShowLater(context, v) }),
+                            Triple(R.string.settings_widgets_dots, widgets.showDots, { v: Boolean -> widgets.setShowDots(context, v) }),
+                        ).forEach { (label, on, set) ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text(stringResource(label), style = PlaitType.body, color = plait.text, modifier = Modifier.weight(1f))
+                                PlaitSwitch(on, { set(!on) }, stringResource(label))
+                            }
+                        }
                     }
                 }
 
@@ -645,6 +696,16 @@ fun HubScreen(onBack: () -> Unit) {
                             pendingImport?.let { u -> HubBtn(stringResource(R.string.settings_backup_retry), { runImport(u) }, style = ButtonStyle.Primary, enabled = !backupBusy && passphrase.isNotEmpty()) }
                         }
                         backupNote?.let { Text(it, style = PlaitType.caption, color = plait.text) }
+                        AutoBackup.last(context).takeIf { it > 0 }?.let { Text(stringResource(R.string.settings_backup_last, Bidi.isolate(app.plait.data.TimeFmt.fmt("EEE d MMM").format(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault())))), style = PlaitType.caption, color = plait.muted) }
+                        var autoBackup by remember { mutableStateOf(AutoBackup.enabled(context)) }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.settings_backup_auto_title), style = PlaitType.bodyStrong, color = plait.text)
+                                Text(stringResource(R.string.settings_backup_auto_body), style = PlaitType.caption, color = plait.muted)
+                                if (!AutoBackup.canRun(context)) Text(stringResource(R.string.settings_backup_auto_needs_sync), style = PlaitType.caption, color = plait.signal)
+                            }
+                            PlaitSwitch(autoBackup, { if (autoBackup || AutoBackup.canRun(context)) { autoBackup = !autoBackup; AutoBackup.setEnabled(context, autoBackup) } }, stringResource(R.string.settings_backup_auto_title))
+                        }
                         Text(
                             stringResource(R.string.settings_backup_import_note),
                             style = PlaitType.caption, color = plait.muted,
@@ -699,14 +760,14 @@ fun HubScreen(onBack: () -> Unit) {
                 }
 
                 fold(section, "updates", R.string.settings_updates_title, versionLabel) {
-                item { FoldNote(stringResource(R.string.settings_updates_note)) }
+                if (!app.plait.BuildConfig.PLAY) item { FoldNote(stringResource(R.string.settings_updates_note)) }
                 item {
                     HubCard {
                         val st = app.plait.data.update.Updater.state
                         var showUpdate by remember { mutableStateOf(false) }
                         var showNews by remember { mutableStateOf(false) }
                         Text(versionLabel, style = PlaitType.bodyStrong, color = plait.text)
-                        Text(
+                        if (!app.plait.BuildConfig.PLAY) Text(
                             when (st) {
                                 is app.plait.data.update.UpdateState.Checking -> stringResource(R.string.common_checking)
                                 is app.plait.data.update.UpdateState.UpToDate -> stringResource(R.string.settings_update_latest)
@@ -722,12 +783,13 @@ fun HubScreen(onBack: () -> Unit) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             val waiting = st is app.plait.data.update.UpdateState.Available || st is app.plait.data.update.UpdateState.Downloading ||
                                 st is app.plait.data.update.UpdateState.NeedsPermission || (st is app.plait.data.update.UpdateState.Failed && st.info != null)
-                            if (waiting) HubBtn(stringResource(R.string.settings_update_button), { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
+                            if (app.plait.BuildConfig.PLAY) Unit
+                            else if (waiting) HubBtn(stringResource(R.string.settings_update_button), { showUpdate = true }, style = ButtonStyle.Primary, size = ButtonSize.Small)
                             else HubBtn(stringResource(R.string.settings_update_check), { app.plait.data.update.Updater.check(context) }, style = ButtonStyle.Primary, size = ButtonSize.Small)
                             HubBtn(stringResource(R.string.settings_update_whats_new), { showNews = true }, size = ButtonSize.Small)
                             HubBtn(stringResource(R.string.settings_update_tour), { app.plait.data.update.WhatsNew.show = app.plait.data.update.WhatsNew.Show.Tour }, size = ButtonSize.Small)
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (!app.plait.BuildConfig.PLAY) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             var auto by remember { mutableStateOf(app.plait.data.update.Updater.autoCheck(context)) }
                             Column(Modifier.weight(1f)) {
                                 Text(stringResource(R.string.settings_update_auto_title), style = PlaitType.bodyStrong, color = plait.text)
@@ -862,12 +924,12 @@ internal fun HubField(
 internal data class HubLook(val tone: GlassTone, val rotation: Int)
 internal val LocalHubLook = androidx.compose.runtime.compositionLocalOf { HubLook(GlassTone.Sky, 0) }
 
-internal val hubSectionIds = listOf("accounts", "add", "import", "send", "ai", "reminders", "week", "appearance", "language", "you", "sync", "diag", "updates", "adv")
+internal val hubSectionIds = listOf("accounts", "add", "import", "send", "ai", "reminders", "week", "appearance", "widgets", "language", "you", "sync", "diag", "updates", "adv")
 
 /** Neighbouring sections never share a tone. */
 internal fun hubTone(id: String): GlassTone = when (id) {
     "accounts", "appearance", "sync" -> GlassTone.Sky
-    "add", "send", "you" -> GlassTone.Mint
+    "add", "send", "you", "widgets" -> GlassTone.Mint
     "import", "week", "diag" -> GlassTone.Peach
     "ai", "updates" -> GlassTone.Lavender
     else -> GlassTone.Rose

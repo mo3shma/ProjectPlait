@@ -100,6 +100,18 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info" />
         </receiver>
+        <receiver android:name=".widget.TasksWidget" android:exported="true" android:label="@string/widget_label_tasks">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tasks_info" />
+        </receiver>
+        <receiver android:name=".widget.MonthWidget" android:exported="true" android:label="@string/widget_label_month">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_month_info" />
+        </receiver>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"
