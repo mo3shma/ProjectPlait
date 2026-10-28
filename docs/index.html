@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#eef0fa">
 <title>Plait · Every calendar, one day</title>
 <meta name="description" content="Plait is an Android calendar that merges every account into one day, with voice, written, photo and checklist notes, meeting management, a day-brief widget and AI that runs on the phone.">
-<script>document.documentElement.classList.add('js')</script>
+<script>document.documentElement.classList.add('js');if(window.chrome||(navigator.userAgentData&&navigator.userAgentData.brands.some(b=>/Chrom/.test(b.brand))))document.documentElement.classList.add('lens')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=AR+One+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,13 +17,14 @@
   --c1:#ffe3d3; --c2:#e6e0fa; --c3:#d5f0e3; --c4:#d6e7ff; --c5:#fdeccb; --c6:#fbd9e0;
   --b1:#c9cdf5; --b2:#f9cfc2; --b3:#bfe6d6;
   --glass:rgba(255,255,255,.72);
+  --edge:rgba(255,255,255,.85); --edge2:rgba(255,255,255,.3); --gblur:blur(16px) saturate(1.7) brightness(1.04);
   --m:clamp(16px,4vw,56px); --r:28px;
   --f:"AR One Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0d0e13; --card:#181a22; --ink:#eef0f6; --muted:#bcc1d1; --indigo:#aab4ff; --indigo-soft:#2a2f55; --fab:#ff7a63; --fab-ink:#14151c;
   --c1:#3a2a26; --c2:#2c2845; --c3:#1f3329; --c4:#1f2f4a; --c5:#3a3220; --c6:#3d2630;
-  --b1:#2b3070; --b2:#5a2e26; --b3:#1d4a3a; --glass:rgba(24,26,34,.72);
+  --b1:#2b3070; --b2:#5a2e26; --b3:#1d4a3a; --glass:rgba(24,26,34,.6); --edge:rgba(255,255,255,.28); --edge2:rgba(255,255,255,.08);
 }}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;scroll-padding-top:24px}
@@ -49,9 +50,9 @@ h2{font-size:clamp(34px,5vw,68px);max-width:14em}
 .blob.b{width:58vmax;height:58vmax;right:-18vmax;top:4vmax;background:radial-gradient(closest-side,var(--wb),transparent);animation:drift2 19s ease-in-out infinite alternate}
 .blob.c{width:54vmax;height:54vmax;left:18vmax;bottom:-30vmax;background:radial-gradient(closest-side,var(--wc),transparent);animation:drift3 22s ease-in-out infinite alternate}
 /* the welcome screen has its own sky: light by day, dark in the evening, whatever the system theme */
-.welcome{--bg:#f1f2f8;--ink:#14151c;--muted:#454a5c;--glass:rgba(255,255,255,.74);--indigo:#4b59d9;--indigo-soft:#e3e6fb;--wa:#c9cdf5;--wb:#f9cfc2;--wc:#bfe6d6;background:var(--bg);color:var(--ink);transition:background .9s,color .9s}
+.welcome{--bg:#f1f2f8;--ink:#14151c;--muted:#454a5c;--glass:rgba(255,255,255,.5);--edge:rgba(255,255,255,.9);--edge2:rgba(255,255,255,.35);--indigo:#4b59d9;--indigo-soft:#e3e6fb;--wa:#c9cdf5;--wb:#f9cfc2;--wc:#bfe6d6;background:var(--bg);color:var(--ink);transition:background .9s,color .9s}
 .welcome[data-mode="1"]{--wa:#bfe0f7;--wb:#fbe3b8;--wc:#d6c9f5}
-.welcome[data-mode="2"]{--bg:#0d0e13;--ink:#f4f4fb;--muted:#c8cbe0;--glass:rgba(24,26,34,.74);--indigo:#aab4ff;--indigo-soft:#2a2f55;--wa:#4a3a7a;--wb:#7a3b52;--wc:#1f3d5a}
+.welcome[data-mode="2"]{--bg:#0d0e13;--ink:#f4f4fb;--muted:#c8cbe0;--glass:rgba(24,26,34,.5);--edge:rgba(255,255,255,.3);--edge2:rgba(255,255,255,.08);--indigo:#aab4ff;--indigo-soft:#2a2f55;--wa:#4a3a7a;--wb:#7a3b52;--wc:#1f3d5a}
 @keyframes drift1{to{transform:translate(12vmax,10vmax) scale(1.12)}}
 @keyframes drift2{to{transform:translate(-10vmax,12vmax) scale(.92)}}
 @keyframes drift3{to{transform:translate(-8vmax,-9vmax) scale(1.15)}}
@@ -77,7 +78,7 @@ h2{font-size:clamp(34px,5vw,68px);max-width:14em}
 
 .stage{position:relative;justify-self:center;display:flex;flex-direction:column;align-items:center;gap:18px;opacity:0;animation:rise 1.2s .7s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes rise{from{transform:translateY(14vh) scale(.94)}to{opacity:1;transform:none}}
-.seg{display:flex;padding:5px;border-radius:999px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;z-index:3}
+.seg{display:flex;padding:5px;border-radius:999px;background:var(--glass);position:relative;z-index:3}
 .seg button{min-height:44px;border:0;background:transparent;color:var(--ink);font:600 15px var(--f);padding:10px 20px;border-radius:999px;cursor:pointer;position:relative;overflow:hidden;transition:background .3s,color .3s}
 .seg button[aria-pressed="true"]{background:var(--indigo-soft);color:var(--indigo)}
 .seg button i{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--indigo);transform:scaleX(0);transform-origin:left}
@@ -89,7 +90,7 @@ h2{font-size:clamp(34px,5vw,68px);max-width:14em}
 .phone .scr{position:relative;width:100%;height:100%;border-radius:calc(clamp(34px,4.4svh,48px) - 9px);overflow:hidden}
 .phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.04);transition:opacity .9s,transform 1.2s}
 .phone img.on{opacity:1;transform:none}
-.chip{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:20px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font:600 14px/1.25 var(--f);white-space:nowrap;color:var(--ink);animation:float 5s ease-in-out infinite alternate;box-shadow:0 14px 34px -14px rgba(0,0,0,.28)}
+.chip{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:20px;background:var(--glass);font:600 14px/1.25 var(--f);white-space:nowrap;color:var(--ink);animation:float 5s ease-in-out infinite alternate}
 .chip b{display:block;font-size:15px} .chip small{color:var(--muted);font-weight:500;font-size:12.5px}
 .chip i{width:10px;height:36px;border-radius:5px;background:var(--cc)}
 .chip.k1{--cc:#6c7cff;left:-34%;top:20%;animation-delay:-1s}
@@ -140,7 +141,7 @@ section{padding:clamp(80px,11vw,170px) var(--m) 0}
 
 .film{margin:clamp(80px,11vw,170px) var(--m) 0;position:relative;border-radius:40px;overflow:hidden;background:#14151c}
 .film video{width:100%;aspect-ratio:16/9;object-fit:cover}
-.film a.cap{position:absolute;left:20px;bottom:20px;padding:12px 20px;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-decoration:none;font-weight:600;font-size:15px}
+.film a.cap{position:absolute;left:20px;bottom:20px;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px}
 
 .widgets{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:92px;gap:12px;max-width:460px;justify-self:end;width:100%}
 .wd{border-radius:24px;padding:14px 16px;color:#16181f;font:600 13px/1.3 var(--f);overflow:hidden}
@@ -196,13 +197,25 @@ td small{display:block;color:var(--muted);font-size:13.5px}
 footer{margin-top:90px;padding:0 var(--m) 20px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 footer a{color:var(--ink)}
 
+
+/* ---------- liquid glass: blur, a lit rim, and (Chrome/Edge) a lens that bends what is behind ---------- */
+.seg,.chip,.dock,.film a.cap{
+  background:var(--glass);
+  -webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);
+  box-shadow:inset 1.5px 1.5px 0 var(--edge),inset -1px -1px 0 var(--edge2),inset 0 0 22px var(--edge2),0 14px 34px -14px rgba(0,0,0,.28);
+}
+.lens .seg,.lens .chip,.lens .dock,.lens .film a.cap{-webkit-backdrop-filter:blur(5px) url(#lens) saturate(1.7) brightness(1.04);backdrop-filter:blur(5px) url(#lens) saturate(1.7) brightness(1.04)}
+.agenda,.panel,.perm{position:relative}
+.fabbtn{box-shadow:inset 2px 2px 0 rgba(255,255,255,.45),inset -2px -2px 0 rgba(0,0,0,.12),0 16px 32px -10px rgba(0,0,0,.35)}
+.btn.soft{-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur);box-shadow:inset 1.5px 1.5px 0 var(--edge),inset -1px -1px 0 var(--edge2)}
+
 /* ---------- app dock ---------- */
 .dockwrap{position:fixed;z-index:50;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;padding:0 14px;pointer-events:none}
-.dock{pointer-events:auto;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 16px 40px -14px rgba(0,0,0,.28)}
+.dock{pointer-events:auto;display:flex;gap:4px;padding:6px;border-radius:999px;}
 .dock a{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:76px;padding:8px 12px 7px;border-radius:999px;text-decoration:none;font:600 12px var(--f);color:var(--ink);transition:background .3s,color .3s}
 .dock a svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dock a.on{background:var(--indigo-soft);color:var(--indigo)}
-.fabbtn{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:var(--fab);color:var(--fab-ink);display:grid;place-items:center;box-shadow:0 16px 36px -10px rgba(0,0,0,.3);transition:transform .25s}
+.fabbtn{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:var(--fab);color:var(--fab-ink);display:grid;place-items:center;transition:transform .25s}
 .fabbtn:hover{transform:scale(1.07) rotate(8deg)} .fabbtn:active{transform:scale(.94)}
 .fabbtn svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 
@@ -223,7 +236,7 @@ footer a{color:var(--ink)}
   .seg button{padding:8px 14px;font-size:14px}
   .phone{height:min(54svh,540px)}
   .toggle button{font-size:16px;padding:10px 22px}
-  .dock{background:color-mix(in srgb,var(--card) 94%,transparent);padding:5px;gap:2px}
+  .dock{padding:5px;gap:2px}
   .dock a{min-width:56px;padding:7px 8px 6px;font-size:12px;gap:1px}.dock a svg{width:22px;height:22px}
   .fabbtn{width:56px;height:56px}.fabbtn svg{width:24px;height:24px}
   .demo,.split,.priv,.looks{grid-template-columns:1fr}
@@ -246,6 +259,12 @@ footer a{color:var(--ink)}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <filter id="lens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feImage id="mapx" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g'%3E%3Cstop offset='0' stop-color='%23ff8080'/%3E%3Cstop offset='.2' stop-color='%23808080'/%3E%3Cstop offset='.8' stop-color='%23808080'/%3E%3Cstop offset='1' stop-color='%2300ff80' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='80' fill='%23808080'/%3E%3Crect width='200' height='80' fill='url(%23g)'/%3E%3C/svg%3E" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="m"/>
+    <feDisplacementMap in="SourceGraphic" in2="m" scale="16" xChannelSelector="R" yChannelSelector="B"/>
+  </filter>
+</defs></svg>
 <a class="skip" href="#features">Skip to content</a>
 
 <header class="welcome" id="top" data-mode="0">
