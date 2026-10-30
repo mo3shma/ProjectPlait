@@ -15,7 +15,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "app.plait"
+        applicationId = "com.plait.calendar"
         minSdk = 26
         targetSdk = 36
         versionCode = 60

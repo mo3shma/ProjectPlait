@@ -127,7 +127,7 @@ Plait isn't on Google Play yet, so you install the APK yourself. It takes about 
 - **Google directly:** needs a one-time Google Cloud setup. Plait holds no client ID or secret, and Google recognises the app by its package name and signing certificate.
   1. In [console.cloud.google.com](https://console.cloud.google.com), create a project and enable the **Google Calendar API**.
   2. Set up the OAuth consent screen: External, add yourself as a test user, and add the `calendar.readonly` and `calendar.events` scopes.
-  3. Credentials → OAuth client ID → **Android**, with package `app.plait` and the SHA-1 of the APK you installed. For the APK from the Releases page that's `77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC`.
+  3. Credentials → OAuth client ID → **Android**, with package `com.plait.calendar` and the SHA-1 of the APK you installed. For the APK from the Releases page that's `77:EC:81:98:56:2D:3C:F1:81:44:EC:17:45:7B:31:B6:07:2E:52:BC`.
   4. In Plait, go to Settings → Advanced and switch on **Read Google directly**.
 
 ### Good to know
