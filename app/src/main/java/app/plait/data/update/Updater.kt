@@ -68,7 +68,7 @@ object Updater {
     }
 
     fun check(context: Context) {
-        if (job?.isActive == true) return
+        if (app.plait.BuildConfig.PLAY || job?.isActive == true) return
         val app = context.applicationContext
         state = UpdateState.Checking
         job = scope.launch {
@@ -119,7 +119,7 @@ object Updater {
 
     /** Downloads the update (resuming a part already on the phone) and installs it. */
     fun download(context: Context, info: UpdateInfo) {
-        if (job?.isActive == true && state is UpdateState.Downloading) return
+        if (app.plait.BuildConfig.PLAY || (job?.isActive == true && state is UpdateState.Downloading)) return
         val app = context.applicationContext
         val dir = File(app.cacheDir, "updates").apply { mkdirs() }
         dir.listFiles()?.filter { !it.name.startsWith("plait-${info.version}.") }?.forEach { it.delete() } // older updates

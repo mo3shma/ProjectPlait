@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plait privacy policy</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{color-scheme:light dark;--bg:#f1f2f8;--card:#fff;--ink:#14151c;--muted:#555a6b;--indigo:#4b59d9}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0e13;--card:#181a22;--ink:#eef0f6;--muted:#bcc1d1;--indigo:#aab4ff}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:48px 16px 96px}
+h1{font-size:2rem;margin:0 0 4px}h2{font-size:1.25rem;margin:36px 0 8px}
+p,li{color:var(--ink)}.muted{color:var(--muted)}
+a{color:var(--indigo)}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--bg);font-size:.95rem}
+code{font-size:.88em}
+</style>
+</head>
+<body>
+<main>
+<h1>Plait privacy policy</h1>
+<p class="muted">Last updated 31 October 2026. Applies to the Plait Android app (<code>app.plait</code>).</p>
+
+<p>Plait is a calendar and meeting-notes app. It has no account, no analytics, no ads and no server of its own. I do not collect, receive or sell any information about you. Everything below happens on your phone unless it says otherwise.</p>
+
+<h2>What Plait works with, and where it stays</h2>
+<table>
+<tr><th>Data</th><th>Why</th><th>Where it goes</th></tr>
+<tr><td>Calendar events (from calendars already on your phone)</td><td>Show your day, and save meetings, edits and replies you make</td><td>Read from and written to Android's calendar. Not sent to me.</td></tr>
+<tr><td>Voice notes and transcripts</td><td>Record a note and turn it into a transcript, summary and tasks</td><td>Recorded and transcribed on the phone. Stored in the app's private storage.</td></tr>
+<tr><td>Written notes, checklists, photos and text read from photos</td><td>Your meeting notes and search</td><td>Stored in the app's private storage. Photo text is read on the phone.</td></tr>
+<tr><td>Emails and notes you share to Plait, and backup files you choose</td><td>Turn a shared email into notes, and back up or restore your data</td><td>Handled on the phone. Plait reads only what you share or pick.</td></tr>
+<tr><td>Contacts and pictures you pick</td><td>Add guests, attach photos</td><td>Through Android's own pickers, so Plait sees only what you choose.</td></tr>
+<tr><td>AI summaries and answers</td><td>Summaries, prep, search answers</td><td>Run by language models on the phone. Nothing you write or say is sent to an AI service.</td></tr>
+</table>
+
+<h2>When Plait uses the network</h2>
+<ul>
+<li><b>Calendar links (.ics)</b> you add: Plait downloads the link you gave it.</li>
+<li><b>Google Calendar</b>, only if you connect it: Plait asks Google for permission to read and edit your events (<code>calendar.readonly</code> and <code>calendar.events</code>) and talks to Google's Calendar API directly from your phone. The data goes between your phone and Google. I never see it. Plait's use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. You can disconnect at any time in Plait, or at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+<li><b>Model downloads</b> you start: Plait downloads AI and speech models from public hosts (Hugging Face and Google). Those hosts see a normal download request, as any browser would send. Once a model is on the phone, it works offline.</li>
+<li><b>A sync folder</b> you choose (for example Drive, Dropbox or Nextcloud): Plait writes copies of your notes there, encrypted on the phone with a passphrase only you know. Plait itself talks to no sync server.</li>
+</ul>
+<p>The Google Play edition does not check for updates itself. Google Play does that. The edition downloaded from GitHub looks up the latest release on <code>api.github.com</code> when it opens (you can switch this off in Settings) and sends nothing about you.</p>
+
+<h2>Permissions</h2>
+<ul>
+<li><b>Calendar (read and write):</b> show your calendars and save the changes you make.</li>
+<li><b>Microphone, and a foreground service while recording:</b> voice notes, including with the screen off. Plait only records when you start a recording, and shows a notification while it does.</li>
+<li><b>Notifications and exact alarms:</b> meeting alerts before they start, and the evening notes reminder.</li>
+<li><b>Network state and keeping the phone awake:</b> check that you are online before a download, and finish recording and download work when the screen turns off.</li>
+<li><b>Run at start-up:</b> put those alerts back after the phone restarts.</li>
+<li><b>Internet, and a foreground service for downloads:</b> the network uses listed above, and keeping a model download going when you leave the app.</li>
+</ul>
+
+<h2>Keeping and deleting your data</h2>
+<p>Your notes, recordings and models live in the app's private storage and are not backed up to the cloud by Android. Delete a note inside Plait, or clear the app's storage or uninstall it, and the data is gone. Because I hold no copy, I cannot recover it for you. Data you chose to put in a sync folder or a backup file stays there until you delete it.</p>
+
+<h2>Children</h2>
+<p>Plait is not directed at children under 13 and I do not knowingly collect anything from them.</p>
+
+<h2>Changes</h2>
+<p>If this policy changes, the new version will be posted here with a new date.</p>
+
+<h2>Contact</h2>
+<p>Questions or requests: <a href="mailto:mohamed.ashmawy.mail@gmail.com">mohamed.ashmawy.mail@gmail.com</a>.</p>
+</main>
+</body>
+</html>

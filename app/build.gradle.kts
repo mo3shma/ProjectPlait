@@ -20,6 +20,7 @@ android {
         targetSdk = 36
         versionCode = 60
         versionName = "0.32.0"
+        buildConfigField("boolean", "PLAY", "false")
     }
 
     // Releases built by GitHub Actions are signed with the key from the repository's secrets (see
@@ -43,6 +44,12 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName(if (releaseKeystore != null) "release" else "debug")
         }
+        // The Google Play edition (`:app:bundlePlay`): Play updates the app, so it has no self-updater and no install permission.
+        create("play") {
+            initWith(getByName("release"))
+            matchingFallbacks += "release"
+            buildConfigField("boolean", "PLAY", "true")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -50,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         checkReleaseBuilds = false
